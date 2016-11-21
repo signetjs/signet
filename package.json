@@ -1,0 +1,28 @@
+{
+  "name": "signet",
+  "version": "1.0.0",
+  "description": "Signet type library",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ./node_modules/mocha/bin/mocha ./test/*.test.js"
+  },
+  "keywords": [
+    "signet",
+    "types",
+    "signatures",
+    "type",
+    "checking"
+  ],
+  "author": "Chris Stead <cmstead@gmail.com> (http://www.chrisstead.com/)",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.1.2",
+    "signet-assembler": "../signet-assembler",
+    "signet-checker": "../signet-checker",
+    "signet-parser": "../signet-parser",
+    "signet-registrar": "../signet-registrar",
+    "signet-typelog": "../signet-typelog",
+    "signet-validator": "../signet-validator"
+  }
+}
