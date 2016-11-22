@@ -92,24 +92,29 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         throw new TypeError(errorMessage);
     }
 
+    var functionTypeDef = parser.parseType('function');
+
     function buildEnforcer(signatureTree, fn) {
         return function () {
             var args = Array.prototype.slice.call(arguments, 0);
+
             var validationResult = validator.validateArguments(signatureTree[0])(args);
-            var returnType = last(signatureTree)[0];
-            var returnTypeStr = assembler.assembleType(returnType);
 
             if (validationResult !== null) {
                 throwEvaluationError(validationResult, '');
             }
 
+            var signatureIsCurried = signatureTree.length > 2;
+            var returnType = !signatureIsCurried ? last(signatureTree)[0] : functionTypeDef;
+            var returnTypeStr = assembler.assembleType(returnType);
+            
             var result = fn.apply(null, args);
-
+            
             if (!validator.validateType(returnType)(result)) {
                 throwEvaluationError([returnTypeStr, result], 'return ');
             }
 
-            return fn.apply(null, args);
+            return !signatureIsCurried ? result : enforceOnTree(signatureTree.slice(1), result);
         }
     }
 
@@ -130,14 +135,28 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         '}'
     ].join('');
 
-    function enforce(signature, fn) {
-        var signatureTree = parser.parseSignature(signature);
+    function enforceOnTree(signatureTree, fn) {
         var enforcer = buildEnforcer(signatureTree, fn);
         var argNames = buildArgNames(fn.length);
-        return Function('enforcer', enforcementTemplate.replace('{args}', argNames))(enforcer);
+        var enforceDecorator =  Function('enforcer', enforcementTemplate.replace('{args}', argNames))(enforcer);
+
+        enforceDecorator.toString = fn.toString.bind(fn);
+
+        return enforceDecorator;
+    }
+
+    function enforce(signature, fn) {
+        var signatureTree = parser.parseSignature(signature);
+        return enforceOnTree(signatureTree, fn);
+    }
+
+    function alias (newType, oldType){
+        var typeDef = parser.parseType(oldType);
+        typelog.defineSubtypeOf(typeDef.type)(newType, typelog.isTypeOf(typeDef));
     }
 
     typelog.define('boolean', isType('boolean'));
+    typelog.define('function', isType('function'));
     typelog.define('number', isType('number'));
     typelog.define('object', isType('object'));
     typelog.define('string', isType('string'));
@@ -152,14 +171,19 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return Object.prototype.toString.call(value) === '[object Array]';
     });
 
+    typelog.define('type', function(value) {
+        return isTypeOf('string')(value) || isTypeOf('function')(value);
+    });
+
     return {
-        enforce: enforce,
-        extend: typelog.define,
-        isSubtypeOf: typelog.isSubtypeOf,
-        isType: typelog.isType,
-        isTypeOf: isTypeOf,
-        sign: sign,
-        subtype: typelog.defineSubtypeOf
+        alias: enforce('string, string => undefined', alias),
+        enforce: enforce('string, function => function', enforce),
+        extend: enforce('string, function => undefined', typelog.define),
+        isSubtypeOf: enforce('string => string => boolean', typelog.isSubtypeOf),
+        isType: enforce('string => boolean', typelog.isType),
+        isTypeOf: enforce('type => * => boolean', isTypeOf),
+        sign: enforce('string, function => function', sign),
+        subtype: enforce('string => string, function => undefined', typelog.defineSubtypeOf)
     };
 }
 

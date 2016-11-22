@@ -31,6 +31,7 @@ describe('Signet Library', function () {
 
     it('should pre-register Javascript base types and values', function () {
         assert.equal(signet.isTypeOf('boolean')(false), true);
+        assert.equal(signet.isTypeOf('function')(addBuilder()), true);
         assert.equal(signet.isTypeOf('number')(17), true);
         assert.equal(signet.isTypeOf('object')({}), true);
         assert.equal(signet.isTypeOf('string')('foo'), true);
@@ -96,6 +97,14 @@ describe('Signet Library', function () {
         assert.throws(fnUnderTest, expectedMessage);
     });
 
+    it('should wrap an enforced function with an appropriate enforcer', function () {
+        var originalAdd = addBuilder();
+        var add = signet.enforce('number, number => number', originalAdd);
+
+        assert.equal(add.length, originalAdd.length);
+        assert.equal(add.toString(), originalAdd.toString());
+    });
+
     it('should enforce a function with a correct argument count', function () {
         var add = signet.enforce('number, number => number', addBuilder());
         var expectedMessage = 'Expected a value of type number but got 6 of type string';
@@ -117,8 +126,6 @@ describe('Signet Library', function () {
     it('should return result from enforced function', function () {
         var add = signet.enforce('number, number => number', addBuilder());
 
-        var expectedMessage = 'Expected a return value of type number but got true of type boolean'
-
         assert.equal(add(3, 4), 7);
     });
 
@@ -131,9 +138,16 @@ describe('Signet Library', function () {
 
         var curriedAdd = signet.enforce('number => number => number', add);
 
-        assert.throws(add.bind(null, 'foo'));
-        assert.throws(add(5).bind(null, 'foo'));
-        assert.throws(add(5).bind(null, 6));
+        assert.throws(curriedAdd.bind(null, 'foo'));
+        assert.throws(curriedAdd(5).bind(null, 'foo'));
+        assert.throws(curriedAdd(5).bind(null, 6));
+    });
+
+    it('should allow aliasing of types by other names', function () {
+        signet.alias('foo', 'string');
+
+        assert.equal(signet.isTypeOf('foo')('bar'), true);
+        assert.equal(signet.isTypeOf('foo')(5), false);
     });
 
 });
