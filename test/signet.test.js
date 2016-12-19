@@ -40,6 +40,35 @@ describe('Signet Library', function () {
 
         assert.equal(signet.isTypeOf('null')(null), true);
         assert.equal(signet.isTypeOf('array')([]), true);
+
+        assert.equal(signet.isTypeOf('int')(5), true);
+        assert.equal(signet.isTypeOf('int')(5.3), false);
+
+        assert.equal(signet.isTypeOf('bounded<1; 5>')(3), true);
+        assert.equal(signet.isTypeOf('bounded<1; 5>')(5.1), false);
+        assert.equal(signet.isTypeOf('bounded<1; 5>')(0), false);
+
+        assert.equal(signet.isTypeOf('boundedInt<1; 5>')(3), true);
+        assert.equal(signet.isTypeOf('boundedInt<1; 5>')(3.1), false);
+        assert.equal(signet.isTypeOf('boundedInt<1; 5>')(6), false);
+        assert.equal(signet.isTypeOf('boundedInt<1; 5>')(0), false);
+
+        assert.equal(signet.isTypeOf('boundedString<2; 15>')('hello'), true);
+        assert.equal(signet.isTypeOf('boundedString<2; 15>')(''), false);
+        assert.equal(signet.isTypeOf('boundedString<2; 15>')('this is a long string which should fail'), false);
+
+        assert.equal(signet.isTypeOf('formattedString<^\\d+(\\;)?\\d*$>')('123;45'), true);
+        assert.equal(signet.isTypeOf('formattedString<^\\d+(\\;)?\\d*$>')('Not numbers'), false);
+
+        assert.equal(signet.isTypeOf('tuple<int; formattedString<^\\d+(\\;)?\\D*$>; boolean>')([123, '1234;foo', false]), true);
+        assert.equal(signet.isTypeOf('tuple<int; formattedString<^\\d+(\\;)?\\D*$>; boolean>')([123, '1234;33', false]), false);
+        assert.equal(signet.isTypeOf('tuple<int; formattedString<^\\d+(\\;)?\\D*$>; boolean>')([123, '1234;foo', false, 'hooray!']), false);
+
+        assert.equal(signet.isTypeOf('variant<int; string>')(10), true);
+        assert.equal(signet.isTypeOf('variant<int; string>')('I am a string'), true);
+        assert.equal(signet.isTypeOf('variant<int; string>')(null), false);
+
+        assert.equal(signet.isTypeOf('taggedUnion<int; string>')(null), false);
     });
 
     it('should pre-register signet type aliases', function () {
@@ -55,10 +84,10 @@ describe('Signet Library', function () {
     });
 
     it('should register a subtype', function () {
-        signet.subtype('number')('int', function (value) { return Math.floor(value) === value; });
+        signet.subtype('number')('intFoo', function (value) { return Math.floor(value) === value; });
 
-        assert.equal(signet.isSubtypeOf('number')('int'), true);
-        assert.equal(signet.isTypeOf('int')(15), true);
+        assert.equal(signet.isSubtypeOf('number')('intFoo'), true);
+        assert.equal(signet.isTypeOf('intFoo')(15), true);
     });
 
     it('should sign a function', function () {
@@ -148,6 +177,16 @@ describe('Signet Library', function () {
 
         assert.equal(signet.isTypeOf('foo')('bar'), true);
         assert.equal(signet.isTypeOf('foo')(5), false);
+    });
+
+    it('should allow function argument verification inside a function body', function () {
+        function test (a, b) {
+            signet.verify(test, arguments);
+        }
+
+        signet.sign('string, number => undefined', test);
+
+        assert.throws(test.bind(5, 'five'));
     });
 
 });
