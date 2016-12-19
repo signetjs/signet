@@ -15,6 +15,6 @@ module.exports = function () {
     var typelog = typelogBuilder(registrar, parser);
     var validator = validatorBuilder(typelog, assembler);
 
-    return signetBuilder(typelog, validator, checker, parser, assembler);
+    return signetBuilder(typelog, validator, checker, parser, assembler, registrar);
 
 };

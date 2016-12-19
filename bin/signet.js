@@ -1,4 +1,4 @@
-function signetBuilder(typelog, validator, checker, parser, assembler) {
+function signetBuilder(typelog, validator, checker, parser, assembler, registrar) {
     'use strict';
 
     function isType(typeStr) {
@@ -92,10 +92,10 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     var functionTypeDef = parser.parseType('function');
 
-    function verify (fn, args){
+    function verify(fn, args) {
         var result = validator.validateArguments(fn.signatureTree[0])(args);
 
-        if(result !== null){
+        if (result !== null) {
             throwEvaluationError(result, '');
         }
     }
@@ -236,8 +236,12 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         throw new Error('Not implemented');
     }
 
-    function typeChain() {
-        throw new Error('Not implemented');
+    function typeChain(typeName) {
+        var predicate = registrar.get(typeName);
+
+        return predicate.parentTypeName !== undefined ?
+                typeChain(predicate.parentTypeName) + ' -> ' + typeName :
+                typeName;
     }
 
     return {

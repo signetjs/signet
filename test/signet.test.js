@@ -189,4 +189,9 @@ describe('Signet Library', function () {
         assert.throws(test.bind(5, 'five'));
     });
 
+    it('should return correct type chains', function () {
+        assert.equal(signet.typeChain('array'), '* -> object -> array');
+        assert.equal(signet.typeChain('number'), '* -> number');
+    });
+
 });
