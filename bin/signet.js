@@ -232,8 +232,24 @@ function signetBuilder(typelog, validator, checker, parser, assembler, registrar
     alias('type', 'variant<string; function>');
     alias('arguments', 'variant<array; object>');
 
-    function duckTypeFactory() {
-        throw new Error('Not implemented');
+    function defineDuckType(typeName, objectDef) {
+        typelog.defineSubtypeOf('object')(typeName, duckTypeFactory(objectDef));
+    }
+
+    function duckTypeFactory(objectDef) {
+        var definitionPairs = Object.keys(objectDef).reduce(function (tuples, key) {
+            var typePredicate = registrar.get(objectDef[key]);
+            return tuples.concat([[key, typePredicate]]);
+        }, []);
+
+        return function (value) {
+            return definitionPairs.reduce(function (result, typePair) {
+                var key = typePair[0];
+                var typePredicate = typePair[1];
+
+                return result && typePredicate(value[key]);
+            }, true);
+        };
     }
 
     function typeChain(typeName) {
@@ -246,7 +262,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler, registrar
 
     return {
         alias: enforce('string, string => undefined', alias),
-        duckTypeFactory: duckTypeFactory,
+        duckTypeFactory: enforce('object => function', duckTypeFactory),
+        defineDuckType: enforce('string, object => undefined', defineDuckType),
         enforce: enforce('string, function => function', enforce),
         extend: enforce('string, function => undefined', typelog.define),
         isSubtypeOf: enforce('string => string => boolean', typelog.isSubtypeOf),
@@ -254,7 +271,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler, registrar
         isTypeOf: enforce('type => * => boolean', isTypeOf),
         sign: enforce('string, function => function', sign),
         subtype: enforce('string => string, function => undefined', typelog.defineSubtypeOf),
-        typeChain: typeChain,
+        typeChain: enforce('string => string', typeChain),
         verify: enforce('function, arguments => undefined', verify)
     };
 }

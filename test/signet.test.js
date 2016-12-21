@@ -194,4 +194,28 @@ describe('Signet Library', function () {
         assert.equal(signet.typeChain('number'), '* -> number');
     });
 
+    it('should duck type check an object', function () {
+        var isMyObj = signet.duckTypeFactory({
+            foo: 'string',
+            bar: 'int',
+            baz: 'array'
+        });
+
+        signet.subtype('object')('myObj', isMyObj);
+
+        assert.equal(signet.isTypeOf('myObj')({ foo: 55 }), false);
+        assert.equal(signet.isTypeOf('myObj')({ foo: 'blah', bar: 55, baz: [] }), true);
+    });
+
+    it('should allow duck types to be defined directly', function () {
+        signet.defineDuckType('myObj', {
+            foo: 'string',
+            bar: 'int',
+            baz: 'array'
+        });
+
+        assert.equal(signet.isTypeOf('myObj')({ foo: 55 }), false);
+        assert.equal(signet.isTypeOf('myObj')({ foo: 'blah', bar: 55, baz: [] }), true);
+    });
+
 });
