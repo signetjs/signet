@@ -21,11 +21,11 @@
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-uglify": "^2.0.0",
     "mocha": "^3.1.2",
-    "signet-assembler": "../signet-assembler",
-    "signet-checker": "../signet-checker",
-    "signet-parser": "../signet-parser",
-    "signet-registrar": "../signet-registrar",
-    "signet-typelog": "../signet-typelog",
-    "signet-validator": "../signet-validator"
+    "signet-assembler": "^1.x.x",
+    "signet-checker": "^1.x.x",
+    "signet-parser": "^1.x.x",
+    "signet-registrar": "^1.x.x",
+    "signet-typelog": "^1.x.x",
+    "signet-validator": "^1.x.x"
   }
 }
