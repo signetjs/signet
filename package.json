@@ -17,6 +17,9 @@
   "license": "MPL-2.0",
   "devDependencies": {
     "chai": "^3.5.0",
+    "grunt": "^1.0.1",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-uglify": "^2.0.0",
     "mocha": "^3.1.2",
     "signet-assembler": "../signet-assembler",
     "signet-checker": "../signet-checker",

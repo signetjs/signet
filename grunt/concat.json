@@ -1,0 +1,18 @@
+{
+    "options": {
+        "separator": "\n\n"
+    },
+    "dist": {
+        "src": [
+            "node_modules/signet-assembler/index.js",
+            "node_modules/signet-checker/index.js",
+            "node_modules/signet-parser/index.js",
+            "node_modules/signet-registrar/index.js",
+            "node_modules/signet-typelog/index.js",
+            "node_modules/signet-validator/index.js",
+            "bin/signet.js",
+            "client-index.js"
+        ],
+        "dest": "dist/signet.js"
+    }
+}

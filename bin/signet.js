@@ -256,8 +256,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler, registrar
         var predicate = registrar.get(typeName);
 
         return predicate.parentTypeName !== undefined ?
-                typeChain(predicate.parentTypeName) + ' -> ' + typeName :
-                typeName;
+            typeChain(predicate.parentTypeName) + ' -> ' + typeName :
+            typeName;
     }
 
     return {
@@ -276,4 +276,6 @@ function signetBuilder(typelog, validator, checker, parser, assembler, registrar
     };
 }
 
-module.exports = signetBuilder;
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = signetBuilder;
+}
