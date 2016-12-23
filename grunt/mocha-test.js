@@ -1,25 +1,21 @@
-var exec = require('child_process').exec;
+var fork = require('child_process').fork;
 var path = require('path');
 
 module.exports = function () {
     var done = this.async();
-
     var cwd = process.cwd();
+    
+    var options = {
+        cwd: cwd
+    };
+
     var testCommand = [cwd, 'node_modules', 'mocha', 'bin', 'mocha'].join(path.sep);
     var testFiles = ['./test/*.test.js'];
 
-    var command = ['node', testCommand].concat(testFiles).join(' ');
-    var options = {
-        cwd: process.cwd()
-    };
 
-    var processHandle = exec(command, options, function (err, stdout, stderr){
-        process.stderr.write(stderr);
+    fork(testCommand, testFiles, options)
+        .on('exit', function (err, stdout, stderr) {
+            done(err);
+        });
 
-        done(err);
-    });
-
-    processHandle.stdout.on('data', function (data) {
-        process.stdout.write(data);
-    });
 };
