@@ -318,26 +318,30 @@ var signetValidator = (function () {
 
     return function (typelog, assembler) {
 
-        function validateType (typeDef){
+        function validateOptional(typeDef, argument, typeList) {
+            return typeDef.optional && (typeList.length > 1 || typeof argument === 'undefined');
+        }
+
+        function validateType(typeDef) {
             return typelog.isTypeOf(typeDef);
+        }
+
+        function validateCurrentValue(typeList, argumentList) {
+            var typeDef = first(typeList);
+            var argument = first(argumentList);
+
+            var isValidated = validateType(typeDef)(argument);
+            var nextArgs = !isValidated ? argumentList : rest(argumentList);
+
+            var validateNext = validateArguments(rest(typeList));
+            var accepted = isValidated || validateOptional(typeDef, argument, typeList);
+
+            return accepted ? validateNext(nextArgs) : [assembler.assembleType(typeDef), argument];
         }
 
         function validateArguments(typeList) {
             return function (argumentList) {
-                var typeDef = first(typeList);
-                var argument = first(argumentList);
-
-                if(typeList.length === 0 && argumentList.length === 0) {
-                    return null;
-                } else if(typeList.length === 0 && argumentList.lenth !== 0) {
-                    return ['invalidArgument', argument];
-                } else if (validateType(typeDef)(argument)){
-                    return validateArguments(rest(typeList))(rest(argumentList));
-                } else if(typeDef.optional) {
-                    return validateArguments(rest(typeList))(argumentList);
-                } else {
-                    return [assembler.assembleType(typeDef), argument];
-                }
+                return typeList.length === 0 ? null : validateCurrentValue(typeList, argumentList);
             };
         }
 
