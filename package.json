@@ -1,6 +1,6 @@
 {
   "name": "signet",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Signet type library",
   "main": "index.js",
   "repository": {
@@ -19,17 +19,19 @@
   ],
   "author": "Chris Stead <cmstead@gmail.com> (http://www.chrisstead.com/)",
   "license": "MPL-2.0",
-  "devDependencies": {
-    "chai": "^3.5.0",
-    "grunt": "^1.0.1",
-    "grunt-contrib-concat": "^1.0.1",
-    "grunt-contrib-uglify": "^2.0.0",
-    "mocha": "^3.1.2",
+  "dependencies": {
     "signet-assembler": "^1.x.x",
     "signet-checker": "^1.x.x",
     "signet-parser": "^1.x.x",
     "signet-registrar": "^1.x.x",
     "signet-typelog": "^1.x.x",
     "signet-validator": "^1.x.x"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "grunt": "^1.0.1",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-uglify": "^2.0.0",
+    "mocha": "^3.1.2"
   }
 }
