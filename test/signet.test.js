@@ -158,8 +158,18 @@ describe('Signet Library', function () {
         assert.equal(add(3, 4), 7);
     });
 
+    it('should not throw on unfulfilled optional int argument in a higher-order function containing a variant type', function () {
+        function slice(start, end) {}
+
+        var enforcedSlice = signet.enforce('int, [int] => *', slice);
+
+        assert.doesNotThrow(function () {
+            enforcedSlice(5);
+        });
+    });
+
     it('should enforce a curried function properly', function () {
-        function add (a){
+        function add(a) {
             return function (b) {
                 return 'bar';
             }
@@ -180,7 +190,7 @@ describe('Signet Library', function () {
     });
 
     it('should allow function argument verification inside a function body', function () {
-        function test (a, b) {
+        function test(a, b) {
             signet.verify(test, arguments);
         }
 

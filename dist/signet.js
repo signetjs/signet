@@ -319,7 +319,7 @@ var signetValidator = (function () {
     return function (typelog, assembler) {
 
         function validateType (typeDef){
-            return typelog.isTypeOf(typeDef);;
+            return typelog.isTypeOf(typeDef);
         }
 
         function validateArguments(typeList) {
@@ -327,10 +327,14 @@ var signetValidator = (function () {
                 var typeDef = first(typeList);
                 var argument = first(argumentList);
 
-                if(typeList.length === 0) {
+                if(typeList.length === 0 && argumentList.length === 0) {
                     return null;
+                } else if(typeList.length === 0 && argumentList.lenth !== 0) {
+                    return ['invalidArgument', argument];
                 } else if (validateType(typeDef)(argument)){
                     return validateArguments(rest(typeList))(rest(argumentList));
+                } else if(typeDef.optional) {
+                    return validateArguments(rest(typeList))(argumentList);
                 } else {
                     return [assembler.assembleType(typeDef), argument];
                 }
