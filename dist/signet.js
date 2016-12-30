@@ -292,9 +292,19 @@ var signetTypelog = function (registrar, parser) {
         };
     }
 
+    function getTypeChain(typeName) {
+        var predicate = registrar.get(typeName);
+
+        return predicate.parentTypeName !== undefined ?
+            getTypeChain(predicate.parentTypeName) + ' -> ' + typeName :
+            typeName;
+    }
+
+
     return {
         define: defineSubtypeOf('*'),
         defineSubtypeOf: defineSubtypeOf,
+        getTypeChain: getTypeChain,
         isType: isType,
         isTypeOf: isTypeOf,
         isSubtypeOf: isSubtypeOf
@@ -357,7 +367,7 @@ if (typeof module !== 'undefined' && typeof module.exports !== undefined) {
     module.exports = signetValidator;
 }
 
-function signetBuilder(typelog, validator, checker, parser, assembler, registrar) {
+function signetBuilder(typelog, validator, checker, parser, assembler) {
     'use strict';
 
     function isType(typeStr) {
@@ -597,8 +607,9 @@ function signetBuilder(typelog, validator, checker, parser, assembler, registrar
 
     function duckTypeFactory(objectDef) {
         var definitionPairs = Object.keys(objectDef).reduce(function (tuples, key) {
-            var typePredicate = registrar.get(objectDef[key]);
-            return tuples.concat([[key, typePredicate]]);
+            var typePredicate = isTypeOf(objectDef[key]);
+            tuples.push([key, typePredicate]);
+            return tuples;
         }, []);
 
         return function (value) {
@@ -609,14 +620,6 @@ function signetBuilder(typelog, validator, checker, parser, assembler, registrar
                 return result && typePredicate(value[key]);
             }, true);
         };
-    }
-
-    function typeChain(typeName) {
-        var predicate = registrar.get(typeName);
-
-        return predicate.parentTypeName !== undefined ?
-            typeChain(predicate.parentTypeName) + ' -> ' + typeName :
-            typeName;
     }
 
     return {
@@ -630,7 +633,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler, registrar
         isTypeOf: enforce('type => * => boolean', isTypeOf),
         sign: enforce('string, function => function', sign),
         subtype: enforce('string => string, function => undefined', typelog.defineSubtypeOf),
-        typeChain: enforce('string => string', typeChain),
+        typeChain: enforce('string => string', typelog.getTypeChain),
         verify: enforce('function, arguments => undefined', verify)
     };
 }
@@ -650,7 +653,7 @@ var signet = (function () {
         var typelog = signetTypelog(registrar, parser);
         var validator = signetValidator(typelog, assembler);
 
-        return signetBuilder(typelog, validator, checker, parser, assembler, registrar);
+        return signetBuilder(typelog, validator, checker, parser, assembler);
     }
 
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

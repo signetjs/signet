@@ -9,7 +9,7 @@ var signet = (function () {
         var typelog = signetTypelog(registrar, parser);
         var validator = signetValidator(typelog, assembler);
 
-        return signetBuilder(typelog, validator, checker, parser, assembler, registrar);
+        return signetBuilder(typelog, validator, checker, parser, assembler);
     }
 
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
