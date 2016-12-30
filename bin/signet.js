@@ -1,16 +1,13 @@
 function signetBuilder(typelog, validator, checker, parser, assembler) {
     'use strict';
 
-    function isType(typeStr) {
-        return function (value) {
-            return typeof value === typeStr;
-        }
-    }
-
     function alias(key, typeStr) {
         var typeDef = parser.parseType(typeStr);
+        var checkType = typelog.isTypeOf(typeDef);
 
-        typelog.defineSubtypeOf(typeDef.type)(key, typelog.isTypeOf(typeDef));
+        typelog.defineSubtypeOf(typeDef.type)(key, function (value) {
+            return checkType(value);
+        });
     }
 
     function isTypeOf(typeValue) {
@@ -156,92 +153,14 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return enforceOnTree(signatureTree, fn);
     }
 
-    typelog.define('boolean', isType('boolean'));
-    typelog.define('function', isType('function'));
-    typelog.define('number', isType('number'));
-    typelog.define('object', isType('object'));
-    typelog.define('string', isType('string'));
-    typelog.define('symbol', isType('symbol'));
-    typelog.define('undefined', isType('undefined'));
-    typelog.define('null', function (value) { return value === null; });
-
-    alias('any', '*');
-    alias('void', '*');
-
-    typelog.defineSubtypeOf('object')('array', function (value) {
-        return Object.prototype.toString.call(value) === '[object Array]';
-    });
-
-    typelog.defineSubtypeOf('number')('int', function (value) {
-        return Math.floor(value) === value;
-    });
-
-    function rangeBuilder() {
-        return function (value, options) {
-            var min = Number(options[0]);
-            var max = Number(options[1]);
-
-            return min <= value && value <= max;
-        }
-    }
-
-    typelog.defineSubtypeOf('number')('bounded', rangeBuilder());
-    typelog.defineSubtypeOf('int')('boundedInt', rangeBuilder());
-
-    var inRange = rangeBuilder();
-
-    typelog.defineSubtypeOf('string')('boundedString', function (value, options) {
-        return inRange(value.length, options);
-    });
-
-    typelog.defineSubtypeOf('string')('formattedString', function (value, options) {
-        var pattern = RegExp(options.join(';'));
-        return value.match(pattern) !== null;
-    });
-
-    typelog.defineSubtypeOf('array')('tuple', function (value, options) {
-        var lengthOkay = value.length === options.length;
-        var tupleOkay = false;
-
-        if (lengthOkay) {
-            var tupleOkay = options.reduce(function (result, typeStr, index) {
-                return result && isTypeOf(typeStr)(value[index]);
-            }, true);
-        }
-
-        return tupleOkay;
-    });
-
-    function validateHigherKindedType(options, validator) {
-        return options.length === 0 || options.filter(validator).length > 0
-    }
-
-    function isVariant(value, options) {
-        return validateHigherKindedType(options, function (option) {
-            return isTypeOf(option)(value);
-        });
-    }
-
-    typelog.define('variant', isVariant);
-
-    typelog.define('taggedUnion', function (value, options) {
-        console.warn('Tagged Union is deprecated, use variant instead.');
-        return isVariant(value, options);
-    })
-
-    alias('type', 'variant<string; function>');
-    alias('arguments', 'variant<array; object>');
-
     function defineDuckType(typeName, objectDef) {
         typelog.defineSubtypeOf('object')(typeName, duckTypeFactory(objectDef));
     }
 
     function duckTypeFactory(objectDef) {
-        var definitionPairs = Object.keys(objectDef).reduce(function (tuples, key) {
-            var typePredicate = isTypeOf(objectDef[key]);
-            tuples.push([key, typePredicate]);
-            return tuples;
-        }, []);
+        var definitionPairs = Object.keys(objectDef).map(function (key) {
+            return [key, isTypeOf(objectDef[key])];
+        });
 
         return function (value) {
             return definitionPairs.reduce(function (result, typePair) {
@@ -252,6 +171,120 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
             }, true);
         };
     }
+
+    /* Defining canned types */
+
+    function isType(typeStr) {
+        return function (value) {
+            return typeof value === typeStr;
+        }
+    }
+
+    function isNull(value) {
+        return value === null;
+    }
+
+    function checkArray(value) {
+        return Object.prototype.toString.call(value) === '[object Array]';
+    }
+
+    function checkInt(value) {
+        return Math.floor(value) === value;
+    }
+
+
+    function rangeBuilder() {
+        function checkRange(value, range) {
+            return range.min <= value && value <= range.max;
+        }
+
+        checkRange.preprocess = optionsToRangeObject;
+
+        return checkRange;
+    }
+
+    function optionsToRangeObject(options) {
+        return {
+            min: Number(options[0]),
+            max: Number(options[1])
+        };
+    }
+
+    var inRange = rangeBuilder();
+
+    function checkBoundedString(value, range) {
+        return inRange(value.length, range);
+    }
+
+    checkBoundedString.preprocess = optionsToRangeObject;
+
+    function optionsToRegex(options) {
+        return RegExp(options.join(';'));
+    }
+
+    function checkFormattedString(value, regex) {
+        return value.match(regex) !== null;
+    }
+
+    checkFormattedString.preprocess = optionsToRegex;
+
+    function optionsToFunctions(options) {
+        return options.map(isTypeOf);
+    }
+
+    function checkTuple(value, options) {
+        var lengthOkay = value.length === options.length;
+
+        return lengthOkay && options.reduce(verifyTupleTypes, true);
+
+        function verifyTupleTypes(result, validator, index) {
+            return result && validator(value[index]);
+        }
+    }
+
+    checkTuple.preprocess = optionsToFunctions;
+
+    function isVariant(value, options) {
+        return options.length === 0 || options.filter(checkValueType).length > 0;
+
+        function checkValueType(validator) {
+            return validator(value);
+        }
+    }
+
+    isVariant.preprocess = optionsToFunctions;
+
+
+    function checkTaggedUnion(value, options) {
+        console.warn('Tagged Union is deprecated, use variant instead.');
+        return isVariant(value, options);
+    }
+
+    checkTaggedUnion.preprocess = optionsToFunctions;
+
+    typelog.define('boolean', isType('boolean'));
+    typelog.define('function', isType('function'));
+    typelog.define('number', isType('number'));
+    typelog.define('object', isType('object'));
+    typelog.define('string', isType('string'));
+    typelog.define('symbol', isType('symbol'));
+    typelog.define('undefined', isType('undefined'));
+    typelog.define('null', isNull);
+    typelog.define('variant', isVariant);
+    typelog.define('taggedUnion', checkTaggedUnion);
+
+    typelog.defineSubtypeOf('object')('array', checkArray);
+    typelog.defineSubtypeOf('number')('int', checkInt);
+    typelog.defineSubtypeOf('number')('bounded', rangeBuilder());
+    typelog.defineSubtypeOf('int')('boundedInt', rangeBuilder());
+    typelog.defineSubtypeOf('string')('boundedString', checkBoundedString);
+    typelog.defineSubtypeOf('string')('formattedString', checkFormattedString);
+    typelog.defineSubtypeOf('array')('tuple', checkTuple);
+
+    alias('any', '*');
+    alias('void', '*');
+    alias('type', 'variant<string; function>');
+    alias('arguments', 'variant<array; object>');
 
     return {
         alias: enforce('string, string => undefined', alias),
