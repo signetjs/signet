@@ -1,10 +1,12 @@
 var signetBuilder = require('../dist/signet.min');
 var parser = require('signet-parser');
 var assert = require('chai').assert;
+var timerFactory = require('./timer');
 
 describe('Signet Library', function () {
 
     var signet;
+    var timer;
 
     function addBuilder() {
         return function (a, b) {
@@ -14,6 +16,13 @@ describe('Signet Library', function () {
 
     beforeEach(function () {
         signet = signetBuilder();
+        timer = timerFactory();
+        timer.start();
+    });
+
+    afterEach(function () {
+        timer.stop();
+        timer.report();
     });
 
     it('should automatically register the * type', function () {

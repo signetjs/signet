@@ -293,7 +293,6 @@ var signetTypelog = function (registrar, parser) {
         var predicate = registrar.get(typeDef.type);
         var preprocess = typeof predicate.preprocess === 'function' ? predicate.preprocess : identity;
 
-
         return {
             name: typeDef.name,
             type: typeDef.type,
@@ -352,7 +351,8 @@ var signetValidator = (function () {
         }
 
         function validateType(typeDef) {
-            return typelog.isTypeOf(typeDef);
+            var hasTypeCheck = typeof typeDef.typeCheck === 'function';
+            return hasTypeCheck ? typeDef.typeCheck : typelog.isTypeOf(typeDef);
         }
 
         function validateCurrentValue(typeList, argumentList) {
@@ -536,8 +536,21 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return enforceDecorator;
     }
 
+    function addTypeCheck(typeDef) {
+        typeDef.typeCheck = typelog.isTypeOf(typeDef);
+        return typeDef;
+    }
+
+    function prepareSubtree(subtree) {
+        return subtree.map(addTypeCheck);
+    }
+
+    function prepareSignature(signatureTree){
+        return signatureTree.map(prepareSubtree);
+    }
+
     function enforce(signature, fn) {
-        var signatureTree = parser.parseSignature(signature);
+        var signatureTree = prepareSignature(parser.parseSignature(signature));
         return enforceOnTree(signatureTree, fn);
     }
 
