@@ -532,8 +532,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         var enforceDecorator = Function('enforcer', enforcementTemplate.replace('{args}', argNames))(enforcer);
 
         enforceDecorator.toString = fn.toString.bind(fn);
-
-        return enforceDecorator;
+        return signFn(signatureTree, enforceDecorator);
     }
 
     function addTypeCheck(typeDef) {
