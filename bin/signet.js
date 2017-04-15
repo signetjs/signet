@@ -186,6 +186,42 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     /* Defining canned types */
 
+    function not(pred) {
+        return function (a, b) {
+            return !pred(a, b);
+        }
+    }
+
+    function objectsAreEqual (a, b) {
+        if(isNull(a) || isNull(b) || a === b) { return a === b; }
+
+        function propsInequal (key) {
+            return a[key] !== b[key]; 
+        }
+
+        var objAKeys = Object.keys(a);
+        var keyLengthEqual = objAKeys.length === Object.keys(b).length;
+
+        return !keyLengthEqual ? false : objAKeys.filter(propsInequal).length === 0;
+
+    }
+
+    function isSameType (a, b) {
+        return typeof a === typeof b;
+    }
+
+    function greater (a, b){
+        return a > b;
+    }
+
+    function less (a, b) {
+        return a < b;
+    }
+
+    function equal (a, b) {
+        return a === b;
+    }
+
     function isType(typeStr) {
         return function (value) {
             return typeof value === typeStr;
@@ -298,10 +334,26 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     alias('type', 'variant<string; function>');
     alias('arguments', 'variant<array; object>');
 
+    typelog.defineDependentOperatorOn('number')('>', greater);
+    typelog.defineDependentOperatorOn('number')('<', less);
+    typelog.defineDependentOperatorOn('number')('=', equal);
+    typelog.defineDependentOperatorOn('number')('>=', not(less));
+    typelog.defineDependentOperatorOn('number')('<=', not(greater));
+    typelog.defineDependentOperatorOn('number')('!=', not(equal));
+
+    typelog.defineDependentOperatorOn('string')('=', equal);
+    typelog.defineDependentOperatorOn('string')('!=', not(equal));
+
+    typelog.defineDependentOperatorOn('object')('=', objectsAreEqual);
+    typelog.defineDependentOperatorOn('object')('!=', not(objectsAreEqual));
+
+    typelog.defineDependentOperatorOn('variant')('isTypeOf', )
+
     return {
         alias: enforce('string, string => undefined', alias),
         duckTypeFactory: enforce('object => function', duckTypeFactory),
         defineDuckType: enforce('string, object => undefined', defineDuckType),
+        defineDependentOperatorOn: enforce('string => string, function => undefined', typelog.defineDependentOperatorOn),
         enforce: enforce('string, function => function', enforce),
         extend: enforce('string, function => undefined', typelog.define),
         isSubtypeOf: enforce('string => string => boolean', typelog.isSubtypeOf),
