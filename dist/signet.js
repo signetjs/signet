@@ -520,16 +520,16 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return argNames.join(', ');
     }
 
-    var enforcementTemplate = [
-        'return function ({args}){',
-        'return enforcer.apply(null, Array.prototype.slice.call(arguments))',
-        '}'
-    ].join('');
+    function buildEnforceDecorator (enforcer){
+        return function (args) {
+            return enforcer.apply(null, Array.prototype.slice.call(arguments, 0));
+        }
+    }
 
     function enforceOnTree(signatureTree, fn) {
         var enforcer = buildEnforcer(signatureTree, fn);
         var argNames = buildArgNames(fn.length);
-        var enforceDecorator = Function('enforcer', enforcementTemplate.replace('{args}', argNames))(enforcer);
+        var enforceDecorator = buildEnforceDecorator(enforcer);
 
         enforceDecorator.toString = fn.toString.bind(fn);
         return signFn(signatureTree, enforceDecorator);

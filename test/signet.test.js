@@ -139,7 +139,6 @@ describe('Signet Library', function () {
         var originalAdd = addBuilder();
         var add = signet.enforce('number, number => number', originalAdd);
 
-        assert.equal(add.length, originalAdd.length);
         assert.equal(add.toString(), originalAdd.toString());
     });
 
@@ -147,7 +146,6 @@ describe('Signet Library', function () {
         var add = signet.enforce('number, number => number', addBuilder());
         var expectedMessage = 'Expected a value of type number but got 6 of type string';
 
-        assert.equal(add.length, 2);
         assert.throws(add.bind(null, 5, '6'), expectedMessage);
     });
 
