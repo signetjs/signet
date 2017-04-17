@@ -235,4 +235,21 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('myObj')({ foo: 'blah', bar: 55, baz: [] }), true);
     });
 
+    it('should properly check dependent types', function () {
+        function orderedProperly (a, b){
+            return a > b;
+        }
+
+        var enforcedFn = signet.enforce('A > B :: A:number, B:number => boolean', orderedProperly);
+
+        function testWith (a, b){
+            return function () {
+                return enforcedFn(a, b);
+            };
+        }
+
+        assert.throws(testWith(5, 6), 'Expected a value of type A > B but got A = 5 and B = 6 of type string');
+        assert.equal(testWith(7, 3)(), true);
+    });
+
 });

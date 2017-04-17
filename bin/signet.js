@@ -100,7 +100,6 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     function buildEnforcer(signatureTree, fn) {
         return function () {
             var args = Array.prototype.slice.call(arguments, 0);
-
             var validationResult = validator.validateArguments(signatureTree[0])(args);
 
             if (validationResult !== null) {
@@ -132,16 +131,16 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return argNames.join(', ');
     }
 
-    function buildEnforceDecorator (enforcer){
-        return function (args) {
-            return enforcer.apply(null, Array.prototype.slice.call(arguments, 0));
-        }
-    }
+    var enforcementTemplate = [
+        'return function ({args}){',
+        'return enforcer.apply(null, Array.prototype.slice.call(arguments))',
+        '}'
+    ].join('');
 
     function enforceOnTree(signatureTree, fn) {
         var enforcer = buildEnforcer(signatureTree, fn);
         var argNames = buildArgNames(fn.length);
-        var enforceDecorator = buildEnforceDecorator(enforcer);
+        var enforceDecorator = Function('enforcer', enforcementTemplate.replace('{args}', argNames))(enforcer);
 
         enforceDecorator.toString = fn.toString.bind(fn);
         return signFn(signatureTree, enforceDecorator);
@@ -153,7 +152,9 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     }
 
     function prepareSubtree(subtree) {
-        return subtree.map(addTypeCheck);
+        var updatedSubtree = subtree.map(addTypeCheck);
+        updatedSubtree.dependent = subtree.dependent;
+        return updatedSubtree;
     }
 
     function prepareSignature(signatureTree){
@@ -347,7 +348,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineDependentOperatorOn('object')('=', objectsAreEqual);
     typelog.defineDependentOperatorOn('object')('!=', not(objectsAreEqual));
 
-    typelog.defineDependentOperatorOn('variant')('isTypeOf', )
+    typelog.defineDependentOperatorOn('variant')('isTypeOf', isSameType);
+    typelog.defineDependentOperatorOn('taggedUnion')('isTypeOf', isSameType);
 
     return {
         alias: enforce('string, string => undefined', alias),
