@@ -41,10 +41,12 @@ List of supported (built in) primary types
 - `array`
 - `boolean`
 - `function`
+- `null`
 - `number`
 - `object`
 - `string`
 - `symbol`
+- `undefined`
 
 Example function signatures:
 
@@ -74,34 +76,34 @@ Below are examples of the two use cases:
 Function wrapper style:
 
     const add = signet.sign('number, number => number',
-        function add (a, b) {
-            return a + b;
-        }
+- function add (a, b) {
+-     return a + b;
+- }
     );
     
     console.log(add.signature); // number, number => number
 
 Function decoration style:
 
-    signet.sign('number, number => number', add);
+    signet.sign('number, number => number`;
     function add (a, b) {
-        return a + b;
+- return a + b;
     }
 
 Example of curried function type annotation:
 
-    signet.sign('number => number => number', add);
+    signet.sign('number => number => number`;
     
     function curriedAdd (a) {
-        return function (b) {
-            return a + b;
-        }
+- return function (b) {
+-     return a + b;
+- }
     }
 
 Signet signatures are immutable, which means once they are declared, they cannot be tampered with. This adds a guarantee
 to the stability of your in-code documentation. Let's take a look:
 
-    signet.sign('number, number => number', add);
+    signet.sign('number, number => number`;
     
     add.signature = 'I am trying to change the signature property';
     console.log(add.signature); // number, number => number
@@ -109,30 +111,30 @@ to the stability of your in-code documentation. Let's take a look:
 Arguments can be verified against the function signature by calling verify inside your function:
 
     function verifiedAdd (a, b) {
-        signet.verify(add, arguments);
-        
-        return a + b;
+- signet.verify(add, arguments);
+- 
+- return a + b;
     }
     
-    signet.sign('number, number => number', verifiedAdd);
+    signet.sign('number, number => number`;
     
 Functions can be signed and verified all in one call with the enforce function:
 
     function add (a, b) {
-        return a + b;
+- return a + b;
     }
     
-    const enforcedAdd = enforce('number, number => number', add);
+    const enforcedAdd = `number, number => number`;
 
 Curried functions are also fully enforced all the way down:
 
     function curriedAdd (a) {
-        return function (b) {
-            return a + b;
-        }
+- return function (b) {
+-     return a + b;
+- }
     }
     
-    const enforcedCurriedAdd = enforce('number => number => number', curriedAdd);
+    const enforcedCurriedAdd = `number => number => number`;
     
     enforcedCurriedAdd(1)('foo'); // Throws -- Expected type number, but got string
 
@@ -140,15 +142,15 @@ Curried functions are also fully enforced all the way down:
 
 New types can be added by using the extend function with a key and a predicate function describing the behavior of the data type
 
-    signet.extend('foo', function (value) { return value !== 'bar'; });
+    signet.extend('foo` { return value !== 'bar'; });
     
-    signet.enforce('foo => int', function (value) { return parseInt(value, 10); })('bar'); // Throws error
+    signet.`foo => int` { return parseInt(value, 10); })('bar'); // Throws error
 
 Subtypes can be added by using the subtype function. This is particularly useful for defining and using business types or defining restricted types.
 
-    signet.subtype('number')('int', function (value) { return Math.floor(value) === value; });
+    signet.subtype('number')('int` { return Math.floor(value) === value; });
     
-    var enforcedIntAdd = signet.enforce('int, int => int', function (a, b) { a + b; });
+    var enforcedIntAdd = signet.`int, int => int` { a + b; });
     
     enforcedIntAdd(1.2, 5); // Throws error
     enforcedIntAdd(99, 3000); // 3099
@@ -156,14 +158,14 @@ Subtypes can be added by using the subtype function. This is particularly useful
 Using secondary type information for higher-kinded subtype definition. Any secondary type strings for higher-kinded
 types will be automatically split on ';' to allow for multiple type arguments.
 
-    signet.subtype('array')('triple', function (value, typeObj, isTypeOf) {
-        return isTypeOf(typeObj.valueType[0])(value[0]) &&
-               isTypeOf(typeObj.valueType[1])(value[1]) &&
-               isTypeOf(typeObj.valueType[2])(value[2]);
+    signet.subtype('array')('triple` {
+- return isTypeOf(typeObj.valueType[0])(value[0]) &&
+-        isTypeOf(typeObj.valueType[1])(value[1]) &&
+-        isTypeOf(typeObj.valueType[2])(value[2]);
     });
 
-    var multiplyTripleBy5 = signet.enforce('triple<int; int; int> => triple<int; int; int>', function (values) {
-        return values.map(x => x * 5);
+    var multiplyTripleBy5 = signet.`triple<int; int; int> => triple<int; int; int>` {
+- return values.map(x => x * 5);
     });
     
     multiplyTripleBy5([1, 2]); // Throws error
@@ -172,10 +174,10 @@ types will be automatically split on ';' to allow for multiple type arguments.
 Types can be aliased using the `alias` function. This allows the programmer to define and declare a custom type based on
 existing types or a particular implementation on a higher-kinded types.
 
-    signet.alias('R3Point', 'triple<number;number;number>');
+    signet.alias('R3Point`;
     
     signet.isTypeOf('R3Point')([1, 2, 3]); // true
-    signet.isTypeOf('R3Point')([1, 'foo', 3]); // false
+    signet.isTypeOf('R3Point')([1, 'foo`; // false
     
     // Matrix in R3:
     signet.isTypeOf('triple<R3Point; R3Point; R3Point>')([[1, 2, 3], [4, 5, 6], [7, 8, 9]]); // true
@@ -201,10 +203,10 @@ type depends on extant properties with correct types, it can be predefined with 
     var myObjDef = { foo: 'string', bar: 'array' };
     var checkMyObj = signet.duckTypeFactory(myObjDef);
 
-    signet.subtype('object')('myObj', checkMyObj);
+    signet.subtype('object')('myObj`;
 
-    signet.isTypeOf('myObj')({ foo: 'testing', bar: [1, 2, 3] }); // true
-    signet.isTypeOf('myObj')({ foo: 'testing', bar: null }); // false
+    signet.isTypeOf('myObj')({ foo: 'testing`; // true
+    signet.isTypeOf('myObj')({ foo: 'testing`; // false
     signet.isTypeOf('myObj')({ foo: 42, bar: [] }); // false
 
 ### Type Chain Information
@@ -223,13 +225,42 @@ In the browser environment, signet.min.js and signet.types.min.js in that order 
 
 Extended types are as follows:
 
-- `int` - number:int
-- `bounded<min<number>;max<number>>` - number:bounded
-- `boundedInt<min<number>;max<number>>` - number:int:bounded:boundedInt
-- `boundedString<minLength<int>;maxLength<int>>` - string:boundedString
-- `formattedString<regex>` - string:formattedString
-- `tuple<type;type;type...>` - array:tuple
-- `taggedUnion<optionType;optionType;optionType>` - dynamic:taggedUnion
+- `int` - `* -> number -> int`
+- `bounded<min<number>;max<number>>` - `* -> number -> bounded`
+- `boundedInt<min<number>;max<number>>` - `* -> number -> int -> bounded -> boundedInt`
+- `boundedString<minLength<int>;maxLength<int>>` - `* -> string -> boundedString`
+- `formattedString<regex>` - `* -> string -> formattedString`
+- `tuple<type;type;type...>` - `* -> array -> tuple`
+- `variant` - `* -> variant`
+
+## Dependent types
+
+Types can be named and dependencies can be declared between two arguments in the same call.  Signet currently does not have
+the means to verify dependent types across function calls.  Built in type operations are as follows:
+
+- number: `=`, `!=`, `<`, `>`, `<=`, `>=`
+- string: `=`, `!=`,
+- object: `=`, `!=`,
+- variant: `isTypeOf`
+
+Other dependent type operators can be defined through the defineDependentOperatorOn function.
+
+## Signet API
+
+- alias: `string, string => undefined`
+- duckTypeFactory: `object => function`
+- defineDuckType: `string, object => undefined`
+- defineDependentOperatorOn: `string => string, function => undefined`
+- enforce: `string, function => function`
+- extend: `string, function => undefined`
+- isSubtypeOf: `string => string => boolean`
+- isType: `string => boolean`
+- isTypeOf: `type => * => boolean`
+- sign: `string, function => function`
+- subtype: `string => string, function => undefined`
+- typeChain: `string => string`
+- verify: `function, arguments => undefined`
+
 
 ## Execution context binding
 
@@ -237,16 +268,16 @@ You can now bind an execution context for object instances or other, various rea
 a constructor!
 
     var MyObj = signet.sign(
-        'object => *',
-        function MyObj (foo) {
-            // Throws an error if constructor is not passed appropriate values
-            signet.verify(MyObj, arguments);
-            
-            this.foo = foo;
-            
-            // Enforce the function at construction time or the context will be wrong.
-            this.behavior = signet.enforce('() => *', this.behavior, this);
-        });
+- 'object => *',
+- function MyObj (foo) {
+-     // Throws an error if constructor is not passed appropriate values
+-     signet.verify(MyObj, arguments);
+-     
+-     this.foo = foo;
+-     
+-     // Enforce the function at construction time or the context will be wrong.
+-     this.behavior = signet.`() => *`;
+- });
     
     MyObj.prototype.behavior = function (foo) { return this.foo.bar; };
 
