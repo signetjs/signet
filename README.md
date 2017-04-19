@@ -240,7 +240,7 @@ the means to verify dependent types across function calls.  Built in type operat
 
 - number: `=`, `!=`, `<`, `>`, `<=`, `>=`
 - string: `=`, `!=`,
-- object: `=`, `!=`, `:>` (property superset), `:<` (property subset), `:=` (property congruence)
+- object: `=`, `!=`, `:>` (property superset), `:<` (property subset), `:=` (property congruence), `:!=` (property incongruence)
 - variant: `isTypeOf`
 
 Other dependent type operators can be defined through the defineDependentOperatorOn function.

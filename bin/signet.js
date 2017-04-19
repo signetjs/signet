@@ -370,6 +370,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineDependentOperatorOn('object')(':>', propertySuperSet);
     typelog.defineDependentOperatorOn('object')(':<', propertySubSet);
     typelog.defineDependentOperatorOn('object')(':=', propertyCongruence);
+    typelog.defineDependentOperatorOn('object')(':!=', not(propertyCongruence));
 
     typelog.defineDependentOperatorOn('variant')('isTypeOf', isSameType);
     typelog.defineDependentOperatorOn('taggedUnion')('isTypeOf', isSameType);
