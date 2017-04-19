@@ -207,6 +207,26 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     }
 
+    function verifyPropertyMatches (a, b) {
+        return Object.keys(b).filter(function (key){
+            return typeof a[key] === typeof b[key];
+        }).length === 0;
+    }
+
+    function propertySuperSet (a, b) {
+        var keyLengthOk = !(Object.keys(a).length < Object.keys(b).length);
+        return keyLengthOk && verifyPropertyMatches(a, b);
+    }
+
+    function propertySubSet (a, b) {
+        return propertySuperSet(b, a);
+    }
+
+    function propertyCongruence (a, b) {
+        var keyLengthOk = Object.keys(a).length === Object.keys(b).length;
+        return keyLengthOk && verifyPropertyMatches(a, b);
+    }
+
     function isSameType (a, b) {
         return typeof a === typeof b;
     }
@@ -347,6 +367,9 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     typelog.defineDependentOperatorOn('object')('=', objectsAreEqual);
     typelog.defineDependentOperatorOn('object')('!=', not(objectsAreEqual));
+    typelog.defineDependentOperatorOn('object')(':>', propertySuperSet);
+    typelog.defineDependentOperatorOn('object')(':<', propertySubSet);
+    typelog.defineDependentOperatorOn('object')(':=', propertyCongruence);
 
     typelog.defineDependentOperatorOn('variant')('isTypeOf', isSameType);
     typelog.defineDependentOperatorOn('taggedUnion')('isTypeOf', isSameType);
