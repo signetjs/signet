@@ -238,16 +238,33 @@ Extended types are as follows:
 Types can be named and dependencies can be declared between two arguments in the same call.  Signet currently does not have
 the means to verify dependent types across function calls.  Built in type operations are as follows:
 
-- number: `=`, `!=`, `<`, `>`, `<=`, `>=`
-- string: `=`, `!=`,
-- object: `=`, `!=`, `:>` (property superset), `:<` (property subset), `:=` (property congruence), `:!=` (property incongruence)
-- variant: `isTypeOf`
+- number: 
+    - `=` (value equality)
+    - `!=` (value inequality)
+    - `<` (A less than B)
+    - `>` (A greater than B)
+    - `<=` (A less than or equal to B)
+    - `>=` (A greater than or equal to B)
+- string:
+    - `=` (value equality)
+    - `!=` (value inequality)
+- object:
+    - `=` (property equality)
+    - `!=`(property inequality)
+    - `:>` (property superset)
+    - `:<` (property subset)
+    - `:=` (property congruence -- same property names, potentially different values)
+    - `:!=` (property incongruence -- different property names)
+- variant:
+    - `=:` (same type)
+    - `<:` (subtype)
+    - `>:` (supertype)
 
 Other dependent type operators can be defined through the defineDependentOperatorOn function.
 
 ## Signet API
 
-- alias: `string, string => undefined`
+- alias: `A != B :: A:string, B:string => undefined`
 - duckTypeFactory: `object => function`
 - defineDuckType: `string, object => undefined`
 - defineDependentOperatorOn: `string => string, function => undefined`

@@ -166,7 +166,7 @@ describe('Signet Library', function () {
     });
 
     it('should not throw on unfulfilled optional int argument in a higher-order function containing a variant type', function () {
-        function slice(start, end) {}
+        function slice(start, end) { }
 
         var enforcedSlice = signet.enforce('int, [int] => *', slice);
 
@@ -236,13 +236,13 @@ describe('Signet Library', function () {
     });
 
     it('should properly check dependent types', function () {
-        function orderedProperly (a, b){
+        function orderedProperly(a, b) {
             return a > b;
         }
 
         var enforcedFn = signet.enforce('A > B :: A:number, B:number => boolean', orderedProperly);
 
-        function testWith (a, b){
+        function testWith(a, b) {
             return function () {
                 return enforcedFn(a, b);
             };
@@ -250,6 +250,22 @@ describe('Signet Library', function () {
 
         assert.throws(testWith(5, 6), 'Expected a value of type A > B but got A = 5 and B = 6 of type string');
         assert.equal(testWith(7, 3)(), true);
+    });
+
+    it('should properly check type dependencies', function () {
+        function testFnFactory() {
+            return function (a, b) {
+                return a;
+            };
+        }
+
+        assert.throws(signet.enforce(
+            'A <: B :: A:variant<string;number>, B:variant<string;int> => number',
+            testFnFactory()).bind(null, 2.2, 3),
+            'Expected a value of type A <: B but got A = 2.2 and B = 3 of type string');
+        assert.doesNotThrow(signet.enforce(
+            'A <: B :: A:variant<string;int>, B:variant<string;number> => number',
+            testFnFactory()).bind(null, 5, 6));
     });
 
 });

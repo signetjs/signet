@@ -228,7 +228,27 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     }
 
     function isSameType (a, b) {
-        return typeof a === typeof b;
+        var aTypeName = getVariantType(a, aType);
+        var bTypeName = getVariantType(b, bType);
+
+        return aTypeName === bTypeName;
+    }
+
+    function getVariantType (value, typeDef){
+        return typeDef.subtype.filter(function (typeName) {
+            return isTypeOf(typeName)(value);
+        })[0];
+    }
+
+    function isSubtypeOf (a, b, aType, bType) {
+        var aTypeName = getVariantType(a, aType);
+        var bTypeName = getVariantType(b, bType);
+
+        return typelog.isSubtypeOf(bTypeName)(aTypeName);
+    }
+
+    function isSupertypeOf (a, b) {
+        return isSubtypeOf(b, a);
     }
 
     function greater (a, b){
@@ -258,7 +278,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     }
 
     function checkInt(value) {
-        return Math.floor(value) === value;
+        return Math.floor(value) === value && value !== Infinity;
     }
 
 
@@ -373,10 +393,12 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineDependentOperatorOn('object')(':!=', not(propertyCongruence));
 
     typelog.defineDependentOperatorOn('variant')('isTypeOf', isSameType);
-    typelog.defineDependentOperatorOn('taggedUnion')('isTypeOf', isSameType);
+    typelog.defineDependentOperatorOn('variant')('=:', isSameType);
+    typelog.defineDependentOperatorOn('variant')('<:', isSubtypeOf);
+    typelog.defineDependentOperatorOn('variant')('>:', isSupertypeOf);
 
     return {
-        alias: enforce('string, string => undefined', alias),
+        alias: enforce('A != B :: A:string, B:string => undefined', alias),
         duckTypeFactory: enforce('object => function', duckTypeFactory),
         defineDuckType: enforce('string, object => undefined', defineDuckType),
         defineDependentOperatorOn: enforce('string => string, function => undefined', typelog.defineDependentOperatorOn),

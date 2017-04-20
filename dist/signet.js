@@ -419,7 +419,7 @@ var signetValidator = (function () {
         function getValidationState(left, right, operatorDef) {
             var validationState = null;
 
-            if(!operatorDef.operation(left.value, right.value)){
+            if(!operatorDef.operation(left.value, right.value, left.typeNode, right.typeNode)){
                 var typeInfo = [left.name, operatorDef.operator, right.name];
                 var typeDef = typeInfo.join(' ');
                 var valueInfo = [left.name, '=', left.value, 'and', right.name, '=', right.value];
@@ -713,8 +713,46 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     }
 
+    function verifyPropertyMatches (a, b) {
+        return Object.keys(b).filter(function (key){
+            return typeof a[key] === typeof b[key];
+        }).length === 0;
+    }
+
+    function propertySuperSet (a, b) {
+        var keyLengthOk = !(Object.keys(a).length < Object.keys(b).length);
+        return keyLengthOk && verifyPropertyMatches(a, b);
+    }
+
+    function propertySubSet (a, b) {
+        return propertySuperSet(b, a);
+    }
+
+    function propertyCongruence (a, b) {
+        var keyLengthOk = Object.keys(a).length === Object.keys(b).length;
+        return keyLengthOk && verifyPropertyMatches(a, b);
+    }
+
     function isSameType (a, b) {
         return typeof a === typeof b;
+    }
+
+    function getVariantType (value, typeDef){
+        return typeDef.subtype.filter(function (typeName) {
+            return isTypeOf(typeName)(value);
+        })[0];
+    }
+
+    function isSubtypeOf (a, b, aType, bType) {
+        var aTypeName = getVariantType(a, aType);
+        var bTypeName = getVariantType(b, bType);
+
+        return typelog.isSubtypeOf(bTypeName)(aTypeName);
+    }
+
+    function isSupertypeOf (a, b) {
+        console.log(a, b);
+        return false;
     }
 
     function greater (a, b){
@@ -853,9 +891,14 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     typelog.defineDependentOperatorOn('object')('=', objectsAreEqual);
     typelog.defineDependentOperatorOn('object')('!=', not(objectsAreEqual));
+    typelog.defineDependentOperatorOn('object')(':>', propertySuperSet);
+    typelog.defineDependentOperatorOn('object')(':<', propertySubSet);
+    typelog.defineDependentOperatorOn('object')(':=', propertyCongruence);
+    typelog.defineDependentOperatorOn('object')(':!=', not(propertyCongruence));
 
     typelog.defineDependentOperatorOn('variant')('isTypeOf', isSameType);
-    typelog.defineDependentOperatorOn('taggedUnion')('isTypeOf', isSameType);
+    typelog.defineDependentOperatorOn('variant')('<:', isSubtypeOf);
+    typelog.defineDependentOperatorOn('variant')('>:', isSupertypeOf);
 
     return {
         alias: enforce('string, string => undefined', alias),
