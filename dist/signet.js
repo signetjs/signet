@@ -637,16 +637,16 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return argNames.join(', ');
     }
 
-    var enforcementTemplate = [
-        'return function ({args}){',
-        'return enforcer.apply(null, Array.prototype.slice.call(arguments))',
-        '}'
-    ].join('');
+    function buildEnforceDecorator(enforcer) {
+        return function (args) {
+            return enforcer.apply(null, Array.prototype.slice.call(arguments, 0));
+        }
+    }
 
     function enforceOnTree(signatureTree, fn) {
         var enforcer = buildEnforcer(signatureTree, fn);
         var argNames = buildArgNames(fn.length);
-        var enforceDecorator = Function('enforcer', enforcementTemplate.replace('{args}', argNames))(enforcer);
+        var enforceDecorator = buildEnforceDecorator(enforcer);
 
         enforceDecorator.toString = fn.toString.bind(fn);
         return signFn(signatureTree, enforceDecorator);
@@ -663,7 +663,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return updatedSubtree;
     }
 
-    function prepareSignature(signatureTree){
+    function prepareSignature(signatureTree) {
         return signatureTree.map(prepareSubtree);
     }
 
@@ -699,11 +699,11 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         }
     }
 
-    function objectsAreEqual (a, b) {
-        if(isNull(a) || isNull(b) || a === b) { return a === b; }
+    function objectsAreEqual(a, b) {
+        if (isNull(a) || isNull(b) || a === b) { return a === b; }
 
-        function propsInequal (key) {
-            return a[key] !== b[key]; 
+        function propsInequal(key) {
+            return a[key] !== b[key];
         }
 
         var objAKeys = Object.keys(a);
@@ -713,27 +713,27 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     }
 
-    function verifyPropertyMatches (a, b) {
-        return Object.keys(b).filter(function (key){
+    function verifyPropertyMatches(a, b) {
+        return Object.keys(b).filter(function (key) {
             return typeof a[key] === typeof b[key];
         }).length === 0;
     }
 
-    function propertySuperSet (a, b) {
+    function propertySuperSet(a, b) {
         var keyLengthOk = !(Object.keys(a).length < Object.keys(b).length);
         return keyLengthOk && verifyPropertyMatches(a, b);
     }
 
-    function propertySubSet (a, b) {
+    function propertySubSet(a, b) {
         return propertySuperSet(b, a);
     }
 
-    function propertyCongruence (a, b) {
+    function propertyCongruence(a, b) {
         var keyLengthOk = Object.keys(a).length === Object.keys(b).length;
         return keyLengthOk && verifyPropertyMatches(a, b);
     }
 
-    function isSameType (a, b) {
+    function isSameType(a, b) {
         var aTypeName = getVariantType(a, aType);
         var bTypeName = getVariantType(b, bType);
 
@@ -757,26 +757,26 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         };
     }
 
-    function isSubtypeOf (a, b, aType, bType) {
+    function isSubtypeOf(a, b, aType, bType) {
         var aTypeName = getVariantType(a, aType);
         var bTypeName = getVariantType(b, bType);
 
         return typelog.isSubtypeOf(bTypeName)(aTypeName);
     }
 
-    function isSupertypeOf (a, b) {
+    function isSupertypeOf(a, b) {
         return isSubtypeOf(b, a);
     }
 
-    function greater (a, b){
+    function greater(a, b) {
         return a > b;
     }
 
-    function less (a, b) {
+    function less(a, b) {
         return a < b;
     }
 
-    function equal (a, b) {
+    function equal(a, b) {
         return a === b;
     }
 
