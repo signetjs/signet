@@ -203,10 +203,10 @@ type depends on extant properties with correct types, it can be predefined with 
     var myObjDef = { foo: 'string', bar: 'array' };
     var checkMyObj = signet.duckTypeFactory(myObjDef);
 
-    signet.subtype('object')('myObj`;
+    signet.subtype('object')('myObj', checkMyObj);
 
-    signet.isTypeOf('myObj')({ foo: 'testing`; // true
-    signet.isTypeOf('myObj')({ foo: 'testing`; // false
+    signet.isTypeOf('myObj')({ foo: 'testing', bar: [] }); // true
+    signet.isTypeOf('myObj')({ foo: 'testing' }); // false
     signet.isTypeOf('myObj')({ foo: 42, bar: [] }); // false
 
 ### Type Chain Information

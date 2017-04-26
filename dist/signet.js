@@ -734,13 +734,27 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     }
 
     function isSameType (a, b) {
-        return typeof a === typeof b;
+        var aTypeName = getVariantType(a, aType);
+        var bTypeName = getVariantType(b, bType);
+
+        return aTypeName === bTypeName;
     }
 
     function getVariantType (value, typeDef){
-        return typeDef.subtype.filter(function (typeName) {
-            return isTypeOf(typeName)(value);
-        })[0];
+        return whichType(typeDef.subtype)(value);
+    }
+
+    function whichVariantType (variantString) {
+        var variantStrings = parser.parseType(variantString).subtype;
+
+        return whichType(variantStrings);
+    }
+
+    function whichType (typeStrings) {
+        return function (value) {
+            var result = typeStrings.filter(function (typeString) { return isTypeOf(typeString)(value); })[0];
+            return typeof result !== 'string' ? null : result;
+        };
     }
 
     function isSubtypeOf (a, b, aType, bType) {
@@ -751,8 +765,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     }
 
     function isSupertypeOf (a, b) {
-        console.log(a, b);
-        return false;
+        return isSubtypeOf(b, a);
     }
 
     function greater (a, b){
@@ -777,12 +790,22 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return value === null;
     }
 
-    function checkArray(value) {
-        return Object.prototype.toString.call(value) === '[object Array]';
+    function checkArrayValues(arrayValues, options) {
+        if(options.length === 0 || options[0] === '*') {
+            return true;
+        } else {
+            var checkType = isTypeOf(options[0]);
+            return arrayValues.filter(checkType).length === arrayValues.length;
+        }
+    }
+
+    function checkArray(value, options) {
+        var arrayIsOk = Object.prototype.toString.call(value) === '[object Array]';
+        return arrayIsOk && checkArrayValues(value, options);
     }
 
     function checkInt(value) {
-        return Math.floor(value) === value;
+        return Math.floor(value) === value && value !== Infinity;
     }
 
 
@@ -823,6 +846,10 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     function optionsToFunctions(options) {
         return options.map(isTypeOf);
+    }
+
+    function checkArgumentsObject(value) {
+        return !isNull(value);
     }
 
     function checkTuple(value, options) {
@@ -873,11 +900,11 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineSubtypeOf('string')('boundedString', checkBoundedString);
     typelog.defineSubtypeOf('string')('formattedString', checkFormattedString);
     typelog.defineSubtypeOf('array')('tuple', checkTuple);
+    typelog.defineSubtypeOf('object')('arguments', checkArgumentsObject);
 
     alias('any', '*');
     alias('void', '*');
     alias('type', 'variant<string; function>');
-    alias('arguments', 'variant<array; object>');
 
     typelog.defineDependentOperatorOn('number')('>', greater);
     typelog.defineDependentOperatorOn('number')('<', less);
@@ -897,11 +924,12 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineDependentOperatorOn('object')(':!=', not(propertyCongruence));
 
     typelog.defineDependentOperatorOn('variant')('isTypeOf', isSameType);
+    typelog.defineDependentOperatorOn('variant')('=:', isSameType);
     typelog.defineDependentOperatorOn('variant')('<:', isSubtypeOf);
     typelog.defineDependentOperatorOn('variant')('>:', isSupertypeOf);
 
     return {
-        alias: enforce('string, string => undefined', alias),
+        alias: enforce('A != B :: A:string, B:string => undefined', alias),
         duckTypeFactory: enforce('object => function', duckTypeFactory),
         defineDuckType: enforce('string, object => undefined', defineDuckType),
         defineDependentOperatorOn: enforce('string => string, function => undefined', typelog.defineDependentOperatorOn),
@@ -913,7 +941,9 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         sign: enforce('string, function => function', sign),
         subtype: enforce('string => string, function => undefined', typelog.defineSubtypeOf),
         typeChain: enforce('string => string', typelog.getTypeChain),
-        verify: enforce('function, arguments => undefined', verify)
+        verify: enforce('function, arguments => undefined', verify),
+        whichType: enforce('array<string> => * => variant<string; null>', whichType),
+        whichVariantType: enforce('string => * => variant<string; null>', whichVariantType)
     };
 }
 

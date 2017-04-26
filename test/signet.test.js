@@ -49,6 +49,8 @@ describe('Signet Library', function () {
 
         assert.equal(signet.isTypeOf('null')(null), true);
         assert.equal(signet.isTypeOf('array')([]), true);
+        assert.equal(signet.isTypeOf('array<*>')([1, 2, 'foo']), true);
+        assert.equal(signet.isTypeOf('array<int>')([1, 2, 'foo']), false);
 
         assert.equal(signet.isTypeOf('int')(5), true);
         assert.equal(signet.isTypeOf('int')(5.3), false);
@@ -266,6 +268,14 @@ describe('Signet Library', function () {
         assert.doesNotThrow(signet.enforce(
             'A <: B :: A:variant<string;int>, B:variant<string;number> => number',
             testFnFactory()).bind(null, 5, 6));
+    });
+
+    it('should get variant type of value', function () {
+        var getValueType = signet.whichVariantType('variant<string; int>');
+
+        assert.equal(getValueType('foo'), 'string');
+        assert.equal(getValueType(17), 'int');
+        assert.equal(getValueType(17.5), null);
     });
 
 });
