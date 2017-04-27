@@ -277,7 +277,8 @@ Other dependent type operators can be defined through the defineDependentOperato
 - subtype: `string => string, function => undefined`
 - typeChain: `string => string`
 - verify: `function, arguments => undefined`
-
+- whichType: `array<string> => * => variant<string; null>`
+- whichVariantType: `string => * => variant<string; null>`
 
 ## Execution context binding
 
