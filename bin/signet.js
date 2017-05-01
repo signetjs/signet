@@ -234,17 +234,17 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return aTypeName === bTypeName;
     }
 
-    function getVariantType (value, typeDef){
+    function getVariantType(value, typeDef) {
         return whichType(typeDef.subtype)(value);
     }
 
-    function whichVariantType (variantString) {
+    function whichVariantType(variantString) {
         var variantStrings = parser.parseType(variantString).subtype;
 
         return whichType(variantStrings);
     }
 
-    function whichType (typeStrings) {
+    function whichType(typeStrings) {
         return function (value) {
             var result = typeStrings.filter(function (typeString) { return isTypeOf(typeString)(value); })[0];
             return typeof result !== 'string' ? null : result;
@@ -285,7 +285,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     }
 
     function checkArrayValues(arrayValues, options) {
-        if(options.length === 0 || options[0] === '*') {
+        if (options.length === 0 || options[0] === '*') {
             return true;
         } else {
             var checkType = isTypeOf(options[0]);
@@ -346,6 +346,10 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return !isNull(value);
     }
 
+    function isRegExp(value) {
+        return Object.prototype.toString.call(value) === '[object RegExp]';
+    }
+
     function checkTuple(value, options) {
         var lengthOkay = value.length === options.length;
 
@@ -388,6 +392,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.define('taggedUnion', checkTaggedUnion);
 
     typelog.defineSubtypeOf('object')('array', checkArray);
+    typelog.defineSubtypeOf('object')('regexp', isRegExp);
     typelog.defineSubtypeOf('number')('int', checkInt);
     typelog.defineSubtypeOf('number')('bounded', rangeBuilder());
     typelog.defineSubtypeOf('int')('boundedInt', rangeBuilder());

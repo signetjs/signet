@@ -230,7 +230,8 @@ Extended types are as follows:
 - `boundedInt<min<number>;max<number>>` - `* -> number -> int -> bounded -> boundedInt`
 - `boundedString<minLength<int>;maxLength<int>>` - `* -> string -> boundedString`
 - `formattedString<regex>` - `* -> string -> formattedString`
-- `tuple<type;type;type...>` - `* -> array -> tuple`
+- `regexp` - `* -> object -> regexp`
+- `tuple<type;type;type...>` - `* -> object -> array -> tuple`
 - `variant` - `* -> variant`
 
 ## Dependent types
