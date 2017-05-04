@@ -350,6 +350,15 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return Object.prototype.toString.call(value) === '[object RegExp]';
     }
 
+    // function sortTypeNames(typeNames) {
+    //     typeNames.reduce(function () {}, );
+    // }
+
+    // function isUnorderedProduct(value, typeNames) {
+    //     var isCorrectLength = value.length === typeNames.length;
+    //     return isCorrectLength;
+    // }
+
     function checkTuple(value, options) {
         var lengthOkay = value.length === options.length;
 
@@ -399,6 +408,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineSubtypeOf('string')('boundedString', checkBoundedString);
     typelog.defineSubtypeOf('string')('formattedString', checkFormattedString);
     typelog.defineSubtypeOf('array')('tuple', checkTuple);
+    // typelog.defineSubtypeOf('array')('unorderedProduct', isUnorderedProduct);
     typelog.defineSubtypeOf('object')('arguments', checkArgumentsObject);
 
     alias('any', '*');

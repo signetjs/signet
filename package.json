@@ -22,7 +22,7 @@
   "dependencies": {
     "signet-assembler": "^1.0.0",
     "signet-checker": "^1.0.0",
-    "signet-parser": "1.1.0",
+    "signet-parser": "1.1.1",
     "signet-registrar": "1.0.0",
     "signet-typelog": "1.1.2",
     "signet-validator": "1.2.0"

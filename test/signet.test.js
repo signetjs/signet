@@ -80,6 +80,16 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('variant<int; string>')(null), false);
 
         assert.equal(signet.isTypeOf('taggedUnion<int; string>')(null), false);
+
+        assert.doesNotThrow(signet.isTypeOf.bind(null, 'formattedString<:>'))
+
+        // var isUnorderedProduct = signet.isTypeOf('unorderedProduct<number; int; object; array; string>');
+
+        // assert.equal(isUnorderedProduct([1, 2, 3, 4]), false); //too short
+        // assert.equal(isUnorderedProduct([1, 2, 3, 4, 5, 6]), false); //too long
+        // assert.equal(isUnorderedProduct([2, 'foo', {}, 1, []]), false); //bad type
+        // assert.equal(isUnorderedProduct([1, 2.5, 'foo', [], {}]), true);
+        // assert.equal(isUnorderedProduct([2.5, 'foo', {}, 1, []]), true);
     });
 
     it('should pre-register signet type aliases', function () {

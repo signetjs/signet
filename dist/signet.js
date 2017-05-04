@@ -138,7 +138,7 @@ var signetParser = (function () {
     }
 
     function parseType(typeStr) {
-        var typePattern = /^([^\:]+)\:(.+)$/;
+        var typePattern = /^([^:<]+)\:(.+)$/;
         var typeName = typeStr.replace(typePattern, '$1');
         var rawType = typeStr.replace(typePattern, '$2');
 
@@ -388,9 +388,9 @@ var signetValidator = (function () {
         return list.slice(1);
     }
 
-    return function (typelog, assembler) {
+    return function (typelog, assembler, parser) {
 
-        function isObjectInstance (value) {
+        function isObjectInstance(value) {
             return typeof value === 'object' && value !== null;
         }
 
@@ -419,7 +419,7 @@ var signetValidator = (function () {
         function getValidationState(left, right, operatorDef) {
             var validationState = null;
 
-            if(!operatorDef.operation(left.value, right.value, left.typeNode, right.typeNode)){
+            if (!operatorDef.operation(left.value, right.value, left.typeNode, right.typeNode)) {
                 var typeInfo = [left.name, operatorDef.operator, right.name];
                 var typeDef = typeInfo.join(' ');
                 var valueInfo = [left.name, '=', left.value, 'and', right.name, '=', right.value];
@@ -430,14 +430,14 @@ var signetValidator = (function () {
             return validationState;
         }
 
-        function alwaysFalse (){
+        function alwaysFalse() {
             return false;
         }
 
-        function getDependentOperator (typeName, operator){
+        function getDependentOperator(typeName, operator) {
             var dependentOperator = typelog.getDependentOperatorOn(typeName)(operator);
 
-            if(dependentOperator === null) {
+            if (dependentOperator === null) {
                 dependentOperator = {
                     operator: operator,
                     operation: alwaysFalse
@@ -447,12 +447,50 @@ var signetValidator = (function () {
             return dependentOperator;
         }
 
+        function buildTypeObj(typeName) {
+            var typeDef = parser.parseType(typeName);
+            var isCorrectType = typelog.isTypeOf(typeDef);
+
+            function typeCheck(value) {
+                return isCorrectType(value);
+            }
+
+            typeCheck.toString = function () {
+                return '[function typePredicate]';
+            }
+
+            return {
+                name: typeName,
+                value: typeCheck,
+                typeNode: typeDef
+            };
+
+        }
+
+        function buildValueObj(value) {
+            return {
+                name: value,
+                value: value,
+                typeNode: {}
+            }
+        }
+
+        function getRightArg(namedArgs, right) {
+            var value = namedArgs[right];
+
+            if (typeof value === 'undefined') {
+                value = typelog.isType(right) ? buildTypeObj(right) : buildValueObj(right);
+            }
+
+            return value;
+        }
+
         function checkDependentTypes(dependent, namedArgs, validationState) {
             var newValidationState = null;
 
-            if(validationState === null && isObjectInstance(dependent)) {
+            if (validationState === null && isObjectInstance(dependent)) {
                 var left = namedArgs[dependent.left];
-                var right = namedArgs[dependent.right];
+                var right = getRightArg(namedArgs, dependent.right);
 
                 var operatorDef = getDependentOperator(left.typeNode.type, dependent.operator);
 
@@ -468,11 +506,11 @@ var signetValidator = (function () {
             var typeNode;
             var typeName;
 
-            for(var i = 0; i < typeLength; i++) {
+            for (var i = 0; i < typeLength; i++) {
                 typeNode = typeList[i];
                 typeName = typeNode.name;
                 result[typeName] = {
-                    name: typeName, 
+                    name: typeName,
                     value: argumentList[i],
                     typeNode: typeList[i]
                 };
@@ -487,7 +525,7 @@ var signetValidator = (function () {
             return function (argumentList) {
                 var namedArgs = buildNamedArgs(typeList, argumentList);
                 var validationState = typeList.length === 0 ? null : validateCurrentValue(typeList, argumentList);
-                
+
                 return checkDependentTypes(dependent, namedArgs, validationState);
             };
         }
@@ -740,17 +778,17 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return aTypeName === bTypeName;
     }
 
-    function getVariantType (value, typeDef){
+    function getVariantType(value, typeDef) {
         return whichType(typeDef.subtype)(value);
     }
 
-    function whichVariantType (variantString) {
+    function whichVariantType(variantString) {
         var variantStrings = parser.parseType(variantString).subtype;
 
         return whichType(variantStrings);
     }
 
-    function whichType (typeStrings) {
+    function whichType(typeStrings) {
         return function (value) {
             var result = typeStrings.filter(function (typeString) { return isTypeOf(typeString)(value); })[0];
             return typeof result !== 'string' ? null : result;
@@ -791,7 +829,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     }
 
     function checkArrayValues(arrayValues, options) {
-        if(options.length === 0 || options[0] === '*') {
+        if (options.length === 0 || options[0] === '*') {
             return true;
         } else {
             var checkType = isTypeOf(options[0]);
@@ -852,6 +890,19 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return !isNull(value);
     }
 
+    function isRegExp(value) {
+        return Object.prototype.toString.call(value) === '[object RegExp]';
+    }
+
+    // function sortTypeNames(typeNames) {
+    //     typeNames.reduce(function () {}, );
+    // }
+
+    // function isUnorderedProduct(value, typeNames) {
+    //     var isCorrectLength = value.length === typeNames.length;
+    //     return isCorrectLength;
+    // }
+
     function checkTuple(value, options) {
         var lengthOkay = value.length === options.length;
 
@@ -894,12 +945,14 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.define('taggedUnion', checkTaggedUnion);
 
     typelog.defineSubtypeOf('object')('array', checkArray);
+    typelog.defineSubtypeOf('object')('regexp', isRegExp);
     typelog.defineSubtypeOf('number')('int', checkInt);
     typelog.defineSubtypeOf('number')('bounded', rangeBuilder());
     typelog.defineSubtypeOf('int')('boundedInt', rangeBuilder());
     typelog.defineSubtypeOf('string')('boundedString', checkBoundedString);
     typelog.defineSubtypeOf('string')('formattedString', checkFormattedString);
     typelog.defineSubtypeOf('array')('tuple', checkTuple);
+    // typelog.defineSubtypeOf('array')('unorderedProduct', isUnorderedProduct);
     typelog.defineSubtypeOf('object')('arguments', checkArgumentsObject);
 
     alias('any', '*');
