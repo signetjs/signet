@@ -65,7 +65,7 @@ First it is recommended that you create a types file so the local signet object 
     var signet = require('signet')();
     
     //my aliased type
-    signet.alias('foo')('string');
+    signet.alias('foo', 'string');
 ```
 
 Now, include your types file into your other files and the signet types object will be properly enclosed in your module.
