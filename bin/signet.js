@@ -350,14 +350,58 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return Object.prototype.toString.call(value) === '[object RegExp]';
     }
 
-    // function sortTypeNames(typeNames) {
-    //     typeNames.reduce(function () {}, );
-    // }
+    function compareTypes(typeA, typeB) {
+        var result = typeA === typeB ? 1 : 0;
+        return typelog.isSubtypeOf(typeA)(typeB) ? -1 : result;
+    }
 
-    // function isUnorderedProduct(value, typeNames) {
-    //     var isCorrectLength = value.length === typeNames.length;
-    //     return isCorrectLength;
-    // }
+    function insertTypeName(typeNameArray, typeName) {
+        var index = 0;
+        var offset = 0;
+
+        for(index; index < typeNameArray.length; index++) {
+            offset = compareTypes(typeNameArray[index], typeName);
+            if (offset !== 0) {
+                break;
+            }
+        }
+
+        typeNameArray.splice(index + offset, 0, typeName);
+
+        return typeNameArray;
+    }
+
+    function sortTypeNames(typeNames) {
+        return typeNames.reduce(insertTypeName, []);
+    }
+
+    function typeDoesNotExistIn(values) {
+        var valuesCopy = values.slice(0);
+
+        return function (typeName) {
+            var typeCheckOk = false;
+            var isTypeOfTypeName = isTypeOf(typeName);
+
+            for(var i = 0; i < valuesCopy.length; i++) {
+                if(isTypeOfTypeName(valuesCopy[i])) {
+                    typeCheckOk = true;
+                    valuesCopy.splice(i, 1);
+                    break;
+                }
+            }
+
+            return !typeCheckOk;
+        };
+    }
+
+    function checkValueTypes (values, typeNames) {
+        return typeNames.filter(typeDoesNotExistIn(values)).length === 0;
+    }
+
+    function isUnorderedProduct(value, typeNames) {
+        var isCorrectLength = value.length === typeNames.length;
+        return isCorrectLength && checkValueTypes(value, sortTypeNames(typeNames));
+    }
 
     function checkTuple(value, options) {
         var lengthOkay = value.length === options.length;
@@ -408,7 +452,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineSubtypeOf('string')('boundedString', checkBoundedString);
     typelog.defineSubtypeOf('string')('formattedString', checkFormattedString);
     typelog.defineSubtypeOf('array')('tuple', checkTuple);
-    // typelog.defineSubtypeOf('array')('unorderedProduct', isUnorderedProduct);
+    typelog.defineSubtypeOf('array')('unorderedProduct', isUnorderedProduct);
     typelog.defineSubtypeOf('object')('arguments', checkArgumentsObject);
 
     alias('any', '*');

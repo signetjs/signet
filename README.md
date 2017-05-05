@@ -253,12 +253,13 @@ In the browser environment, signet.min.js and signet.types.min.js in that order 
 Extended types are as follows:
 
 - `int` - `* -> number -> int`
-- `bounded<min<number>;max<number>>` - `* -> number -> bounded`
-- `boundedInt<min<number>;max<number>>` - `* -> number -> int -> bounded -> boundedInt`
-- `boundedString<minLength<int>;maxLength<int>>` - `* -> string -> boundedString`
+- `bounded<min:number;max:number>` - `* -> number -> bounded`
+- `boundedInt<min:number;max:number>` - `* -> number -> int -> bounded -> boundedInt`
+- `boundedString<minLength:int;maxLength:int>` - `* -> string -> boundedString`
 - `formattedString<regex>` - `* -> string -> formattedString`
 - `regexp` - `* -> object -> regexp`
 - `tuple<type;type;type...>` - `* -> object -> array -> tuple`
+- `unorderedProduct<type;type;type...>` - `* -> object -> array -> unorderedProduct`
 - `variant` - `* -> variant`
 
 ## Dependent types
@@ -328,6 +329,12 @@ You can now bind an execution context for object instances or other, various rea
     
     MyObj.prototype.behavior = function (foo) { return this.foo.bar; };
 ```
+
+## Changes
+
+### 1.5.0
+
+- Added unorderedProduct -- like tuple but values can be in any order
 
 ## Breaking Changes
 
