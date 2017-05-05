@@ -59,10 +59,26 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('bounded<1; 5>')(5.1), false);
         assert.equal(signet.isTypeOf('bounded<1; 5>')(0), false);
 
+        assert.equal(signet.isTypeOf('leftBounded<0>')(0), true);
+        assert.equal(signet.isTypeOf('leftBounded<0>')(1), true);
+        assert.equal(signet.isTypeOf('leftBounded<0>')(-1), false);
+
+        assert.equal(signet.isTypeOf('rightBounded<0>')(0), true);
+        assert.equal(signet.isTypeOf('rightBounded<0>')(-1), true);
+        assert.equal(signet.isTypeOf('rightBounded<0>')(1), false);
+
         assert.equal(signet.isTypeOf('boundedInt<1; 5>')(3), true);
         assert.equal(signet.isTypeOf('boundedInt<1; 5>')(3.1), false);
         assert.equal(signet.isTypeOf('boundedInt<1; 5>')(6), false);
         assert.equal(signet.isTypeOf('boundedInt<1; 5>')(0), false);
+
+        assert.equal(signet.isTypeOf('leftBoundedInt<0>')(0), true);
+        assert.equal(signet.isTypeOf('leftBoundedInt<0>')(1), true);
+        assert.equal(signet.isTypeOf('leftBoundedInt<0>')(-1), false);
+
+        assert.equal(signet.isTypeOf('rightBoundedInt<0>')(0), true);
+        assert.equal(signet.isTypeOf('rightBoundedInt<0>')(-1), true);
+        assert.equal(signet.isTypeOf('rightBoundedInt<0>')(1), false);
 
         assert.equal(signet.isTypeOf('boundedString<2; 15>')('hello'), true);
         assert.equal(signet.isTypeOf('boundedString<2; 15>')(''), false);

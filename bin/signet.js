@@ -320,6 +320,30 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         };
     }
 
+    function leftBoundedBuilder() {
+        function checkLeftBound(value, bound) {
+            return value >= bound;
+        }
+
+        checkLeftBound.preprocess = optionsToBound;
+
+        return checkLeftBound;
+    }
+
+    function rightBoundedBuilder() {
+        function checkRightBound(value, bound) {
+            return value <= bound;
+        }
+
+        checkRightBound.preprocess = optionsToBound;
+
+        return checkRightBound;
+    }
+
+    function optionsToBound(options){
+        return Number(options[0]);
+    }
+
     var inRange = rangeBuilder();
 
     function checkBoundedString(value, range) {
@@ -448,7 +472,11 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineSubtypeOf('object')('regexp', isRegExp);
     typelog.defineSubtypeOf('number')('int', checkInt);
     typelog.defineSubtypeOf('number')('bounded', rangeBuilder());
+    typelog.defineSubtypeOf('number')('leftBounded', leftBoundedBuilder());
+    typelog.defineSubtypeOf('number')('rightBounded', rightBoundedBuilder());
     typelog.defineSubtypeOf('int')('boundedInt', rangeBuilder());
+    typelog.defineSubtypeOf('int')('leftBoundedInt', leftBoundedBuilder());
+    typelog.defineSubtypeOf('int')('rightBoundedInt', rightBoundedBuilder());
     typelog.defineSubtypeOf('string')('boundedString', checkBoundedString);
     typelog.defineSubtypeOf('string')('formattedString', checkFormattedString);
     typelog.defineSubtypeOf('array')('tuple', checkTuple);

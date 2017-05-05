@@ -332,6 +332,14 @@ You can now bind an execution context for object instances or other, various rea
 
 ## Changes
 
+### 1.6.0
+
+- Added new types:
+    - `leftBounded<min:number>` -- value must be greater than or equal to min
+    - `rightBounded<max:number>` -- value must be less than or equal to max
+    - `leftBoundedInt<min:number>` -- value must be greater than or equal to min
+    - `rightBoundedInt<max:number>` -- value must be less than or equal to max
+
 ### 1.5.0
 
 - Added unorderedProduct -- like tuple but values can be in any order
