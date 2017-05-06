@@ -1,0 +1,11 @@
+[ignore]
+./test
+./dist
+
+[include]
+./bin/signet.js
+
+[libs]
+
+[options]
+suppress_comment= \\(.\\|\n\\)*\\@flowSuppress

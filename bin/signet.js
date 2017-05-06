@@ -142,7 +142,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         var argNames = buildArgNames(fn.length);
         var enforceDecorator = buildEnforceDecorator(enforcer);
 
-        enforceDecorator.toString = fn.toString.bind(fn);
+        enforceDecorator.toString = Function.prototype.toString.bind(fn);
+
         return signFn(signatureTree, enforceDecorator);
     }
 
@@ -227,7 +228,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return keyLengthOk && verifyPropertyMatches(a, b);
     }
 
-    function isSameType(a, b) {
+    function isSameType(a, b, aType, bType) {
         var aTypeName = getVariantType(a, aType);
         var bTypeName = getVariantType(b, bType);
 
@@ -258,8 +259,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return typelog.isSubtypeOf(bTypeName)(aTypeName);
     }
 
-    function isSupertypeOf(a, b) {
-        return isSubtypeOf(b, a);
+    function isSupertypeOf(a, b, aType, bType) {
+        return isSubtypeOf(b, a, bType, aType);
     }
 
     function greater(a, b) {
@@ -340,7 +341,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return checkRightBound;
     }
 
-    function optionsToBound(options){
+    function optionsToBound(options) {
         return Number(options[0]);
     }
 
@@ -383,7 +384,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         var index = 0;
         var offset = 0;
 
-        for(index; index < typeNameArray.length; index++) {
+        for (index; index < typeNameArray.length; index++) {
             offset = compareTypes(typeNameArray[index], typeName);
             if (offset !== 0) {
                 break;
@@ -406,8 +407,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
             var typeCheckOk = false;
             var isTypeOfTypeName = isTypeOf(typeName);
 
-            for(var i = 0; i < valuesCopy.length; i++) {
-                if(isTypeOfTypeName(valuesCopy[i])) {
+            for (var i = 0; i < valuesCopy.length; i++) {
+                if (isTypeOfTypeName(valuesCopy[i])) {
                     typeCheckOk = true;
                     valuesCopy.splice(i, 1);
                     break;
@@ -418,7 +419,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         };
     }
 
-    function checkValueTypes (values, typeNames) {
+    function checkValueTypes(values, typeNames) {
         return typeNames.filter(typeDoesNotExistIn(values)).length === 0;
     }
 
