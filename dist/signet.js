@@ -641,13 +641,29 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         }
     }
 
-    function buildEnforcer(signatureTree, fn) {
+    function throwInputError(validationResult, inputErrorBuilder, args, signatureTree) {
+        if (typeof inputErrorBuilder === 'function') {
+            throw new Error(inputErrorBuilder(validationResult, args, signatureTree));
+        } else {
+            throwEvaluationError(validationResult, '');
+        }
+    }
+
+    function throwOutputError(validationResult, outputErrorBuilder, args, signatureTree) {
+        if (typeof outputErrorBuilder === 'function') {
+            throw new Error(outputErrorBuilder(validationResult, args, signatureTree));
+        } else {
+            throwEvaluationError(validationResult, 'return ');
+        }
+    }
+
+    function buildEnforcer(signatureTree, fn, options) {
         return function () {
             var args = Array.prototype.slice.call(arguments, 0);
             var validationResult = validator.validateArguments(signatureTree[0])(args);
 
             if (validationResult !== null) {
-                throwEvaluationError(validationResult, '');
+                throwInputError(validationResult, options.inputErrorBuilder, args, signatureTree);
             }
 
             var signatureIsCurried = signatureTree.length > 2;
@@ -657,10 +673,10 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
             var result = fn.apply(null, args);
 
             if (!validator.validateType(returnType)(result)) {
-                throwEvaluationError([returnTypeStr, result], 'return ');
+                throwOutputError([returnTypeStr, result], options.outputErrorBuilder, args, signatureTree);
             }
 
-            return !signatureIsCurried ? result : enforceOnTree(signatureTree.slice(1), result);
+            return !signatureIsCurried ? result : enforceOnTree(signatureTree.slice(1), result, options);
         }
     }
 
@@ -681,8 +697,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         }
     }
 
-    function enforceOnTree(signatureTree, fn) {
-        var enforcer = buildEnforcer(signatureTree, fn);
+    function enforceOnTree(signatureTree, fn, options) {
+        var enforcer = buildEnforcer(signatureTree, fn, options);
         var argNames = buildArgNames(fn.length);
         var enforceDecorator = buildEnforceDecorator(enforcer);
 
@@ -706,28 +722,49 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return signatureTree.map(prepareSubtree);
     }
 
-    function enforce(signature, fn) {
+    function enforce(signature, fn, options) {
         var signatureTree = prepareSignature(parser.parseSignature(signature));
-        return enforceOnTree(signatureTree, fn);
+        var cleanOptions = typeof options === 'object' && options !== null ? options : {};
+        return enforceOnTree(signatureTree, fn, cleanOptions);
     }
 
     function defineDuckType(typeName, objectDef) {
         typelog.defineSubtypeOf('object')(typeName, duckTypeFactory(objectDef));
     }
 
-    function duckTypeFactory(objectDef) {
-        var definitionPairs = Object.keys(objectDef).map(function (key) {
-            return [key, isTypeOf(objectDef[key])];
-        });
+    function getTypeName(objectDef, key) {
+        return typeof objectDef[key] === 'string' ? objectDef[key] : objectDef[key].name;
+    }
 
+    function buildDuckTypeChecker(definitionPairs, objectDef) {
         return function (value) {
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
                 var typePredicate = typePair[1];
 
-                return result && typePredicate(value[key]);
-            }, true);
+                if (!typePredicate(value[key])) {
+                    result.push([key, getTypeName(objectDef, key), value[key]]);
+                }
+
+                return result;
+            }, []);
         };
+    }
+
+    function duckTypeFactory(objectDef) {
+        var definitionPairs = Object.keys(objectDef).map(function (key) {
+            return [key, isTypeOf(objectDef[key])];
+        });
+        var getDuckTypeErrors = buildDuckTypeChecker(definitionPairs, objectDef);
+
+        function duckTypeCheck(value) {
+            var typeCheckResults = getDuckTypeErrors(value);
+            return typeCheckResults.length === 0;
+        }
+
+        duckTypeCheck.getErrors = getDuckTypeErrors;
+
+        return duckTypeCheck;
     }
 
     /* Defining canned types */
@@ -1059,7 +1096,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         duckTypeFactory: enforce('object => function', duckTypeFactory),
         defineDuckType: enforce('string, object => undefined', defineDuckType),
         defineDependentOperatorOn: enforce('string => string, function => undefined', typelog.defineDependentOperatorOn),
-        enforce: enforce('string, function => function', enforce),
+        enforce: enforce('string, function, [object] => function', enforce),
         extend: enforce('string, function => undefined', typelog.define),
         isSubtypeOf: enforce('string => string => boolean', typelog.isSubtypeOf),
         isType: enforce('string => boolean', typelog.isType),

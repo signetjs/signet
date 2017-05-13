@@ -187,6 +187,34 @@ describe('Signet Library', function () {
         assert.throws(add.bind(null, 3, 4), expectedMessage);
     });
 
+    it('should throw a custom error on bad input', function () {
+        var add = signet.enforce('number, number => number', function (a, b) {
+            return true;
+        }, {
+            inputErrorBuilder: function (validationResult, args, signatureTree) {
+                return 'This is a custom input error!' + validationResult.toString() + args.toString() + signatureTree.toString();
+            }
+        });
+
+        var expectedMessage = 'This is a custom input error!number,no3,no[object Object],[object Object],[object Object]';
+
+        assert.throws(add.bind(null, 3, 'no'), expectedMessage);
+    });
+
+    it('should throw a custom error on bad output', function () {
+        var add = signet.enforce('number, number => number', function (a, b) {
+            return true;
+        }, {
+            outputErrorBuilder: function (validationResult, args, signatureTree) {
+                return 'This is a custom output error!' + validationResult.toString() + args.toString() + signatureTree.toString();
+            }
+        });
+
+        var expectedMessage = 'This is a custom output error!number,true3,4[object Object],[object Object],[object Object]';
+
+        assert.throws(add.bind(null, 3, 4), expectedMessage);
+    });
+
     it('should return result from enforced function', function () {
         var add = signet.enforce('number, number => number', addBuilder());
 

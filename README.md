@@ -297,7 +297,10 @@ Other dependent type operators can be defined through the defineDependentOperato
 - duckTypeFactory: `object => function`
 - defineDuckType: `string, object => undefined`
 - defineDependentOperatorOn: `string => string, function => undefined`
-- enforce: `string, function => function`
+- enforce: `signature:string, function, [options:object] => function`
+    - currently supported options:
+        - inputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
+        - outputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
 - extend: `string, function => undefined`
 - isSubtypeOf: `string => string => boolean`
 - isType: `string => boolean`
