@@ -275,7 +275,11 @@ var signetTypelog = function (registrar, parser) {
     }
 
     function isType(typeName) {
-        return typeof registrar.get(typeName) === 'function';
+        try {
+            return typeof registrar.get(typeName) === 'function';
+        } catch (e) {
+            return false;
+        }
     }
 
     function isSubtypeOf(parentName) {
