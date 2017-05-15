@@ -335,6 +335,10 @@ You can now bind an execution context for object instances or other, various rea
 
 ## Changes
 
+### 1.9.0
+
+- Enhanced 'type' type check to verify type is registered
+
 ### 1.6.0
 
 - Added new types:

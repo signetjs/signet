@@ -106,6 +106,10 @@ describe('Signet Library', function () {
         assert.equal(isUnorderedProduct([2.5, 'foo', {}, 1.7, []]), false); //bad type
         assert.equal(isUnorderedProduct([1, 2.5, 'foo', [], {}]), true);
         assert.equal(isUnorderedProduct([2.5, 'foo', {}, 1, []]), true);
+
+        assert.equal(signet.isTypeOf('type')(function () {}), true);
+        assert.equal(signet.isTypeOf('type')('variant'), true);
+        assert.equal(signet.isTypeOf('type')('badType'), false);
     });
 
     it('should pre-register signet type aliases', function () {

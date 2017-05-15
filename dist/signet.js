@@ -1043,6 +1043,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     checkTaggedUnion.preprocess = optionsToFunctions;
 
+
     typelog.define('boolean', isType('boolean'));
     typelog.define('function', isType('function'));
     typelog.define('number', isType('number'));
@@ -1053,6 +1054,21 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.define('null', isNull);
     typelog.define('variant', isVariant);
     typelog.define('taggedUnion', checkTaggedUnion);
+
+    var isTypeBaseType = isTypeOf('variant<string; function>');
+
+    function verifyTypeType(value) {
+        var typeValueOk = isTypeBaseType(value);
+
+        if(typeValueOk && typeof value === 'string') {
+            var parsedType = parser.parseType(value);
+            typeValueOk = typelog.isType(parsedType.type);
+        }
+
+        return typeValueOk;
+    }
+
+    typelog.define('type', verifyTypeType);
 
     typelog.defineSubtypeOf('object')('array', checkArray);
     typelog.defineSubtypeOf('object')('regexp', isRegExp);
@@ -1069,9 +1085,11 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineSubtypeOf('array')('unorderedProduct', isUnorderedProduct);
     typelog.defineSubtypeOf('object')('arguments', checkArgumentsObject);
 
+
+
+
     alias('any', '*');
     alias('void', '*');
-    alias('type', 'variant<string; function>');
 
     typelog.defineDependentOperatorOn('number')('>', greater);
     typelog.defineDependentOperatorOn('number')('<', less);
