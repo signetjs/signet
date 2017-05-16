@@ -404,6 +404,11 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return options.map(isTypeOf);
     }
 
+    function optionsToFunctionsMacro(typeDef) {
+        typeDef.subtype = typeDef.subtype.map(isTypeOf);
+        return typeDef;
+    }
+
     function checkArgumentsObject(value) {
         return !isNull(value);
     }
@@ -475,7 +480,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         }
     }
 
-    checkTuple.preprocess = optionsToFunctions;
+    parser.registerTypeLevelMacro('tuple', optionsToFunctionsMacro);
 
     function isVariant(value, options) {
         return options.length === 0 || options.filter(checkValueType).length > 0;
@@ -487,7 +492,6 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     isVariant.preprocess = optionsToFunctions;
 
-
     function checkTaggedUnion(value, options) {
         console.warn('Tagged Union is deprecated, use variant instead.');
         return isVariant(value, options);
@@ -495,6 +499,9 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     checkTaggedUnion.preprocess = optionsToFunctions;
 
+    var starTypeDef = parser.parseType('*');
+
+    parser.registerTypeLevelMacro('()', function () { return starTypeDef; });
 
     typelog.define('boolean', isType('boolean'));
     typelog.define('function', isType('function'));
@@ -537,9 +544,6 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineSubtypeOf('array')('unorderedProduct', isUnorderedProduct);
     typelog.defineSubtypeOf('object')('arguments', checkArgumentsObject);
 
-
-
-
     alias('any', '*');
     alias('void', '*');
 
@@ -566,21 +570,22 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     typelog.defineDependentOperatorOn('variant')('>:', isSupertypeOf);
 
     return {
-        alias: enforce('A != B :: A:string, B:string => undefined', alias),
-        duckTypeFactory: enforce('object => function', duckTypeFactory),
-        defineDuckType: enforce('string, object => undefined', defineDuckType),
-        defineDependentOperatorOn: enforce('string => string, function => undefined', typelog.defineDependentOperatorOn),
-        enforce: enforce('string, function, [object] => function', enforce),
-        extend: enforce('string, function => undefined', typelog.define),
-        isSubtypeOf: enforce('string => string => boolean', typelog.isSubtypeOf),
-        isType: enforce('string => boolean', typelog.isType),
-        isTypeOf: enforce('type => * => boolean', isTypeOf),
-        sign: enforce('string, function => function', sign),
-        subtype: enforce('string => string, function => undefined', typelog.defineSubtypeOf),
-        typeChain: enforce('string => string', typelog.getTypeChain),
-        verify: enforce('function, arguments => undefined', verify),
-        whichType: enforce('array<string> => * => variant<string; null>', whichType),
-        whichVariantType: enforce('string => * => variant<string; null>', whichVariantType)
+        alias: enforce('aliasName != typeString :: aliasName:string, typeString:string => undefined', alias),
+        duckTypeFactory: enforce('duckTypeDef:object => function', duckTypeFactory),
+        defineDuckType: enforce('typeName:string, duckTypeDef:object => undefined', defineDuckType),
+        defineDependentOperatorOn: enforce('typeName:string => operator:string, operatorCheck:function => undefined', typelog.defineDependentOperatorOn),
+        enforce: enforce('signature:string, functionToEnforce:function, options:[object] => function', enforce),
+        extend: enforce('typeName:string, typeCheck:function => undefined', typelog.define),
+        isSubtypeOf: enforce('rootTypeName:string => typeNameUnderTest:string => boolean', typelog.isSubtypeOf),
+        isType: enforce('typeName:string => boolean', typelog.isType),
+        isTypeOf: enforce('typeToCheck:type => value:* => boolean', isTypeOf),
+        registerTypeLevelMacro: enforce('typeKey:string, macro:function => undefined', parser.registerTypeLevelMacro),
+        sign: enforce('signature:string, functionToSign:function => function', sign),
+        subtype: enforce('rootTypeName:string => subtypeName:string, subtypeCheck:function => undefined', typelog.defineSubtypeOf),
+        typeChain: enforce('typeName:string => string', typelog.getTypeChain),
+        verify: enforce('signedFunctionToVerify:function, functionArguments:arguments => undefined', verify),
+        whichType: enforce('typeNames:array<string> => value:* => variant<string; null>', whichType),
+        whichVariantType: enforce('variantString:string => value:* => variant<string; null>', whichVariantType)
     };
 }
 

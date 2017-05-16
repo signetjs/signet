@@ -244,6 +244,22 @@ and get a rich understanding of the ancestors which make up the particular type.
     signet.typeChain('tuple'); // * -> object -> array -> tuple
 ```
 
+### Type-Level Macros
+
+Signet supports the creation of type-level macros to handle special cases where a 
+type definition might need some pre-processing before being processed. This is especially
+useful if you want to create a type name which contains special characters.  The example
+from Signet itself is the `()` type.
+
+```
+    var starTypeDef = parser.parseType('*');
+
+    parser.registerTypeLevelMacro('()', function () { return starTypeDef; });
+
+    signet.enforce('() => undefined', function () {})();
+    signet.isType('()'); // false
+```
+
 ## Extended types
 
 Signet has extended types provided as a separate module.  In the node environment, the extended types
@@ -305,6 +321,7 @@ Other dependent type operators can be defined through the defineDependentOperato
 - isSubtypeOf: `string => string => boolean`
 - isType: `string => boolean`
 - isTypeOf: `type => * => boolean`
+- registerTypeLevelMacro: `typeKey:string, macro:function => undefined`
 - sign: `string, function => function`
 - subtype: `string => string, function => undefined`
 - typeChain: `string => string`

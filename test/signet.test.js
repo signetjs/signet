@@ -110,6 +110,9 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('type')(function () {}), true);
         assert.equal(signet.isTypeOf('type')('variant'), true);
         assert.equal(signet.isTypeOf('type')('badType'), false);
+
+        assert.equal(signet.isTypeOf('()')('foo'), true);
+        assert.doesNotThrow(signet.enforce('() => undefined', function() {}));
     });
 
     it('should pre-register signet type aliases', function () {
