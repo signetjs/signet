@@ -309,25 +309,26 @@ Other dependent type operators can be defined through the defineDependentOperato
 
 ## Signet API
 
-- alias: `A != B :: A:string, B:string => undefined`
-- duckTypeFactory: `object => function`
-- defineDuckType: `string, object => undefined`
-- defineDependentOperatorOn: `string => string, function => undefined`
-- enforce: `signature:string, function, [options:object] => function`
+- alias: `aliasName != typeString :: aliasName:string, typeString:string => undefined`
+- duckTypeFactory: `duckTypeDef:object => function`
+- defineDuckType: `typeName:string, duckTypeDef:object => undefined`
+- defineDependentOperatorOn: `typeName:string => operator:string, operatorCheck:function => undefined`
+- enforce: `signature:string, functionToEnforce:function, options:[object] => function`
     - currently supported options:
         - inputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
         - outputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
-- extend: `string, function => undefined`
-- isSubtypeOf: `string => string => boolean`
-- isType: `string => boolean`
-- isTypeOf: `type => * => boolean`
+- extend: `typeName:string, typeCheck:function => undefined`
+- isSubtypeOf: `rootTypeName:string => typeNameUnderTest:string => boolean`
+- isType: `typeName:string => boolean`
+- isTypeOf: `typeToCheck:type => value:* => boolean`
 - registerTypeLevelMacro: `typeKey:string, macro:function => undefined`
-- sign: `string, function => function`
-- subtype: `string => string, function => undefined`
-- typeChain: `string => string`
-- verify: `function, arguments => undefined`
-- whichType: `array<string> => * => variant<string; null>`
-- whichVariantType: `string => * => variant<string; null>`
+- reportDuckTypeErrors: `duckTypeName:string => valueToCheck:object => array<tuple<string; string; *>>`
+- sign: `signature:string, functionToSign:function => function`
+- subtype: `rootTypeName:string => subtypeName:string, subtypeCheck:function => undefined`
+- typeChain: `typeName:string => string`
+- verify: `signedFunctionToVerify:function, functionArguments:arguments => undefined`
+- whichType: `typeNames:array<string> => value:* => variant<string; null>`
+- whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Execution context binding
 
