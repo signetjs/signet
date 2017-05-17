@@ -10,6 +10,7 @@
             "node_modules/signet-registrar/index.js",
             "node_modules/signet-typelog/index.js",
             "node_modules/signet-validator/index.js",
+            "bin/duckTypes.js",
             "bin/signet.js",
             "client-index.js"
         ],

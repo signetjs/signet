@@ -1,5 +1,14 @@
-function signetBuilder(typelog, validator, checker, parser, assembler) {
+function signetBuilder(
+    typelog,
+    validator,
+    checker,
+    parser,
+    assembler,
+    duckTypes) {
+
     'use strict';
+
+    var duckTypesModule = duckTypes(typelog, isTypeOf);
 
     function alias(key, typeStr) {
         var typeDef = parser.parseType(typeStr);
@@ -184,43 +193,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return enforceOnTree(signatureTree, fn, cleanOptions);
     }
 
-    function defineDuckType(typeName, objectDef) {
-        typelog.defineSubtypeOf('object')(typeName, duckTypeFactory(objectDef));
-    }
-
     function getTypeName(objectDef, key) {
         return typeof objectDef[key] === 'string' ? objectDef[key] : objectDef[key].name;
-    }
-
-    function buildDuckTypeChecker(definitionPairs, objectDef) {
-        return function (value) {
-            return definitionPairs.reduce(function (result, typePair) {
-                var key = typePair[0];
-                var typePredicate = typePair[1];
-
-                if (!typePredicate(value[key])) {
-                    result.push([key, getTypeName(objectDef, key), value[key]]);
-                }
-
-                return result;
-            }, []);
-        };
-    }
-
-    function duckTypeFactory(objectDef) {
-        var definitionPairs = Object.keys(objectDef).map(function (key) {
-            return [key, isTypeOf(objectDef[key])];
-        });
-        var getDuckTypeErrors = buildDuckTypeChecker(definitionPairs, objectDef);
-
-        function duckTypeCheck(value) {
-            var typeCheckResults = getDuckTypeErrors(value);
-            return typeCheckResults.length === 0;
-        }
-
-        duckTypeCheck.getErrors = getDuckTypeErrors;
-
-        return duckTypeCheck;
     }
 
     /* Defining canned types */
@@ -519,7 +493,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     function verifyTypeType(value) {
         var typeValueOk = isTypeBaseType(value);
 
-        if(typeValueOk && typeof value === 'string') {
+        if (typeValueOk && typeof value === 'string') {
             var parsedType = parser.parseType(value);
             typeValueOk = typelog.isType(parsedType.type);
         }
@@ -571,8 +545,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     return {
         alias: enforce('aliasName != typeString :: aliasName:string, typeString:string => undefined', alias),
-        duckTypeFactory: enforce('duckTypeDef:object => function', duckTypeFactory),
-        defineDuckType: enforce('typeName:string, duckTypeDef:object => undefined', defineDuckType),
+        duckTypeFactory: enforce('duckTypeDef:object => function', duckTypesModule.duckTypeFactory),
+        defineDuckType: enforce('typeName:string, duckTypeDef:object => undefined', duckTypesModule.defineDuckType),
         defineDependentOperatorOn: enforce('typeName:string => operator:string, operatorCheck:function => undefined', typelog.defineDependentOperatorOn),
         enforce: enforce('signature:string, functionToEnforce:function, options:[object] => function', enforce),
         extend: enforce('typeName:string, typeCheck:function => undefined', typelog.define),

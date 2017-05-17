@@ -1,10 +1,12 @@
 var signetBuilder = require('../dist/signet.min');
-var parser = require('signet-parser');
+// var signetBuilder = require('../index');
+var signetParser = require('signet-parser');
 var assert = require('chai').assert;
 var timerFactory = require('./timer');
 
 describe('Signet Library', function () {
 
+    var parser;
     var signet;
     var timer;
 
@@ -15,6 +17,7 @@ describe('Signet Library', function () {
     }
 
     beforeEach(function () {
+        parser = signetParser();
         signet = signetBuilder();
         timer = timerFactory();
         timer.start();

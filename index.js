@@ -2,19 +2,27 @@
 
 var assembler = require('signet-assembler');
 var checkerBuilder = require('signet-checker');
-var parser = require('signet-parser');
+var signetParser = require('signet-parser');
 var registrarBuilder = require('signet-registrar');
 var typelogBuilder = require('signet-typelog');
 var validatorBuilder = require('signet-validator');
 var signetBuilder = require('./bin/signet');
+var duckTypes = require('./bin/duckTypes');
 
 module.exports = function () {
 
+    var parser = signetParser();
     var registrar = registrarBuilder();
     var checker = checkerBuilder(registrar);
     var typelog = typelogBuilder(registrar, parser);
     var validator = validatorBuilder(typelog, assembler);
 
-    return signetBuilder(typelog, validator, checker, parser, assembler);
+    return signetBuilder(
+        typelog,
+        validator, 
+        checker, 
+        parser, 
+        assembler, 
+        duckTypes);
 
 };

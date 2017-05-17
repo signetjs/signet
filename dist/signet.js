@@ -8,15 +8,36 @@ var signetAssembler = (function () {
         return hasSubtype(typeDef) ? '<' + typeDef.subtype.join(';') + '>' : '';
     }
 
-    function assembleType(typeDef) {
-        var typeStr = typeDef.type + buildSubtype(typeDef);
+    function prependTypeName(name, typeStr) {
+        return typeof name === 'string' ? name + ':' + typeStr : typeStr;
+    }
 
-        return typeDef.optional ? '[' + typeStr + ']' : typeStr;
+    function addOptionalBrackets(typeStr, isOptional) {
+        return isOptional ? '[' + typeStr + ']' : typeStr;
+    }
+
+    function getBaseType(typeDef) {
+        var typeStr = typeDef.type + buildSubtype(typeDef);
+        return addOptionalBrackets(typeStr, typeDef.optional);
+    }
+
+    function assembleType(typeDef) {
+        var typeStr = getBaseType(typeDef);
+
+        return prependTypeName(typeDef.name, typeStr);
+    }
+
+    function buildDependentStr (dependent) {
+        return [dependent.left, dependent.operator, dependent.right].join(' ') + ' :: ';
     }
 
     function assembleTypeList(typeList) {
-        return typeList.map(assembleType).join(', ');
+        var typeListStr = typeList.map(assembleType).join(', ');
+        var dependentStr = typeList.dependent === null ? '' : buildDependentStr(typeList.dependent);
+
+        return dependentStr + typeListStr;
     }
+
 
     function assembleSignature(typeTree) {
         return typeTree.map(assembleTypeList).join(' => ');
@@ -38,7 +59,11 @@ var signetChecker = (function () {
     return function (registrar) {
 
         function checkType(typeDef) {
-            return typeof registrar.get(typeDef.type) === 'function';
+            try {
+                return typeof registrar.get(typeDef.type) === 'function';
+            } catch (e) {
+                return false;
+            }
         }
 
         function concat(resultList, list) {
@@ -71,7 +96,7 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = signetChecker;
 }
 
-var signetParser = (function () {
+function signetParser() {
     'use strict';
 
     var typeLevelMacros = {};
@@ -88,6 +113,10 @@ var signetParser = (function () {
     }
 
     function registerTypeLevelMacro (typeKey, macro) {
+        if(typeof typeLevelMacros[typeKey] !== 'undefined') {
+            throw new Error('Type-level macro "' + typeKey + '" is already registered.');
+        }
+        
         typeLevelMacros[typeKey] = macro;
     }
 
@@ -200,7 +229,7 @@ var signetParser = (function () {
         parseType: parseType,
         registerTypeLevelMacro: registerTypeLevelMacro
     };
-})();
+}
 
 if(typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = signetParser;
@@ -210,17 +239,17 @@ if(typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
 var signetRegistrar = (function () {
     'use strict';
 
-    return function() {
-        function isTypeOf (type, value) {
+    return function () {
+        function isTypeOf(type, value) {
             return typeof value === type;
         }
 
-        function isValidTypeName (value) {
+        function isValidTypeName(value) {
             return isTypeOf('string', value) && value.match(/^[^\(\)\<\>\[\]\:\;\=\,\s]+$/) !== null;
         }
 
-        function throwOnBadType (name, predicate) {
-            if(!isValidTypeName(name)){
+        function throwOnBadType(name, predicate) {
+            if (!isValidTypeName(name)) {
                 throw new Error('Invalid type name: ' + name);
             }
 
@@ -237,11 +266,15 @@ var signetRegistrar = (function () {
 
         var registry = {};
 
-        function get (name) {
-            return registry[name];
+        function get(name) {
+            var predicate = registry[name];
+            if (typeof predicate === 'undefined') {
+                throw new Error('The given type "' + name + '" does not exist');
+            }
+            return predicate;
         }
 
-        function set (name, predicate){
+        function set(name, predicate) {
             throwOnBadType(name, predicate);
 
             registry[name] = predicate;
@@ -255,7 +288,7 @@ var signetRegistrar = (function () {
 
 })();
 
-if(typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = signetRegistrar;
 }
 
@@ -566,8 +599,67 @@ if (typeof module !== 'undefined' && typeof module.exports !== undefined) {
     module.exports = signetValidator;
 }
 
-function signetBuilder(typelog, validator, checker, parser, assembler) {
+function signetDuckTypes(typelog, isTypeOf) {
+
+    var duckTypeErrorCheckers = {};
+
+    function defineDuckType(typeName, objectDef) {
+        typelog.defineSubtypeOf('object')(typeName, duckTypeFactory(objectDef));
+    }
+
+    function buildDuckTypeErrorChecker(definitionPairs, objectDef) {
+        return function (value) {
+            return definitionPairs.reduce(function (result, typePair) {
+                var key = typePair[0];
+                var typePredicate = typePair[1];
+
+                if (!typePredicate(value[key])) {
+                    result.push([key, getTypeName(objectDef, key), value[key]]);
+                }
+
+                return result;
+            }, []);
+        };
+    }
+
+    function duckTypeFactory(objectDef) {
+        var definitionPairs = Object.keys(objectDef).map(function (key) {
+            return [key, isTypeOf(objectDef[key])];
+        });
+
+        return function (value) {
+            return definitionPairs.reduce(function (result, typePair) {
+                var key = typePair[0];
+                var typePredicate = typePair[1];
+
+                return result && typePredicate(value[key]);
+            }, true);
+        };
+    }
+
+    return {
+        defineDuckType: defineDuckType,
+        buildDuckTypeErrorChecker: buildDuckTypeErrorChecker,
+        duckTypeFactory: duckTypeFactory
+    };
+}
+
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+    module.exports = signetDuckTypes;
+}
+
+
+function signetBuilder(
+    typelog,
+    validator,
+    checker,
+    parser,
+    assembler,
+    duckTypes) {
+
     'use strict';
+
+    var duckTypesModule = duckTypes(typelog, isTypeOf);
 
     function alias(key, typeStr) {
         var typeDef = parser.parseType(typeStr);
@@ -752,43 +844,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
         return enforceOnTree(signatureTree, fn, cleanOptions);
     }
 
-    function defineDuckType(typeName, objectDef) {
-        typelog.defineSubtypeOf('object')(typeName, duckTypeFactory(objectDef));
-    }
-
     function getTypeName(objectDef, key) {
         return typeof objectDef[key] === 'string' ? objectDef[key] : objectDef[key].name;
-    }
-
-    function buildDuckTypeChecker(definitionPairs, objectDef) {
-        return function (value) {
-            return definitionPairs.reduce(function (result, typePair) {
-                var key = typePair[0];
-                var typePredicate = typePair[1];
-
-                if (!typePredicate(value[key])) {
-                    result.push([key, getTypeName(objectDef, key), value[key]]);
-                }
-
-                return result;
-            }, []);
-        };
-    }
-
-    function duckTypeFactory(objectDef) {
-        var definitionPairs = Object.keys(objectDef).map(function (key) {
-            return [key, isTypeOf(objectDef[key])];
-        });
-        var getDuckTypeErrors = buildDuckTypeChecker(definitionPairs, objectDef);
-
-        function duckTypeCheck(value) {
-            var typeCheckResults = getDuckTypeErrors(value);
-            return typeCheckResults.length === 0;
-        }
-
-        duckTypeCheck.getErrors = getDuckTypeErrors;
-
-        return duckTypeCheck;
     }
 
     /* Defining canned types */
@@ -1087,7 +1144,7 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
     function verifyTypeType(value) {
         var typeValueOk = isTypeBaseType(value);
 
-        if(typeValueOk && typeof value === 'string') {
+        if (typeValueOk && typeof value === 'string') {
             var parsedType = parser.parseType(value);
             typeValueOk = typelog.isType(parsedType.type);
         }
@@ -1139,8 +1196,8 @@ function signetBuilder(typelog, validator, checker, parser, assembler) {
 
     return {
         alias: enforce('aliasName != typeString :: aliasName:string, typeString:string => undefined', alias),
-        duckTypeFactory: enforce('duckTypeDef:object => function', duckTypeFactory),
-        defineDuckType: enforce('typeName:string, duckTypeDef:object => undefined', defineDuckType),
+        duckTypeFactory: enforce('duckTypeDef:object => function', duckTypesModule.duckTypeFactory),
+        defineDuckType: enforce('typeName:string, duckTypeDef:object => undefined', duckTypesModule.defineDuckType),
         defineDependentOperatorOn: enforce('typeName:string => operator:string, operatorCheck:function => undefined', typelog.defineDependentOperatorOn),
         enforce: enforce('signature:string, functionToEnforce:function, options:[object] => function', enforce),
         extend: enforce('typeName:string, typeCheck:function => undefined', typelog.define),
@@ -1166,13 +1223,20 @@ var signet = (function () {
 
     function buildSignet() {
         var assembler = signetAssembler;
-        var parser = signetParser;
+        var parser = signetParser();
         var registrar = signetRegistrar();
         var checker = signetChecker(registrar);
         var typelog = signetTypelog(registrar, parser);
         var validator = signetValidator(typelog, assembler);
+        var duckTypes = signetDuckTypes;
 
-        return signetBuilder(typelog, validator, checker, parser, assembler);
+        return signetBuilder(
+            typelog, 
+            validator, 
+            checker, 
+            parser, 
+            assembler, 
+            duckTypes);
     }
 
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
