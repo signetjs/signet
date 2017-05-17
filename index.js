@@ -7,6 +7,7 @@ var registrarBuilder = require('signet-registrar');
 var typelogBuilder = require('signet-typelog');
 var validatorBuilder = require('signet-validator');
 var signetBuilder = require('./bin/signet');
+var duckTypes = require('./bin/duckTypes');
 
 module.exports = function () {
 
@@ -21,6 +22,7 @@ module.exports = function () {
         validator, 
         checker, 
         parser, 
-        assembler);
+        assembler, 
+        duckTypes);
 
 };

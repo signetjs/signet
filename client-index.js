@@ -8,13 +8,15 @@ var signet = (function () {
         var checker = signetChecker(registrar);
         var typelog = signetTypelog(registrar, parser);
         var validator = signetValidator(typelog, assembler);
+        var duckTypes = signetDuckTypes;
 
         return signetBuilder(
             typelog, 
             validator, 
             checker, 
             parser, 
-            assembler);
+            assembler, 
+            duckTypes);
     }
 
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
