@@ -1,5 +1,5 @@
-var signetBuilder = require('../dist/signet.min');
-// var signetBuilder = require('../index');
+// var signetBuilder = require('../dist/signet.min');
+var signetBuilder = require('../index');
 var signetParser = require('signet-parser');
 var assert = require('chai').assert;
 var timerFactory = require('./timer');
@@ -298,6 +298,20 @@ describe('Signet Library', function () {
         });
 
         assert.equal(signet.isTypeOf('myObj')({ foo: 55 }), false);
+        assert.equal(signet.isTypeOf('myObj')({ foo: 'blah', bar: 55, baz: [] }), true);
+    });
+
+    it('should allow reporting of duck type errors', function () {
+        signet.defineDuckType('myObj', {
+            foo: 'string',
+            bar: 'int',
+            baz: 'array'
+        });
+
+        var result = signet.reportDuckTypeErrors('myObj')({ foo: 55, bar: 'bad value', baz: null });
+        var expected = '[["foo","string",55],["bar","int","bad value"],["baz","array",null]]';
+
+        assert.equal(JSON.stringify(result), expected);
         assert.equal(signet.isTypeOf('myObj')({ foo: 'blah', bar: 55, baz: [] }), true);
     });
 

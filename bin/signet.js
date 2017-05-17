@@ -8,7 +8,7 @@ function signetBuilder(
 
     'use strict';
 
-    var duckTypesModule = duckTypes(typelog, isTypeOf);
+    var duckTypesModule = duckTypes(typelog, isTypeOf, getTypeName);
 
     function alias(key, typeStr) {
         var typeDef = parser.parseType(typeStr);
@@ -550,6 +550,7 @@ function signetBuilder(
         defineDependentOperatorOn: enforce('typeName:string => operator:string, operatorCheck:function => undefined', typelog.defineDependentOperatorOn),
         enforce: enforce('signature:string, functionToEnforce:function, options:[object] => function', enforce),
         extend: enforce('typeName:string, typeCheck:function => undefined', typelog.define),
+        reportDuckTypeErrors: enforce('duckTypeName:string => valueToCheck:object => array<tuple<string; string; *>>', duckTypesModule.reportDuckTypeErrors),
         isSubtypeOf: enforce('rootTypeName:string => typeNameUnderTest:string => boolean', typelog.isSubtypeOf),
         isType: enforce('typeName:string => boolean', typelog.isType),
         isTypeOf: enforce('typeToCheck:type => value:* => boolean', isTypeOf),

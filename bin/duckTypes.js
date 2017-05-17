@@ -1,12 +1,21 @@
-function signetDuckTypes(typelog, isTypeOf) {
+function signetDuckTypes(typelog, isTypeOf, getTypeName) {
 
-    var duckTypeErrorCheckers = {};
+    var duckTypeErrorReporters = {};
 
     function defineDuckType(typeName, objectDef) {
-        typelog.defineSubtypeOf('object')(typeName, duckTypeFactory(objectDef));
+        var definitionPairs = buildDefinitionPairs(objectDef);
+
+        typelog.defineSubtypeOf('object')(typeName, buildDuckType(definitionPairs, objectDef));
+        duckTypeErrorReporters[typeName] = buildDuckTypeErrorReporter(definitionPairs, objectDef);
     }
 
-    function buildDuckTypeErrorChecker(definitionPairs, objectDef) {
+    function buildDefinitionPairs(objectDef) {
+        return Object.keys(objectDef).map(function (key) {
+            return [key, isTypeOf(objectDef[key])];
+        });
+    }
+
+    function buildDuckTypeErrorReporter(definitionPairs, objectDef) {
         return function (value) {
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
@@ -21,11 +30,7 @@ function signetDuckTypes(typelog, isTypeOf) {
         };
     }
 
-    function duckTypeFactory(objectDef) {
-        var definitionPairs = Object.keys(objectDef).map(function (key) {
-            return [key, isTypeOf(objectDef[key])];
-        });
-
+    function buildDuckType(definitionPairs, objectDef) {
         return function (value) {
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
@@ -36,10 +41,28 @@ function signetDuckTypes(typelog, isTypeOf) {
         };
     }
 
+    function duckTypeFactory(objectDef) {
+        var definitionPairs = buildDefinitionPairs(objectDef);
+        return buildDuckType(definitionPairs, objectDef);
+    }
+
+    function reportDuckTypeErrors(typeName) {
+        var errorChecker = duckTypeErrorReporters[typeName];
+
+        if(typeof errorChecker === 'undefined') {
+            throw new Error('No duck type "' + typeName + '" exists.');
+        }
+
+        return function (value) {
+            return errorChecker(value);
+        }
+    }
+
     return {
+        buildDuckTypeErrorChecker: buildDuckTypeErrorReporter,
         defineDuckType: defineDuckType,
-        buildDuckTypeErrorChecker: buildDuckTypeErrorChecker,
-        duckTypeFactory: duckTypeFactory
+        duckTypeFactory: duckTypeFactory,
+        reportDuckTypeErrors: reportDuckTypeErrors
     };
 }
 

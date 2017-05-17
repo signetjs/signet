@@ -599,15 +599,24 @@ if (typeof module !== 'undefined' && typeof module.exports !== undefined) {
     module.exports = signetValidator;
 }
 
-function signetDuckTypes(typelog, isTypeOf) {
+function signetDuckTypes(typelog, isTypeOf, getTypeName) {
 
-    var duckTypeErrorCheckers = {};
+    var duckTypeErrorReporters = {};
 
     function defineDuckType(typeName, objectDef) {
-        typelog.defineSubtypeOf('object')(typeName, duckTypeFactory(objectDef));
+        var definitionPairs = buildDefinitionPairs(objectDef);
+
+        typelog.defineSubtypeOf('object')(typeName, buildDuckType(definitionPairs, objectDef));
+        duckTypeErrorReporters[typeName] = buildDuckTypeErrorReporter(definitionPairs, objectDef);
     }
 
-    function buildDuckTypeErrorChecker(definitionPairs, objectDef) {
+    function buildDefinitionPairs(objectDef) {
+        return Object.keys(objectDef).map(function (key) {
+            return [key, isTypeOf(objectDef[key])];
+        });
+    }
+
+    function buildDuckTypeErrorReporter(definitionPairs, objectDef) {
         return function (value) {
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
@@ -622,11 +631,7 @@ function signetDuckTypes(typelog, isTypeOf) {
         };
     }
 
-    function duckTypeFactory(objectDef) {
-        var definitionPairs = Object.keys(objectDef).map(function (key) {
-            return [key, isTypeOf(objectDef[key])];
-        });
-
+    function buildDuckType(definitionPairs, objectDef) {
         return function (value) {
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
@@ -637,10 +642,28 @@ function signetDuckTypes(typelog, isTypeOf) {
         };
     }
 
+    function duckTypeFactory(objectDef) {
+        var definitionPairs = buildDefinitionPairs(objectDef);
+        return buildDuckType(definitionPairs, objectDef);
+    }
+
+    function reportDuckTypeErrors(typeName) {
+        var errorChecker = duckTypeErrorReporters[typeName];
+
+        if(typeof errorChecker === 'undefined') {
+            throw new Error('No duck type "' + typeName + '" exists.');
+        }
+
+        return function (value) {
+            return errorChecker(value);
+        }
+    }
+
     return {
+        buildDuckTypeErrorChecker: buildDuckTypeErrorReporter,
         defineDuckType: defineDuckType,
-        buildDuckTypeErrorChecker: buildDuckTypeErrorChecker,
-        duckTypeFactory: duckTypeFactory
+        duckTypeFactory: duckTypeFactory,
+        reportDuckTypeErrors: reportDuckTypeErrors
     };
 }
 
@@ -659,7 +682,7 @@ function signetBuilder(
 
     'use strict';
 
-    var duckTypesModule = duckTypes(typelog, isTypeOf);
+    var duckTypesModule = duckTypes(typelog, isTypeOf, getTypeName);
 
     function alias(key, typeStr) {
         var typeDef = parser.parseType(typeStr);
@@ -1201,6 +1224,7 @@ function signetBuilder(
         defineDependentOperatorOn: enforce('typeName:string => operator:string, operatorCheck:function => undefined', typelog.defineDependentOperatorOn),
         enforce: enforce('signature:string, functionToEnforce:function, options:[object] => function', enforce),
         extend: enforce('typeName:string, typeCheck:function => undefined', typelog.define),
+        reportDuckTypeErrors: enforce('duckTypeName:string => valueToCheck:object => array<tuple<string; string; *>>', duckTypesModule.reportDuckTypeErrors),
         isSubtypeOf: enforce('rootTypeName:string => typeNameUnderTest:string => boolean', typelog.isSubtypeOf),
         isType: enforce('typeName:string => boolean', typelog.isType),
         isTypeOf: enforce('typeToCheck:type => value:* => boolean', isTypeOf),
