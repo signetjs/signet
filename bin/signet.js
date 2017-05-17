@@ -3,12 +3,67 @@ function signetBuilder(
     validator,
     checker,
     parser,
-    assembler,
-    duckTypes) {
+    assembler) {
 
     'use strict';
 
-    var duckTypesModule = duckTypes(typelog, isTypeOf, getTypeName);
+    var duckTypeErrorReporters = {};
+
+    function defineDuckType(typeName, objectDef) {
+        var definitionPairs = buildDefinitionPairs(objectDef);
+
+        typelog.defineSubtypeOf('object')(typeName, buildDuckType(definitionPairs, objectDef));
+        duckTypeErrorReporters[typeName] = buildDuckTypeErrorReporter(definitionPairs, objectDef);
+    }
+
+    function buildDefinitionPairs(objectDef) {
+        return Object.keys(objectDef).map(function (key) {
+            return [key, isTypeOf(objectDef[key])];
+        });
+    }
+
+    function buildDuckTypeErrorReporter(definitionPairs, objectDef) {
+        return function (value) {
+            return definitionPairs.reduce(function (result, typePair) {
+                var key = typePair[0];
+                var typePredicate = typePair[1];
+
+                if (!typePredicate(value[key])) {
+                    result.push([key, getTypeName(objectDef, key), value[key]]);
+                }
+
+                return result;
+            }, []);
+        };
+    }
+
+    function buildDuckType(definitionPairs, objectDef) {
+        return function (value) {
+            return definitionPairs.reduce(function (result, typePair) {
+                var key = typePair[0];
+                var typePredicate = typePair[1];
+
+                return result && typePredicate(value[key]);
+            }, true);
+        };
+    }
+
+    function duckTypeFactory(objectDef) {
+        var definitionPairs = buildDefinitionPairs(objectDef);
+        return buildDuckType(definitionPairs, objectDef);
+    }
+
+    function reportDuckTypeErrors(typeName) {
+        var errorChecker = duckTypeErrorReporters[typeName];
+
+        if(typeof errorChecker === 'undefined') {
+            throw new Error('No duck type "' + typeName + '" exists.');
+        }
+
+        return function (value) {
+            return errorChecker(value);
+        }
+    }
 
     function alias(key, typeStr) {
         var typeDef = parser.parseType(typeStr);
@@ -542,8 +597,8 @@ function signetBuilder(
 
     return {
         alias: enforce('aliasName != typeString :: aliasName:string, typeString:string => undefined', alias),
-        duckTypeFactory: enforce('duckTypeDef:object => function', duckTypesModule.duckTypeFactory),
-        defineDuckType: enforce('typeName:string, duckTypeDef:object => undefined', duckTypesModule.defineDuckType),
+        duckTypeFactory: enforce('duckTypeDef:object => function', duckTypeFactory),
+        defineDuckType: enforce('typeName:string, duckTypeDef:object => undefined', defineDuckType),
         defineDependentOperatorOn: enforce('typeName:string => operator:string, operatorCheck:function => undefined', typelog.defineDependentOperatorOn),
         enforce: enforce('signature:string, functionToEnforce:function, options:[object] => function', enforce),
         extend: enforce('typeName:string, typeCheck:function => undefined', typelog.define),
@@ -551,7 +606,7 @@ function signetBuilder(
         isType: enforce('typeName:string => boolean', typelog.isType),
         isTypeOf: enforce('typeToCheck:type => value:* => boolean', isTypeOf),
         registerTypeLevelMacro: enforce('macro:function => undefined', parser.registerTypeLevelMacro),
-        reportDuckTypeErrors: enforce('duckTypeName:string => valueToCheck:object => array<tuple<string; string; *>>', duckTypesModule.reportDuckTypeErrors),
+        reportDuckTypeErrors: enforce('duckTypeName:string => valueToCheck:object => array<tuple<string; string; *>>', reportDuckTypeErrors),
         sign: enforce('signature:string, functionToSign:function => function', sign),
         subtype: enforce('rootTypeName:string => subtypeName:string, subtypeCheck:function => undefined', typelog.defineSubtypeOf),
         typeChain: enforce('typeName:string => string', typelog.getTypeChain),
