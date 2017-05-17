@@ -99,25 +99,32 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
 function signetParser() {
     'use strict';
 
-    var typeLevelMacros = {};
+    var typeLevelMacros = [];
 
-    function identity (value) {
+    function identity(value) {
         return value;
     }
 
-    function applyTypeLeveMacro(typeDef) {
-        var typeLevelMacro = typeLevelMacros[typeDef.type];
-        typeLevelMacro = typeof typeLevelMacro === 'undefined' ? identity : typeLevelMacro;
-
-        return typeLevelMacro(typeDef);
+    function throwOnBadMacroResult(result) {
+        if (typeof result !== 'string') {
+            throw new Error('Macro Error: All macros must return a string; got ' + result + ' of type ' + typeof result);
+        }
     }
 
-    function registerTypeLevelMacro (typeKey, macro) {
-        if(typeof typeLevelMacros[typeKey] !== 'undefined') {
-            throw new Error('Type-level macro "' + typeKey + '" is already registered.');
+    function applyTypeLeveMacros(typeStr) {
+        var result = typeStr;
+        var macroLength = typeLevelMacros.length;
+
+        for (var i = 0; i < macroLength; i++) {
+            result = typeLevelMacros[i](result);
+            throwOnBadMacroResult(result);
         }
-        
-        typeLevelMacros[typeKey] = macro;
+
+        return result;
+    }
+
+    function registerTypeLevelMacro(macro) {
+        typeLevelMacros.push(macro);
     }
 
     function terminateSubtype(bracketStack, currentChar) {
@@ -184,21 +191,21 @@ function signetParser() {
     }
 
     function parseType(typeStr) {
-        var typePattern = /^([^:<]+)\:(.+)$/;
-        var typeName = typeStr.replace(typePattern, '$1');
-        var rawType = typeStr.replace(typePattern, '$2');
+        var transformedTypeStr = applyTypeLeveMacros(typeStr);
 
-        var typeDef = {
-            name: typeName === typeStr ? null : typeName.trim(),
+        var typePattern = /^([^:<]+)\:(.+)$/;
+        var typeName = transformedTypeStr.replace(typePattern, '$1');
+        var rawType = transformedTypeStr.replace(typePattern, '$2');
+
+        return {
+            name: typeName === transformedTypeStr ? null : typeName.trim(),
             type: rawType.split('<')[0].replace(/\[|\]/g, '').trim(),
             subtype: parseSubtype(rawType),
             optional: rawType.match(/^\[[^\]]+\]$/) !== null
         };
-
-        return applyTypeLeveMacro(typeDef);
     }
 
-    function parseDependentMetadata (metadataStr) {
+    function parseDependentMetadata(metadataStr) {
         var tokens = metadataStr.trim().split(/\s+/g);
 
         return {
@@ -208,7 +215,7 @@ function signetParser() {
         }
     }
 
-    function parseParams (token){
+    function parseParams(token) {
         var tokenSet = token.split(/\s*\:\:\s*/);
         var dependentMetadata = tokenSet.length > 1 ? tokenSet.shift() : null;
         var typeValues = tokenSet[0].split(/\s*\,\s*/).map(parseType);
@@ -231,7 +238,7 @@ function signetParser() {
     };
 }
 
-if(typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = signetParser;
 }
 
@@ -1052,11 +1059,6 @@ function signetBuilder(
         return options.map(isTypeOf);
     }
 
-    function optionsToFunctionsMacro(typeDef) {
-        typeDef.subtype = typeDef.subtype.map(isTypeOf);
-        return typeDef;
-    }
-
     function checkArgumentsObject(value) {
         return !isNull(value);
     }
@@ -1128,7 +1130,7 @@ function signetBuilder(
         }
     }
 
-    parser.registerTypeLevelMacro('tuple', optionsToFunctionsMacro);
+    checkTuple.preprocess = optionsToFunctions;
 
     function isVariant(value, options) {
         return options.length === 0 || options.filter(checkValueType).length > 0;
@@ -1149,7 +1151,9 @@ function signetBuilder(
 
     var starTypeDef = parser.parseType('*');
 
-    parser.registerTypeLevelMacro('()', function () { return starTypeDef; });
+    parser.registerTypeLevelMacro(function emptyParamsToStar(value) {
+        return /^\(\s*\)$/.test(value) ? '*' : value;
+    });
 
     typelog.define('boolean', isType('boolean'));
     typelog.define('function', isType('function'));
@@ -1227,7 +1231,7 @@ function signetBuilder(
         isSubtypeOf: enforce('rootTypeName:string => typeNameUnderTest:string => boolean', typelog.isSubtypeOf),
         isType: enforce('typeName:string => boolean', typelog.isType),
         isTypeOf: enforce('typeToCheck:type => value:* => boolean', isTypeOf),
-        registerTypeLevelMacro: enforce('typeKey:string, macro:function => undefined', parser.registerTypeLevelMacro),
+        registerTypeLevelMacro: enforce('macro:function => undefined', parser.registerTypeLevelMacro),
         reportDuckTypeErrors: enforce('duckTypeName:string => valueToCheck:object => array<tuple<string; string; *>>', duckTypesModule.reportDuckTypeErrors),
         sign: enforce('signature:string, functionToSign:function => function', sign),
         subtype: enforce('rootTypeName:string => subtypeName:string, subtypeCheck:function => undefined', typelog.defineSubtypeOf),

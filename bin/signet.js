@@ -378,11 +378,6 @@ function signetBuilder(
         return options.map(isTypeOf);
     }
 
-    function optionsToFunctionsMacro(typeDef) {
-        typeDef.subtype = typeDef.subtype.map(isTypeOf);
-        return typeDef;
-    }
-
     function checkArgumentsObject(value) {
         return !isNull(value);
     }
@@ -454,7 +449,7 @@ function signetBuilder(
         }
     }
 
-    parser.registerTypeLevelMacro('tuple', optionsToFunctionsMacro);
+    checkTuple.preprocess = optionsToFunctions;
 
     function isVariant(value, options) {
         return options.length === 0 || options.filter(checkValueType).length > 0;
@@ -475,7 +470,9 @@ function signetBuilder(
 
     var starTypeDef = parser.parseType('*');
 
-    parser.registerTypeLevelMacro('()', function () { return starTypeDef; });
+    parser.registerTypeLevelMacro(function emptyParamsToStar(value) {
+        return /^\(\s*\)$/.test(value) ? '*' : value;
+    });
 
     typelog.define('boolean', isType('boolean'));
     typelog.define('function', isType('function'));
@@ -553,7 +550,7 @@ function signetBuilder(
         isSubtypeOf: enforce('rootTypeName:string => typeNameUnderTest:string => boolean', typelog.isSubtypeOf),
         isType: enforce('typeName:string => boolean', typelog.isType),
         isTypeOf: enforce('typeToCheck:type => value:* => boolean', isTypeOf),
-        registerTypeLevelMacro: enforce('typeKey:string, macro:function => undefined', parser.registerTypeLevelMacro),
+        registerTypeLevelMacro: enforce('macro:function => undefined', parser.registerTypeLevelMacro),
         reportDuckTypeErrors: enforce('duckTypeName:string => valueToCheck:object => array<tuple<string; string; *>>', duckTypesModule.reportDuckTypeErrors),
         sign: enforce('signature:string, functionToSign:function => function', sign),
         subtype: enforce('rootTypeName:string => subtypeName:string, subtypeCheck:function => undefined', typelog.defineSubtypeOf),

@@ -321,7 +321,7 @@ Other dependent type operators can be defined through the defineDependentOperato
 - isSubtypeOf: `rootTypeName:string => typeNameUnderTest:string => boolean`
 - isType: `typeName:string => boolean`
 - isTypeOf: `typeToCheck:type => value:* => boolean`
-- registerTypeLevelMacro: `typeKey:string, macro:function => undefined`
+- registerTypeLevelMacro: `macro:function => undefined`
 - reportDuckTypeErrors: `duckTypeName:string => valueToCheck:object => array<tuple<string; string; *>>`
 - sign: `signature:string, functionToSign:function => function`
 - subtype: `rootTypeName:string => subtypeName:string, subtypeCheck:function => undefined`
