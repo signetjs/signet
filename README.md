@@ -353,6 +353,14 @@ You can now bind an execution context for object instances or other, various rea
 
 ## Changes
 
+### 2.0.0
+
+- Moved to macros which operate directly on uncompiled strings
+
+### 1.10.0
+
+- Introduced type-level macros
+
 ### 1.9.0
 
 - Enhanced 'type' type check to verify type is registered
@@ -370,6 +378,10 @@ You can now bind an execution context for object instances or other, various rea
 - Added unorderedProduct -- like tuple but values can be in any order
 
 ## Breaking Changes
+
+### 2.0.0
+
+- Moved to macros which operate directly on uncompiled strings
 
 ### 1.0.0
 
