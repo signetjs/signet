@@ -1,6 +1,6 @@
 {
   "name": "signet",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "description": "Signet type library",
   "main": "index.js",
   "repository": {
@@ -21,7 +21,7 @@
   "author": "Chris Stead <cmstead@gmail.com> (http://www.chrisstead.com/)",
   "license": "MPL-2.0",
   "dependencies": {
-    "signet-assembler": "1.1.0",
+    "signet-assembler": "1.1.1",
     "signet-checker": "1.1.0",
     "signet-parser": "3.0.0",
     "signet-registrar": "2.0.0",
