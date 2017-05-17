@@ -49,7 +49,7 @@ var signetAssembler = (function () {
     };
 })();
 
-if (typeof module !== 'udefined' && typeof module.exports !== 'undefined') {
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = signetAssembler;
 }
 
