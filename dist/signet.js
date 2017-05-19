@@ -180,12 +180,22 @@ function signetParser() {
         var getSubtypeStr = getUpdatedSubtypeStr(bracketStack, buildAppender(bracketStack));
         var updateSubtypes = updateSubtypeInfo(bracketStack, subtypeInfo);
 
-        typeStr.split('').forEach(function (currentChar) {
+        var typeStringTokens = typeStr.split('');
+
+        for(var i = 0; i < typeStringTokens.length; i++) {
+            var currentChar = typeStringTokens[i];
+
+            if(currentChar === '%') {
+                i++;
+                subtypeStr += typeStringTokens[i];
+                continue;
+            }
+
             updateStack(bracketStack, currentChar);
             updateSubtypes(subtypeStr, currentChar);
 
             subtypeStr = getSubtypeStr(subtypeStr, currentChar);
-        });
+        }
 
         return subtypeInfo;
     }

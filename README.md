@@ -353,6 +353,10 @@ You can now bind an execution context for object instances or other, various rea
 
 ## Changes
 
+### 3.0.0
+
+- Added escape character `%` to parser to allow for special characters in type arguments
+
 ### 2.0.0
 
 - Moved to macros which operate directly on uncompiled strings
