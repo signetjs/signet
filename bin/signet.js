@@ -8,7 +8,7 @@ function signetBuilder(
 
     'use strict';
 
-    var duckTypesModule = duckTypes(typelog, isTypeOf, getTypeName);
+    var duckTypesModule = duckTypes(typelog, isTypeOf);
 
     function alias(key, typeStr) {
         var typeDef = parser.parseType(typeStr);
@@ -191,10 +191,6 @@ function signetBuilder(
         var signatureTree = prepareSignature(parser.parseSignature(signature));
         var cleanOptions = typeof options === 'object' && options !== null ? options : {};
         return enforceOnTree(signatureTree, fn, cleanOptions);
-    }
-
-    function getTypeName(objectDef, key) {
-        return typeof objectDef[key] === 'string' ? objectDef[key] : objectDef[key].name;
     }
 
     /* Defining canned types */

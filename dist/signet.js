@@ -616,7 +616,7 @@ if (typeof module !== 'undefined' && typeof module.exports !== undefined) {
     module.exports = signetValidator;
 }
 
-function signetDuckTypes(typelog, isTypeOf, getTypeName) {
+function signetDuckTypes(typelog, isTypeOf) {
 
     var duckTypeErrorReporters = {};
 
@@ -633,14 +633,27 @@ function signetDuckTypes(typelog, isTypeOf, getTypeName) {
         });
     }
 
+    function getErrorValue(value, typeName) {
+        if(typeof duckTypeErrorReporters[typeName] === 'function') {
+            return duckTypeErrorReporters[typeName](value);
+        }
+
+        return value;
+    }
+
+    function getTypeName(objectDef, key) {
+        return typeof objectDef[key] === 'string' ? objectDef[key] : objectDef[key].name;
+    }
+
     function buildDuckTypeErrorReporter(definitionPairs, objectDef) {
         return function (value) {
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
                 var typePredicate = typePair[1];
+                var typeName = getTypeName(objectDef, key);
 
                 if (!typePredicate(value[key])) {
-                    result.push([key, getTypeName(objectDef, key), value[key]]);
+                    result.push([key, typeName, getErrorValue(value[key], typeName)]);
                 }
 
                 return result;
@@ -699,7 +712,7 @@ function signetBuilder(
 
     'use strict';
 
-    var duckTypesModule = duckTypes(typelog, isTypeOf, getTypeName);
+    var duckTypesModule = duckTypes(typelog, isTypeOf);
 
     function alias(key, typeStr) {
         var typeDef = parser.parseType(typeStr);
@@ -882,10 +895,6 @@ function signetBuilder(
         var signatureTree = prepareSignature(parser.parseSignature(signature));
         var cleanOptions = typeof options === 'object' && options !== null ? options : {};
         return enforceOnTree(signatureTree, fn, cleanOptions);
-    }
-
-    function getTypeName(objectDef, key) {
-        return typeof objectDef[key] === 'string' ? objectDef[key] : objectDef[key].name;
     }
 
     /* Defining canned types */
