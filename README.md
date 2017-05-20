@@ -1,16 +1,94 @@
-# Signet
+# Signet #
 
-## A type and function signature library for Javascript
+## The fast, rich runtime documentation-through-type system for Javascript ##
 
-Signet is, first and foremost, a documentation library.  Rather than using the Javadoc method for documenting functions and
-behaving as if Javascript were a classical OO language, signet assumes Javascript is a Prototypal OO language, like 
-Smalltalk or Io and behaves more like a functional language in action than a classical OO language like Java.
+At its core, Signet aims to be a first-line-of-defense documentation library
+for your code. By attaching and enforcing rich type information to your
+functions, you communicate with other developers what your intent is and
+how they can use your code. Sometimes that other developer is future you!
 
-With this in mind, the immediate goal is to create a library which makes it easy to add a read-only signature property to any
-function definition, avoiding typos, post hoc modifications and so on.  Ideally, signet will also allow for type guarantees
-to be tested when the type signature is testable, ensuring the signet definition does not get stale.
+Although Signet is a deep, rich, extensible type system, the most important
+first takeaway is Signet is easy to use.  Unlike other documentation libraries
+which require a lot of time and effort to get familiar with, Signet provides
+a familiar, simple means to fully document your behavior up front, like this:
 
-Signet will allow for single-line strings which contain all of the following:
+```
+    const add = signet.enforce(
+        'a:number, b:number => sum:number`,
+        (a, b) => a + b
+    );
+```
+
+Obviously, this is a trivial example, but it is easy to immediately understand
+what our add function requires and what it will do. More importantly, if someone
+were to try to use our function incorrectly, they would get a clear message:
+
+```
+    add('foo', 23); // TypeError: Expected value of type a:number, but got foo of type string
+```
+
+Moreover, if this developer wanted to understand what the add function expected, they
+could simply request the signature:
+
+```
+    console.log(add.signature); // a:number, b:number => sum:number
+```
+
+All of a sudden, those API endpoints which were left undocumented can be easily
+updated to provide parameter and result information without a lot of extra developer
+time.  This kind of in-code documentation and type checking facilitates tribal 
+knowledge even if a member of the tribe has long left.
+
+Finally, Signet won't let your documentation get out of date.  Since Signet does real type checking and a review of your function properties against your signature, if you add parameters or change your function, Signet will let you know your documentation is out of date.
+
+All of this only scratches the surface of what you can do with Signet.  You can define your own types, use higher-kinded and algebraic types and even define macros to alter type strings just in time. Beyond that, Signet is 100% ECMAScript 5.1 (Harmony) compliant, so there is no need to transpile anything. As long as your code works, Signet works.
+
+Remember, code is not just a program to be run, it is a document programmers read.  Wouldn't you like your document to tell you more?
+
+## Install Signet ##
+
+Signet is available through NPM:
+
+`npm i signet --save`
+
+You can also find it on the NPM site for more information:
+
+[https://www.npmjs.com/package/signet](https://www.npmjs.com/package/signet)
+
+## Library Usage ##
+
+First it is recommended that you create a types file so the local signet object can be cached for your module:
+
+```
+    const signet = require('signet')();
+    
+    //my aliased type
+    signet.alias('foo', 'string');
+
+    //If you're in node, be sure to export your signet instance!
+    module.exports = signet;
+```
+
+Now, include your types file into your other files and the signet types object will be properly enclosed in your module. Now you're ready to get some type and document work done:
+
+```
+const signet = require('./mySignetTypesFile');
+
+const range = signet.enforce(
+    'start < end :: start:int, end:int, increment:leftBoundedInt<1> => array<int>',
+    (start, end, increment) => {
+        let result = [];
+
+        for(let i = start; i <= end; i += increment) {
+            result.push(i);
+        }
+
+        return result;
+    }
+);
+```
+
+## Basic Operators and Syntactic Characters ##
 
 - Type names -- All primary type names should adhere to the list of supported types below
 - Subtype names -- Subtype names must not contain any reserved characters as listed next
@@ -22,22 +100,24 @@ Signet will allow for single-line strings which contain all of the following:
 - `;` -- Semicolons allow for multiple values within the angle bracket notation
 - `()` -- Optional parentheses to group types, which will be treated as spaces by interpreter
 
-White space is stripped at parse time.
+Example function signatures:
 
-**Important note about data types:**
+- Empty argument list: `"() => function"`
+- Simple argument list: `"number, string => boolean"`
+- Subtyped object: `"object:InstantiableName => string"`
+- Typed array: `"array<number> => string"`
+- Optional argument: `"array, [number] => number"`
+- Curried function: `"number => number => number"`
 
-Data types are either primary or secondary. Primary types can only be from the list
-specified below, which ensures that all variables can be validated in some meaningful way. Secondary data types can be
-anything as they are not checked.
+## Primary Types ##
 
-Object notation allows for the declaration, though not the verification, of instantiable objects. Angle bracket notation 
-is for declaring run-time evaluated late-declared type information (higher-kinded types) and collection types such as
-arrays which may contain varied types.
+Signet supports all of the core Javascript types as well as a few others, which allow
+the core typesystem to be approachable, clear and easy to relate to for anyone 
+familiar with Javascript and its built-in dynamic types.
 
-List of supported (built in) primary types
+List of primary types:
 
-- `()`
-- `*` -- preferred syntax over 'any' type
+- `*`
 - `array`
 - `boolean`
 - `function`
@@ -48,29 +128,62 @@ List of supported (built in) primary types
 - `symbol`
 - `undefined`
 
-Example function signatures:
+## Extended types ##
 
-- Empty argument list: `"() => function"`
-- Simple argument list: `"number, string => boolean"`
-- Subtyped object: `"object:InstantiableName => string"`
-- Typed array: `"array<number> => string"`
-- Optional argument: `"array, [number] => number"`
-- Curried function: `"number => number => number"`
+Signet has extended types provided as a separate module.  In the node environment, the extended types
+are included in the required module, but can be removed by pointing to the signet.js module directly.
+In the browser environment, signet.min.js and signet.types.min.js in that order to include the extended types.
 
-## Usage
+Extended types, and their inheritance chain, are as follows:
 
-First it is recommended that you create a types file so the local signet object can be cached for your module:
+- `arguments` - `* -> variant<array; object>`
+- `int` - `* -> number -> int`
+- `bounded<min:number;max:number>` - `* -> number -> bounded`
+- `boundedInt<min:number;max:number>` - `* -> number -> int -> bounded -> boundedInt`
+- `boundedString<minLength:int;maxLength:int>` - `* -> string -> boundedString`
+- `formattedString<regex>` - `* -> string -> formattedString`
+- `leftBounded<min:number>` - `* -> number -> leftBounded`
+- `leftBoundedInt<min:int>` - `* -> number -> int -> leftBoundedInt`
+- `regexp` - `* -> object -> regexp`
+- `rightBounded<max:number>` - `* -> number -> rightBounded`
+- `rightBoundedInt<max:int>` - `* -> number -> int -> rightBoundedInt`
+- `tuple<type;type;type...>` - `* -> object -> array -> tuple`
+- `unorderedProduct<type;type;type...>` - `* -> object -> array -> unorderedProduct`
+- `variant<type;type;type...>` - `* -> variant`
 
-```
-    var signet = require('signet')();
-    
-    //my aliased type
-    signet.alias('foo', 'string');
-```
+## Dependent types ##
 
-Now, include your types file into your other files and the signet types object will be properly enclosed in your module.
+Types can be named and dependencies can be declared between two arguments in the same call. Signet currently does not have the means to verify dependent types across function calls.  
 
-### Signet behaviors
+Example for a range function might look like the following:
+
+`start < end :: start:int, end:int, increment:int => array<int>`
+
+Built in type operations are as follows:
+
+- number: 
+    - `=` (value equality)
+    - `!=` (value inequality)
+    - `<` (A less than B)
+    - `>` (A greater than B)
+    - `<=` (A less than or equal to B)
+    - `>=` (A greater than or equal to B)
+- string:
+    - `=` (value equality)
+    - `!=` (value inequality)
+- object:
+    - `=` (property equality)
+    - `!=`(property inequality)
+    - `:>` (property superset)
+    - `:<` (property subset)
+    - `:=` (property congruence -- same property names, potentially different values)
+    - `:!=` (property incongruence -- different property names)
+- variant:
+    - `=:` (same type)
+    - `<:` (subtype)
+    - `>:` (supertype)
+
+### Signet behaviors ###
 
 Signet can be used two different ways to sign your functions, as a function wrapper or as a decoration of your function. 
 Below are examples of the two use cases:
@@ -149,7 +262,7 @@ Curried functions are also fully enforced all the way down:
     curriedAdd(1)('foo'); // Throws -- Expected type number, but got string
 ```
 
-### Types and subtypes
+### Types and subtypes ###
 
 New types can be added by using the extend function with a key and a predicate function describing the behavior of the data type
 
@@ -203,7 +316,7 @@ Types can be aliased using the `alias` function. This allows the programmer to d
     signet.isTypeOf('R3Matrix')([[1, 2, 3], [4, 5, 6], [7, 8, 9]]); // true
 ```
 
-### Direct type checking
+### Direct type checking ###
 
 Types can be checked from outside of a function call with isTypeOf.  The isTypeOf function is curried, so a specific
 type check can be reused without recomputing the type object definition:
@@ -218,7 +331,7 @@ type check can be reused without recomputing the type object definition:
     isRanged3to4(4000); // false
 ```
 
-### Object duck typing
+### Object duck typing ###
 
 Duck typing functions can be created using the duckTypeFactory function.  This means, if an object 
 type depends on extant properties with correct types, it can be predefined with an object type definition.
@@ -234,7 +347,7 @@ type depends on extant properties with correct types, it can be predefined with 
     signet.isTypeOf('myObj')({ foo: 42, bar: [] }); // false
 ```
 
-### Type Chain Information
+### Type Chain Information ###
 
 Signet supports accessing a type's inheritance chain.  This means, if you want to know what a type does, you can review the chain
 and get a rich understanding of the ancestors which make up the particular type.
@@ -244,7 +357,7 @@ and get a rich understanding of the ancestors which make up the particular type.
     signet.typeChain('tuple'); // * -> object -> array -> tuple
 ```
 
-### Type-Level Macros
+### Type-Level Macros ###
 
 Signet supports the creation of type-level macros to handle special cases where a 
 type definition might need some pre-processing before being processed. This is especially
@@ -260,58 +373,7 @@ from Signet itself is the `()` type.
     signet.isType('()'); // false
 ```
 
-## Extended types
-
-Signet has extended types provided as a separate module.  In the node environment, the extended types
-are included in the required module, but can be removed by pointing to the signet.js module directly.
-In the browser environment, signet.min.js and signet.types.min.js in that order to include the extended types.
-
-Extended types are as follows:
-
-- `int` - `* -> number -> int`
-- `bounded<min:number;max:number>` - `* -> number -> bounded`
-- `boundedInt<min:number;max:number>` - `* -> number -> int -> bounded -> boundedInt`
-- `boundedString<minLength:int;maxLength:int>` - `* -> string -> boundedString`
-- `formattedString<regex>` - `* -> string -> formattedString`
-- `regexp` - `* -> object -> regexp`
-- `tuple<type;type;type...>` - `* -> object -> array -> tuple`
-- `unorderedProduct<type;type;type...>` - `* -> object -> array -> unorderedProduct`
-- `variant` - `* -> variant`
-
-## Dependent types
-
-Types can be named and dependencies can be declared between two arguments in the same call.  Signet currently does not have
-the means to verify dependent types across function calls.  Built in type operations are as follows:
-
-- number: 
-    - `=` (value equality)
-    - `!=` (value inequality)
-    - `<` (A less than B)
-    - `>` (A greater than B)
-    - `<=` (A less than or equal to B)
-    - `>=` (A greater than or equal to B)
-- string:
-    - `=` (value equality)
-    - `!=` (value inequality)
-- object:
-    - `=` (property equality)
-    - `!=`(property inequality)
-    - `:>` (property superset)
-    - `:<` (property subset)
-    - `:=` (property congruence -- same property names, potentially different values)
-    - `:!=` (property incongruence -- different property names)
-- variant:
-    - `=:` (same type)
-    - `<:` (subtype)
-    - `>:` (supertype)
-
-Example for a range function might look like the following:
-
-`start < end :: start:int, end:int, increment:int => array<int>`
-
-Other dependent type operators can be defined through the defineDependentOperatorOn function.
-
-## Signet API
+## Signet API ###
 
 - alias: `aliasName != typeString :: aliasName:string, typeString:string => undefined`
 - duckTypeFactory: `duckTypeDef:object => function`
@@ -334,54 +396,33 @@ Other dependent type operators can be defined through the defineDependentOperato
 - whichType: `typeNames:array<string> => value:* => variant<string; null>`
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
-## Execution context binding
+## Change Log ##
 
-You can now bind an execution context for object instances or other, various reasons. It's also possible to sign and verify a constructor!
-
-```
-    const MyObj = signet.sign(
-        'object => *',
-
-        function MyObj (foo) {
-            // Throws an error if constructor is not passed appropriate values
-            signet.verify(MyObj, arguments);
-
-            this.foo = foo;
-
-            // Enforce the function at construction time or the context will be wrong.
-            this.behavior = signet.enforce('() => *', this.behavior.bind(this));
-        });
-    
-    MyObj.prototype.behavior = function (foo) { return this.foo.bar; };
-```
-
-## Changes
-
-### 3.2.0
+### 3.2.0 ###
 
 - Added support for multiple dependent type expressions
 
-### 3.1.0
+### 3.1.0 ###
 
 - Extended reportDuckTypeErrors to perform a recursive search through an object when possible
 
-### 3.0.0
+### 3.0.0 ###
 
 - Added escape character `%` to parser to allow for special characters in type arguments
 
-### 2.0.0
+### 2.0.0 ###
 
 - Moved to macros which operate directly on uncompiled strings
 
-### 1.10.0
+### 1.10.0 ###
 
 - Introduced type-level macros
 
-### 1.9.0
+### 1.9.0 ###
 
 - Enhanced 'type' type check to verify type is registered
 
-### 1.6.0
+### 1.6.0 ###
 
 - Added new types:
     - `leftBounded<min:number>` -- value must be greater than or equal to min
@@ -389,34 +430,34 @@ You can now bind an execution context for object instances or other, various rea
     - `leftBoundedInt<min:number>` -- value must be greater than or equal to min
     - `rightBoundedInt<max:number>` -- value must be less than or equal to max
 
-### 1.5.0
+### 1.5.0 ###
 
 - Added unorderedProduct -- like tuple but values can be in any order
 
 ## Breaking Changes
 
-### 2.0.0
+### 2.0.0 ###
 
 - Moved to macros which operate directly on uncompiled strings
 
-### 1.0.0
+### 1.0.0 ###
 
 - No-argument type '`()`' no longer supported
 - TaggedUnion deprecated in preference for 'variant' 
 
-### 0.18.0
+### 0.18.0 ###
 
 - Function signatures now verify parameter length against total length and length of required paramters.
 
-### 0.16.x
+### 0.16.x ###
 
 - Signet and SignetTypes are now factories in node space to ensure types are encapsulated only in local module.  
 
-### 0.9.x
+### 0.9.x ###
 
 - valueType is now an array instead of a string; any higher-kinded type definitions relying on a string will need updating
 
-### 0.4.x
+### 0.4.x ###
 
 - Any top-level types will now cause an error if they are not part of the core Javascript types or in the following list:
     - ()
