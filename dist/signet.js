@@ -215,7 +215,7 @@ function signetParser() {
         };
     }
 
-    function parseDependentMetadata(metadataStr) {
+    function parseDependentMetadataToken(metadataStr) {
         var tokens = metadataStr.trim().split(/\s+/g);
 
         return {
@@ -223,6 +223,10 @@ function signetParser() {
             left: tokens[0],
             right: tokens[2]
         }
+    }
+
+    function parseDependentMetadata (metadataStr) {
+        return metadataStr.split(/\,\s*/g).map(parseDependentMetadataToken);
     }
 
     function parseParams(token) {
@@ -559,19 +563,21 @@ var signetValidator = (function () {
             return value;
         }
 
-        function checkDependentTypes(dependent, namedArgs, validationState) {
-            var newValidationState = null;
+        function checkDependentTypes(namedArgs) {
+            return function (dependent, validationState) {
+                var newValidationState = null;
 
-            if (validationState === null && isObjectInstance(dependent)) {
-                var left = namedArgs[dependent.left];
-                var right = getRightArg(namedArgs, dependent.right);
+                if (validationState === null) {
+                    var left = namedArgs[dependent.left];
+                    var right = getRightArg(namedArgs, dependent.right);
 
-                var operatorDef = getDependentOperator(left.typeNode.type, dependent.operator);
+                    var operatorDef = getDependentOperator(left.typeNode.type, dependent.operator);
 
-                newValidationState = getValidationState(left, right, operatorDef);
-            }
+                    newValidationState = getValidationState(left, right, operatorDef);
+                }
 
-            return newValidationState === null ? validationState : newValidationState;
+                return newValidationState === null ? validationState : newValidationState;
+            };
         }
 
         function buildNamedArgs(typeList, argumentList) {
@@ -593,14 +599,25 @@ var signetValidator = (function () {
             return result;
         }
 
+        function arrayOrDefault (value) {
+            var typeOk = Object.prototype.toString.call(value) === '[object Array]';
+            return typeOk ? value : [];
+        }
+
         function validateArguments(typeList) {
-            var dependent = typeList.dependent;
+            var dependentExpressions = arrayOrDefault(typeList.dependent);
 
             return function (argumentList) {
                 var namedArgs = buildNamedArgs(typeList, argumentList);
                 var validationState = typeList.length === 0 ? null : validateCurrentValue(typeList, argumentList);
 
-                return checkDependentTypes(dependent, namedArgs, validationState);
+                var checkDependentType = checkDependentTypes(namedArgs);
+
+                dependentExpressions.forEach(function (dependent) {
+                    validationState = checkDependentType(dependent, validationState);
+                });
+
+                return validationState;
             };
         }
 

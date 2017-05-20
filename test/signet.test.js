@@ -348,9 +348,17 @@ describe('Signet Library', function () {
             'A <: B :: A:variant<string;number>, B:variant<string;int> => number',
             testFnFactory()).bind(null, 2.2, 3),
             'Expected a value of type A <: B but got A = 2.2 and B = 3 of type string');
+        assert.throws(signet.enforce(
+            'A < B, B > C :: A:int, B:int, C:int => number',
+            testFnFactory()).bind(null, 5, 6, 7),
+            'Expected a value of type B > C but got B = 6 and C = 7 of type string');
+
         assert.doesNotThrow(signet.enforce(
             'A <: B :: A:variant<string;int>, B:variant<string;number> => number',
             testFnFactory()).bind(null, 5, 6));
+        assert.doesNotThrow(signet.enforce(
+            'A < B, B < C :: A:int, B:int, C:int => number',
+            testFnFactory()).bind(null, 5, 6, 7));
     });
 
     it('should get variant type of value', function () {
