@@ -305,6 +305,10 @@ the means to verify dependent types across function calls.  Built in type operat
     - `<:` (subtype)
     - `>:` (supertype)
 
+Example for a range function might look like the following:
+
+`start < end :: start:int, end:int, increment:int => array<int>`
+
 Other dependent type operators can be defined through the defineDependentOperatorOn function.
 
 ## Signet API
@@ -352,6 +356,14 @@ You can now bind an execution context for object instances or other, various rea
 ```
 
 ## Changes
+
+### 3.2.0
+
+- Added support for multiple dependent type expressions
+
+### 3.1.0
+
+- Extended reportDuckTypeErrors to perform a recursive search through an object when possible
 
 ### 3.0.0
 
