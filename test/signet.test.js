@@ -3,6 +3,7 @@ var signetBuilder = require('../index');
 var signetParser = require('signet-parser');
 var assert = require('chai').assert;
 var timerFactory = require('./timer');
+var sinon = require('sinon');
 
 describe('Signet Library', function () {
 
@@ -110,12 +111,12 @@ describe('Signet Library', function () {
         assert.equal(isUnorderedProduct([1, 2.5, 'foo', [], {}]), true);
         assert.equal(isUnorderedProduct([2.5, 'foo', {}, 1, []]), true);
 
-        assert.equal(signet.isTypeOf('type')(function () {}), true);
+        assert.equal(signet.isTypeOf('type')(function () { }), true);
         assert.equal(signet.isTypeOf('type')('variant'), true);
         assert.equal(signet.isTypeOf('type')('badType'), false);
 
         assert.equal(signet.isTypeOf('()')('foo'), true);
-        assert.doesNotThrow(signet.enforce('() => undefined', function() {}));
+        assert.doesNotThrow(signet.enforce('() => undefined', function () { }));
     });
 
     it('should pre-register signet type aliases', function () {
@@ -201,10 +202,10 @@ describe('Signet Library', function () {
         var add = signet.enforce('number, number => number', function (a, b) {
             return true;
         }, {
-            inputErrorBuilder: function (validationResult, args, signatureTree) {
-                return 'This is a custom input error!' + validationResult.toString() + args.toString() + signatureTree.toString();
-            }
-        });
+                inputErrorBuilder: function (validationResult, args, signatureTree) {
+                    return 'This is a custom input error!' + validationResult.toString() + args.toString() + signatureTree.toString();
+                }
+            });
 
         var expectedMessage = 'This is a custom input error!number,no3,no[object Object],[object Object],[object Object]';
 
@@ -215,10 +216,10 @@ describe('Signet Library', function () {
         var add = signet.enforce('number, number => number', function (a, b) {
             return true;
         }, {
-            outputErrorBuilder: function (validationResult, args, signatureTree) {
-                return 'This is a custom output error!' + validationResult.toString() + args.toString() + signatureTree.toString();
-            }
-        });
+                outputErrorBuilder: function (validationResult, args, signatureTree) {
+                    return 'This is a custom output error!' + validationResult.toString() + args.toString() + signatureTree.toString();
+                }
+            });
 
         var expectedMessage = 'This is a custom output error!number,true3,4[object Object],[object Object],[object Object]';
 
@@ -367,6 +368,57 @@ describe('Signet Library', function () {
         assert.equal(getValueType('foo'), 'string');
         assert.equal(getValueType(17), 'int');
         assert.equal(getValueType(17.5), null);
+    });
+
+    it('should properly enforce constructors', function () {
+        var testMethodSpy = sinon.spy();
+
+        var MyObj = signet.enforce(
+            'a:int, b:string => undefined',
+            function (a, b) {
+                this.testMethod(a, b);
+            }
+        );
+
+        MyObj.prototype.testMethod = testMethodSpy;
+
+        var objInstance = new MyObj(5, 'foo');
+        var result = JSON.stringify(testMethodSpy.args[0]);
+        var expectedResult = JSON.stringify([5, 'foo']);
+
+        assert.equal(testMethodSpy.callCount, 1);
+        assert.equal(result, expectedResult);
+
+        assert.throws(
+            function () { return new MyObj('foo', 5); },
+            'Expected a value of type a:int but got foo of type string'
+        );
+    });
+
+    it('should properly enforce object methods', function () {
+        var testMethodSpy = sinon.spy();
+
+        function MyObj(a) {
+            this.a = a;
+        }
+
+        MyObj.prototype = {
+            testMethod: signet.enforce(
+                'b:int => result:int',
+                function (b) {
+                    return this.a + b;
+                }
+            )
+        }
+
+        var objInstance = new MyObj(6);
+
+        assert.equal(objInstance.testMethod(7), 13);
+        assert.throws(
+            objInstance.testMethod.bind(objInstance, '7'),
+            'Expected a value of type b:int but got 7 of type string'
+        );
+
     });
 
 });

@@ -398,6 +398,11 @@ from Signet itself is the `()` type.
 
 ## Change Log ##
 
+### 3.3.0 ###
+
+- Added object context preservation to ensure constructors and methods can safely be
+decorated and standard bind, call and apply actions work as expected
+
 ### 3.2.0 ###
 
 - Added support for multiple dependent type expressions

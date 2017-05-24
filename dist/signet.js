@@ -856,14 +856,14 @@ function signetBuilder(
             var returnType = !signatureIsCurried ? last(signatureTree)[0] : functionTypeDef;
             var returnTypeStr = assembler.assembleType(returnType);
 
-            var result = fn.apply(null, args);
+            var result = fn.apply(this, args);
 
             if (!validator.validateType(returnType)(result)) {
                 throwOutputError([returnTypeStr, result], options.outputErrorBuilder, args, signatureTree);
             }
 
             return !signatureIsCurried ? result : enforceOnTree(signatureTree.slice(1), result, options);
-        }
+        };
     }
 
     function buildArgNames(argCount) {
@@ -878,8 +878,8 @@ function signetBuilder(
     }
 
     function buildEnforceDecorator(enforcer) {
-        return function (args) {
-            return enforcer.apply(null, Array.prototype.slice.call(arguments, 0));
+        return function enforceDecorator(args) {
+            return enforcer.apply(this, Array.prototype.slice.call(arguments, 0));
         }
     }
 
