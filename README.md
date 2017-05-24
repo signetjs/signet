@@ -246,7 +246,7 @@ Functions can be signed and verified all in one call with the enforce function:
 
 ```
     const enforcedAdd = signet.enforce(
-        'number, number => number',
+        'a:number, b:number => sum:number',
         (a, b) => a + b
     );
 ```
@@ -255,7 +255,7 @@ Curried functions are also fully enforced all the way down:
 
 ```
     const curriedAdd = signet.enforce(
-        'number => number => number',
+        'a:number => b:number => sum:number',
         (a) => (b) => a + b
     );
     
@@ -277,7 +277,7 @@ Subtypes can be added by using the subtype function. This is particularly useful
     signet.subtype('number')('int', (value) => Math.floor(value) === value && value !== infinity);
     
     var enforcedIntAdd = signet.enforce(
-        'int, int => int',
+        'a:int, b:int => sum:int',
         (a, b) => a + b
     );
     
@@ -288,7 +288,7 @@ Subtypes can be added by using the subtype function. This is particularly useful
 Using secondary type information for higher-kinded subtype definition. Any secondary type strings for higher-kinded types will be automatically split on ';' to allow for multiple type arguments.
 
 ```
-    signet.subtype('array')('triple` {
+    signet.subtype('array')('triple` function (value) {
         return isTypeOf(typeObj.valueType[0])(value[0]) &&
             isTypeOf(typeObj.valueType[1])(value[1]) &&
             isTypeOf(typeObj.valueType[2])(value[2]);
