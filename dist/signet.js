@@ -27,8 +27,13 @@ var signetAssembler = (function () {
         return prependTypeName(typeDef.name, typeStr);
     }
 
+    function buildDependentToken (result, dependent) {
+        var output = result !== '' ? result + ', ' : result;
+        return output + [dependent.left, dependent.operator, dependent.right].join(' ');
+    }
+
     function buildDependentStr (dependent) {
-        return [dependent.left, dependent.operator, dependent.right].join(' ') + ' :: ';
+        return dependent.reduce(buildDependentToken, '') + ' :: ';
     }
 
     function assembleTypeList(typeList) {
