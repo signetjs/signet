@@ -422,3 +422,7 @@ describe('Signet Library', function () {
     });
 
 });
+
+if(typeof global.runQuokkaMochaBdd === 'function') {
+    runQuokkaMochaBdd();
+}
