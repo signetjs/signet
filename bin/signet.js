@@ -129,7 +129,6 @@ function signetBuilder(
     function buildEnforcer(signatureTree, fn, options) {
         var functionName = getFunctionName(fn);
         return function () {
-            console.log('Enforced function name: ' + fn.name);
             var args = Array.prototype.slice.call(arguments, 0);
             var validationResult = validator.validateArguments(signatureTree[0])(args);
 
