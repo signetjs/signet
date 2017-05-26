@@ -398,6 +398,10 @@ from Signet itself is the `()` type.
 
 ## Change Log ##
 
+### 3.4.0 ###
+
+- Updated error messages to include function name as available
+
 ### 3.3.0 ###
 
 - Added object context preservation to ensure constructors and methods can safely be
