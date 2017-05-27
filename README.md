@@ -398,9 +398,13 @@ from Signet itself is the `()` type.
 
 ## Change Log ##
 
-### 3.4.0 ###
+### 3.5.0 ###
 
 - Exposed preprocessor option for extend and subtype functions
+
+### 3.4.0 ###
+
+- Updated error messages to include function name as available
 
 ### 3.3.0 ###
 

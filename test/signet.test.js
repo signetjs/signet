@@ -184,7 +184,7 @@ describe('Signet Library', function () {
 
     it('should enforce a function with a correct argument count', function () {
         var add = signet.enforce('number, number => number', addBuilder());
-        var expectedMessage = 'Expected a value of type number but got 6 of type string';
+        var expectedMessage = 'Anonymous expected a value of type number but got 6 of type string';
 
         assert.throws(add.bind(null, 5, '6'), expectedMessage);
     });
@@ -194,7 +194,7 @@ describe('Signet Library', function () {
             return true;
         });
 
-        var expectedMessage = 'Expected a return value of type number but got true of type boolean'
+        var expectedMessage = 'Anonymous expected a return value of type number but got true of type boolean';
 
         assert.throws(add.bind(null, 3, 4), expectedMessage);
     });
@@ -335,7 +335,7 @@ describe('Signet Library', function () {
             };
         }
 
-        assert.throws(testWith(5, 6), 'Expected a value of type A > B but got A = 5 and B = 6 of type string');
+        assert.throws(testWith(5, 6), 'orderedProperly expected a value of type A > B but got A = 5 and B = 6 of type string');
         assert.equal(testWith(7, 3)(), true);
     });
 
@@ -349,11 +349,11 @@ describe('Signet Library', function () {
         assert.throws(signet.enforce(
             'A <: B :: A:variant<string;number>, B:variant<string;int> => number',
             testFnFactory()).bind(null, 2.2, 3),
-            'Expected a value of type A <: B but got A = 2.2 and B = 3 of type string');
+            'Anonymous expected a value of type A <: B but got A = 2.2 and B = 3 of type string');
         assert.throws(signet.enforce(
             'A < B, B > C :: A:int, B:int, C:int => number',
             testFnFactory()).bind(null, 5, 6, 7),
-            'Expected a value of type B > C but got B = 6 and C = 7 of type string');
+            'Anonymous expected a value of type B > C but got B = 6 and C = 7 of type string');
 
         assert.doesNotThrow(signet.enforce(
             'A <: B :: A:variant<string;int>, B:variant<string;number> => number',
@@ -392,14 +392,14 @@ describe('Signet Library', function () {
 
         assert.throws(
             function () { return new MyObj('foo', 5); },
-            'Expected a value of type a:int but got foo of type string'
+            'Anonymous expected a value of type a:int but got foo of type string'
         );
     });
 
     it('should properly enforce object methods', function () {
         var testMethodSpy = sinon.spy();
 
-        function MyObj(a) {
+        function MyObj(a) { 
             this.a = a;
         }
 
@@ -417,7 +417,7 @@ describe('Signet Library', function () {
         assert.equal(objInstance.testMethod(7), 13);
         assert.throws(
             objInstance.testMethod.bind(objInstance, '7'),
-            'Expected a value of type b:int but got 7 of type string'
+            'Anonymous expected a value of type b:int but got 7 of type string'
         );
 
     });

@@ -87,10 +87,10 @@ function signetBuilder(
         return list[list.length - 1];
     }
 
-    function throwEvaluationError(valueInfo, prefixMixin) {
+    function throwEvaluationError(valueInfo, prefixMixin, functionName) {
         var valueType = typeof valueInfo[1];
 
-        var errorMessage = 'Expected a ' + prefixMixin + 'value of type ' +
+        var errorMessage = functionName + ' expected a ' + prefixMixin + 'value of type ' +
             valueInfo[0] + ' but got ' +
             valueInfo[1] + ' of type ' + valueType;
 
@@ -107,29 +107,34 @@ function signetBuilder(
         }
     }
 
-    function throwInputError(validationResult, inputErrorBuilder, args, signatureTree) {
+    function throwInputError(validationResult, inputErrorBuilder, args, signatureTree, functionName) {
         if (typeof inputErrorBuilder === 'function') {
-            throw new Error(inputErrorBuilder(validationResult, args, signatureTree));
+            throw new Error(inputErrorBuilder(validationResult, args, signatureTree, functionName));
         } else {
-            throwEvaluationError(validationResult, '');
+            throwEvaluationError(validationResult, '', functionName);
         }
     }
 
-    function throwOutputError(validationResult, outputErrorBuilder, args, signatureTree) {
+    function throwOutputError(validationResult, outputErrorBuilder, args, signatureTree, functionName) {
         if (typeof outputErrorBuilder === 'function') {
-            throw new Error(outputErrorBuilder(validationResult, args, signatureTree));
+            throw new Error(outputErrorBuilder(validationResult, args, signatureTree, functionName));
         } else {
-            throwEvaluationError(validationResult, 'return ');
+            throwEvaluationError(validationResult, 'return ', functionName);
         }
+    }
+
+    function getFunctionName (fn) {
+        return fn.name === '' ? 'Anonymous' : fn.name;
     }
 
     function buildEnforcer(signatureTree, fn, options) {
+        var functionName = getFunctionName(fn);
         return function () {
             var args = Array.prototype.slice.call(arguments, 0);
             var validationResult = validator.validateArguments(signatureTree[0])(args);
 
             if (validationResult !== null) {
-                throwInputError(validationResult, options.inputErrorBuilder, args, signatureTree);
+                throwInputError(validationResult, options.inputErrorBuilder, args, signatureTree, functionName);
             }
 
             var signatureIsCurried = signatureTree.length > 2;
@@ -139,7 +144,7 @@ function signetBuilder(
             var result = fn.apply(this, args);
 
             if (!validator.validateType(returnType)(result)) {
-                throwOutputError([returnTypeStr, result], options.outputErrorBuilder, args, signatureTree);
+                throwOutputError([returnTypeStr, result], options.outputErrorBuilder, args, signatureTree, functionName);
             }
 
             return !signatureIsCurried ? result : enforceOnTree(signatureTree.slice(1), result, options);
