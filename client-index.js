@@ -9,6 +9,7 @@ var signet = (function () {
         var typelog = signetTypelog(registrar, parser);
         var validator = signetValidator(typelog, assembler);
         var duckTypes = signetDuckTypes;
+        var coreTypes = signetCoreTypes;
 
         return signetBuilder(
             typelog, 
@@ -16,7 +17,8 @@ var signet = (function () {
             checker, 
             parser, 
             assembler, 
-            duckTypes);
+            duckTypes,
+            coreTypes);
     }
 
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

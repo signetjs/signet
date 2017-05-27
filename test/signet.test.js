@@ -1,6 +1,7 @@
 // var signetBuilder = require('../dist/signet.min');
 var signetBuilder = require('../index');
 var signetParser = require('signet-parser');
+
 var assert = require('chai').assert;
 var timerFactory = require('./timer');
 var sinon = require('sinon');

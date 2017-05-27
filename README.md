@@ -383,20 +383,24 @@ from Signet itself is the `()` type.
     - currently supported options:
         - inputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
         - outputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
-- extend: `typeName:string, typeCheck:function => undefined`
+- extend: `typeName:string, typeCheck:function, preprocessor:[function] => undefined`
 - isSubtypeOf: `rootTypeName:string => typeNameUnderTest:string => boolean`
 - isType: `typeName:string => boolean`
 - isTypeOf: `typeToCheck:type => value:* => boolean`
 - registerTypeLevelMacro: `macro:function => undefined`
 - reportDuckTypeErrors: `duckTypeName:string => valueToCheck:object => array<tuple<string; string; *>>`
 - sign: `signature:string, functionToSign:function => function`
-- subtype: `rootTypeName:string => subtypeName:string, subtypeCheck:function => undefined`
+- subtype: `rootTypeName:string => subtypeName:string, subtypeCheck:function, preprocessor:[function] => undefined`
 - typeChain: `typeName:string => string`
 - verify: `signedFunctionToVerify:function, functionArguments:arguments => undefined`
 - whichType: `typeNames:array<string> => value:* => variant<string; null>`
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 3.4.0 ###
+
+- Exposed preprocessor option for extend and subtype functions
 
 ### 3.3.0 ###
 

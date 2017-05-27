@@ -8,6 +8,7 @@ var typelogBuilder = require('signet-typelog');
 var validatorBuilder = require('signet-validator');
 var signetBuilder = require('./bin/signet');
 var duckTypes = require('./bin/duckTypes');
+var coreTypes = require('./bin/coreTypes')
 
 module.exports = function () {
 
@@ -23,6 +24,7 @@ module.exports = function () {
         checker, 
         parser, 
         assembler, 
-        duckTypes);
+        duckTypes,
+        coreTypes);
 
 };
