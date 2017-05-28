@@ -1,14 +1,14 @@
-function signetCoreTypes (
+function signetCoreTypes(
     parser,
     extend,
     isTypeOf,
     isSignetType,
-    isSignetSubtypeOf, 
-    subtype, 
-    alias, 
+    isSignetSubtypeOf,
+    subtype,
+    alias,
     defineDependentOperatorOn) {
     'use strict';
-    
+
     function not(pred) {
         return function (a, b) {
             return !pred(a, b);
@@ -140,30 +140,8 @@ function signetCoreTypes (
         };
     }
 
-    function leftBoundedBuilder() {
-        function checkLeftBound(value, bound) {
-            return value >= bound;
-        }
-
-        return checkLeftBound;
-    }
-
-    function rightBoundedBuilder() {
-        function checkRightBound(value, bound) {
-            return value <= bound;
-        }
-
-        return checkRightBound;
-    }
-
-    function optionsToBound(options) {
-        return Number(options[0]);
-    }
-
-    var inRange = rangeBuilder();
-
     function checkBoundedString(value, range) {
-        return inRange(value.length, range);
+        return range.min <= value.length && value.length <= range.max;
     }
 
     function optionsToRegex(options) {
@@ -264,6 +242,11 @@ function signetCoreTypes (
 
     var starTypeDef = parser.parseType('*');
 
+    function isRegisteredType(value) {
+        return typeof value === 'function' || isSignetType(parser.parseType(value).type);
+    }
+
+
     parser.registerTypeLevelMacro(function emptyParamsToStar(value) {
         return /^\(\s*\)$/.test(value) ? '*' : value;
     });
@@ -279,38 +262,28 @@ function signetCoreTypes (
     extend('variant', isVariant, optionsToFunctions);
     extend('taggedUnion', checkTaggedUnion, optionsToFunctions);
 
-    var isTypeBaseType = isTypeOf('variant<string; function>');
-
-    function verifyTypeType(value) {
-        var typeValueOk = isTypeBaseType(value);
-
-        if (typeValueOk && typeof value === 'string') {
-            var parsedType = parser.parseType(value);
-            typeValueOk = isSignetType(parsedType.type);
-        }
-
-        return typeValueOk;
-    }
-
-    extend('type', verifyTypeType);
-
     subtype('object')('array', checkArray);
     subtype('object')('regexp', isRegExp);
     subtype('number')('int', checkInt);
     subtype('number')('bounded', rangeBuilder(), optionsToRangeObject);
-    subtype('number')('leftBounded', leftBoundedBuilder(), optionsToBound);
-    subtype('number')('rightBounded', rightBoundedBuilder(), optionsToBound);
     subtype('int')('boundedInt', rangeBuilder(), optionsToRangeObject);
-    subtype('int')('leftBoundedInt', leftBoundedBuilder(), optionsToBound);
-    subtype('int')('rightBoundedInt', rightBoundedBuilder(), optionsToBound);
     subtype('string')('boundedString', checkBoundedString, optionsToRangeObject);
     subtype('string')('formattedString', checkFormattedString, optionsToRegex);
     subtype('array')('tuple', checkTuple, optionsToFunctions);
     subtype('array')('unorderedProduct', isUnorderedProduct);
     subtype('object')('arguments', checkArgumentsObject);
 
+    alias('typeValue', 'variant<string; function>');
+    subtype('typeValue')('type', isRegisteredType);
+
     alias('any', '*');
     alias('void', '*');
+
+    alias('leftBounded', 'bounded<_; Infinity>');
+    alias('rightBounded', 'bounded<-Infinity; _>');
+    
+    alias('leftBoundedInt', 'bounded<_; Infinity>');
+    alias('rightBoundedInt', 'bounded<-Infinity; _>');
 
     defineDependentOperatorOn('number')('>', greater);
     defineDependentOperatorOn('number')('<', less);
@@ -341,6 +314,6 @@ function signetCoreTypes (
 
 }
 
-if(typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = signetCoreTypes;
 }

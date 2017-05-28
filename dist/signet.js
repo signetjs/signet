@@ -724,17 +724,17 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
 }
 
 
-function signetCoreTypes (
+function signetCoreTypes(
     parser,
     extend,
     isTypeOf,
     isSignetType,
-    isSignetSubtypeOf, 
-    subtype, 
-    alias, 
+    isSignetSubtypeOf,
+    subtype,
+    alias,
     defineDependentOperatorOn) {
     'use strict';
-    
+
     function not(pred) {
         return function (a, b) {
             return !pred(a, b);
@@ -866,30 +866,8 @@ function signetCoreTypes (
         };
     }
 
-    function leftBoundedBuilder() {
-        function checkLeftBound(value, bound) {
-            return value >= bound;
-        }
-
-        return checkLeftBound;
-    }
-
-    function rightBoundedBuilder() {
-        function checkRightBound(value, bound) {
-            return value <= bound;
-        }
-
-        return checkRightBound;
-    }
-
-    function optionsToBound(options) {
-        return Number(options[0]);
-    }
-
-    var inRange = rangeBuilder();
-
     function checkBoundedString(value, range) {
-        return inRange(value.length, range);
+        return range.min <= value.length && value.length <= range.max;
     }
 
     function optionsToRegex(options) {
@@ -990,6 +968,11 @@ function signetCoreTypes (
 
     var starTypeDef = parser.parseType('*');
 
+    function isRegisteredType(value) {
+        return typeof value === 'function' || isSignetType(parser.parseType(value).type);
+    }
+
+
     parser.registerTypeLevelMacro(function emptyParamsToStar(value) {
         return /^\(\s*\)$/.test(value) ? '*' : value;
     });
@@ -1005,38 +988,28 @@ function signetCoreTypes (
     extend('variant', isVariant, optionsToFunctions);
     extend('taggedUnion', checkTaggedUnion, optionsToFunctions);
 
-    var isTypeBaseType = isTypeOf('variant<string; function>');
-
-    function verifyTypeType(value) {
-        var typeValueOk = isTypeBaseType(value);
-
-        if (typeValueOk && typeof value === 'string') {
-            var parsedType = parser.parseType(value);
-            typeValueOk = isSignetType(parsedType.type);
-        }
-
-        return typeValueOk;
-    }
-
-    extend('type', verifyTypeType);
-
     subtype('object')('array', checkArray);
     subtype('object')('regexp', isRegExp);
     subtype('number')('int', checkInt);
     subtype('number')('bounded', rangeBuilder(), optionsToRangeObject);
-    subtype('number')('leftBounded', leftBoundedBuilder(), optionsToBound);
-    subtype('number')('rightBounded', rightBoundedBuilder(), optionsToBound);
     subtype('int')('boundedInt', rangeBuilder(), optionsToRangeObject);
-    subtype('int')('leftBoundedInt', leftBoundedBuilder(), optionsToBound);
-    subtype('int')('rightBoundedInt', rightBoundedBuilder(), optionsToBound);
     subtype('string')('boundedString', checkBoundedString, optionsToRangeObject);
     subtype('string')('formattedString', checkFormattedString, optionsToRegex);
     subtype('array')('tuple', checkTuple, optionsToFunctions);
     subtype('array')('unorderedProduct', isUnorderedProduct);
     subtype('object')('arguments', checkArgumentsObject);
 
+    alias('typeValue', 'variant<string; function>');
+    subtype('typeValue')('type', isRegisteredType);
+
     alias('any', '*');
     alias('void', '*');
+
+    alias('leftBounded', 'bounded<_; Infinity>');
+    alias('rightBounded', 'bounded<-Infinity; _>');
+    
+    alias('leftBoundedInt', 'bounded<_; Infinity>');
+    alias('rightBoundedInt', 'bounded<-Infinity; _>');
 
     defineDependentOperatorOn('number')('>', greater);
     defineDependentOperatorOn('number')('<', less);
@@ -1067,7 +1040,7 @@ function signetCoreTypes (
 
 }
 
-if(typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
     module.exports = signetCoreTypes;
 }
 
@@ -1083,14 +1056,40 @@ function signetBuilder(
     'use strict';
 
     var duckTypesModule = duckTypes(typelog, isTypeOf);
+    var placeholderPattern = /([<\;]\s*)(_)(\s*[>\;])/;
+
+    function hasPlaceholder(typeStr) {
+        return placeholderPattern.test(typeStr);
+    }
+
+    function replacePlaceholders(typeStr, typeValues) {
+        return typeValues.reduce(function (result, typeValue) {
+            return result.replace(placeholderPattern, '$1' + typeValue + '$3');
+        }, typeStr);
+    }
+
+    function buildTypeAlias(typeDef) {
+        var checkValue = typelog.isTypeOf(typeDef);
+
+        return function typeCheck(value) {
+            return checkValue(value);
+        };
+    }
+
+    function buildPartialTypeAlias(typeStr) {
+        return function typeCheck(value, typeValues) {
+            var finalTypeStr = replacePlaceholders(typeStr, typeValues);
+            var typeDef = parser.parseType(finalTypeStr);
+
+            return buildTypeAlias(typeDef)(value);
+        };
+    }
 
     function alias(key, typeStr) {
         var typeDef = parser.parseType(typeStr);
-        var checkType = typelog.isTypeOf(typeDef);
+        var typeAlias = hasPlaceholder(typeStr) ? buildPartialTypeAlias(typeStr) : buildTypeAlias(typeDef);
 
-        typelog.defineSubtypeOf(typeDef.type)(key, function (value) {
-            return checkType(value);
-        });
+        typelog.define(key, typeAlias);
     }
 
     function isTypeOf(typeValue) {
@@ -1196,7 +1195,7 @@ function signetBuilder(
         }
     }
 
-    function getFunctionName (fn) {
+    function getFunctionName(fn) {
         return fn.name === '' ? 'Anonymous' : fn.name;
     }
 
@@ -1307,39 +1306,39 @@ function signetBuilder(
             'aliasName != typeString :: aliasName:string, typeString:string => undefined',
             alias),
         duckTypeFactory: enforce(
-            'duckTypeDef:object => function', 
+            'duckTypeDef:object => function',
             duckTypesModule.duckTypeFactory),
         defineDuckType: enforce(
-            'typeName:string, duckTypeDef:object => undefined', 
+            'typeName:string, duckTypeDef:object => undefined',
             duckTypesModule.defineDuckType),
         defineDependentOperatorOn: enforce(
-            'typeName:string => operator:string, operatorCheck:function => undefined', 
+            'typeName:string => operator:string, operatorCheck:function => undefined',
             typelog.defineDependentOperatorOn),
         enforce: enforce(
-            'signature:string, functionToEnforce:function, options:[object] => function', 
+            'signature:string, functionToEnforce:function, options:[object] => function',
             enforce),
         extend: enforce(
-            'typeName:string, typeCheck:function, preprocessor:[function] => undefined', 
+            'typeName:string, typeCheck:function, preprocessor:[function] => undefined',
             extend),
         isSubtypeOf: enforce(
-            'rootTypeName:string => typeNameUnderTest:string => boolean', 
+            'rootTypeName:string => typeNameUnderTest:string => boolean',
             typelog.isSubtypeOf),
         isType: enforce(
-            'typeName:string => boolean', 
+            'typeName:string => boolean',
             typelog.isType),
         isTypeOf: enforce(
-            'typeToCheck:type => value:* => boolean', 
+            'typeToCheck:type => value:* => boolean',
             isTypeOf),
         registerTypeLevelMacro: enforce(
-            'macro:function => undefined', 
+            'macro:function => undefined',
             parser.registerTypeLevelMacro),
         reportDuckTypeErrors: enforce(
             'duckTypeName:string => \
             valueToCheck:object => \
-            array<tuple<string; string; *>>', 
+            array<tuple<string; string; *>>',
             duckTypesModule.reportDuckTypeErrors),
         sign: enforce(
-            'signature:string, functionToSign:function => function', 
+            'signature:string, functionToSign:function => function',
             sign),
         subtype: enforce(
             'rootTypeName:string => \
@@ -1347,16 +1346,16 @@ function signetBuilder(
             undefined',
             subtype),
         typeChain: enforce(
-            'typeName:string => string', 
+            'typeName:string => string',
             typelog.getTypeChain),
         verify: enforce(
-            'signedFunctionToVerify:function, functionArguments:arguments => undefined', 
+            'signedFunctionToVerify:function, functionArguments:arguments => undefined',
             verify),
         whichType: enforce(
-            'typeNames:array<string> => value:* => variant<string; null>', 
+            'typeNames:array<string> => value:* => variant<string; null>',
             typeApi.whichType),
         whichVariantType: enforce(
-            'variantString:string => value:* => variant<string; null>', 
+            'variantString:string => value:* => variant<string; null>',
             typeApi.whichVariantType)
     };
 }

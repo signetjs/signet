@@ -398,6 +398,10 @@ from Signet itself is the `()` type.
 
 ## Change Log ##
 
+### 3.6.0 ###
+
+- Added partial application to higher-kinded types in type aliasing
+
 ### 3.5.0 ###
 
 - Exposed preprocessor option for extend and subtype functions

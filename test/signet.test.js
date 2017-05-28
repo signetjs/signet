@@ -422,6 +422,15 @@ describe('Signet Library', function () {
 
     });
 
+    it('should partially apply a type value', function () {
+        signet.alias('testTuple', 'tuple<_; _>');
+        signet.alias('testPartialTuple', 'testTuple<int; _>');
+
+        assert.equal(signet.isTypeOf('testTuple<array; object>')([[], {}]), true);
+        assert.equal(signet.isTypeOf('testPartialTuple<string>')([5, 'foo']), true);
+        assert.equal(signet.isTypeOf('testPartialTuple<string>')([5, 6]), false);
+    });
+
 });
 
 if(typeof global.runQuokkaMochaBdd === 'function') {
