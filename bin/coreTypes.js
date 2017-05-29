@@ -248,7 +248,7 @@ function signetCoreTypes(
 
 
     parser.registerTypeLevelMacro(function emptyParamsToStar(value) {
-        return /^\(\s*\)$/.test(value) ? '*' : value;
+        return /^\(\s*\)$/.test(value.trim()) ? '*' : value;
     });
 
     extend('boolean', isType('boolean'));

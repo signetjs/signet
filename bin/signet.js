@@ -190,7 +190,8 @@ function signetBuilder(
 
     function buildEnforceDecorator(enforcer) {
         return function enforceDecorator(args) {
-            return enforcer.apply(this, Array.prototype.slice.call(arguments, 0));
+            var args = Array.prototype.slice.call(arguments, 0);
+            return enforcer.apply(this, args);
         }
     }
 
