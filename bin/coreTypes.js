@@ -145,7 +145,7 @@ function signetCoreTypes(
     }
 
     function optionsToRegex(options) {
-        return RegExp(options.join(';'));
+        return options.length === 1 ? options[0] : options.join(';');
     }
 
     function checkFormattedString(value, regex) {
@@ -251,6 +251,13 @@ function signetCoreTypes(
         return /^\(\s*\)$/.test(value.trim()) ? '*' : value;
     });
 
+    parser.registerSignatureLevelMacro(function signatureToFunction(value) {
+        var signaturePattern = /(\()((.*\=\>)+(.*))(\))/
+        var signatureMatch = signaturePattern.test(value);
+
+        return signatureMatch ? value.replace(signaturePattern, 'function<$2>') : value;
+    });
+
     extend('boolean', isType('boolean'));
     extend('function', isType('function'));
     extend('number', isType('number'));
@@ -273,17 +280,17 @@ function signetCoreTypes(
     subtype('array')('unorderedProduct', isUnorderedProduct);
     subtype('object')('arguments', checkArgumentsObject);
 
-    alias('typeValue', 'variant<string; function>');
+    alias('typeValue', 'variant<string, function>');
     subtype('typeValue')('type', isRegisteredType);
 
     alias('any', '*');
     alias('void', '*');
 
-    alias('leftBounded', 'bounded<_; Infinity>');
-    alias('rightBounded', 'bounded<-Infinity; _>');
+    alias('leftBounded', 'bounded<_, Infinity>');
+    alias('rightBounded', 'bounded<-Infinity, _>');
     
-    alias('leftBoundedInt', 'bounded<_; Infinity>');
-    alias('rightBoundedInt', 'bounded<-Infinity; _>');
+    alias('leftBoundedInt', 'bounded<_, Infinity>');
+    alias('rightBoundedInt', 'bounded<-Infinity, _>');
 
     defineDependentOperatorOn('number')('>', greater);
     defineDependentOperatorOn('number')('<', less);

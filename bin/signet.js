@@ -10,7 +10,7 @@ function signetBuilder(
     'use strict';
 
     var duckTypesModule = duckTypes(typelog, isTypeOf);
-    var placeholderPattern = /([<\;]\s*)(_)(\s*[>\;])/;
+    var placeholderPattern = /([<\;\,]\s*)(_)(\s*[>\;\,])/;
 
     function hasPlaceholder(typeStr) {
         return placeholderPattern.test(typeStr);
@@ -290,7 +290,7 @@ function signetBuilder(
         reportDuckTypeErrors: enforce(
             'duckTypeName:string => \
             valueToCheck:object => \
-            array<tuple<string; string; *>>',
+            array<tuple<string, string; *>>',
             duckTypesModule.reportDuckTypeErrors),
         sign: enforce(
             'signature:string, functionToSign:function => function',
@@ -307,10 +307,10 @@ function signetBuilder(
             'signedFunctionToVerify:function, functionArguments:arguments => undefined',
             verify),
         whichType: enforce(
-            'typeNames:array<string> => value:* => variant<string; null>',
+            'typeNames:array<string> => value:* => variant<string, null>',
             typeApi.whichType),
         whichVariantType: enforce(
-            'variantString:string => value:* => variant<string; null>',
+            'variantString:string => value:* => variant<string, null>',
             typeApi.whichVariantType)
     };
 }

@@ -89,12 +89,12 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('boundedString<2; 15>')(''), false);
         assert.equal(signet.isTypeOf('boundedString<2; 15>')('this is a long string which should fail'), false);
 
-        assert.equal(signet.isTypeOf('formattedString<^\\d+(\\;)?\\d*$>')('123;45'), true);
-        assert.equal(signet.isTypeOf('formattedString<^\\d+(\\;)?\\d*$>')('Not numbers'), false);
+        assert.equal(signet.isTypeOf('formattedString<^\\d+(\\%;)?\\d*$>')('123;45'), true);
+        assert.equal(signet.isTypeOf('formattedString<^\\d+(\\%;)?\\d*$>')('Not numbers'), false);
 
-        assert.equal(signet.isTypeOf('tuple<int; formattedString<^\\d+(\\;)?\\D*$>; boolean>')([123, '1234;foo', false]), true);
-        assert.equal(signet.isTypeOf('tuple<int; formattedString<^\\d+(\\;)?\\D*$>; boolean>')([123, '1234;33', false]), false);
-        assert.equal(signet.isTypeOf('tuple<int; formattedString<^\\d+(\\;)?\\D*$>; boolean>')([123, '1234;foo', false, 'hooray!']), false);
+        assert.equal(signet.isTypeOf('tuple<int; formattedString<^\\d+(\\%;)?\\D*$>; boolean>')([123, '1234;foo', false]), true);
+        assert.equal(signet.isTypeOf('tuple<int; formattedString<^\\d+(\\%;)?\\D*$>; boolean>')([123, '1234;33', false]), false);
+        assert.equal(signet.isTypeOf('tuple<int; formattedString<^\\d+(\\%;)?\\D*$>; boolean>')([123, '1234;foo', false, 'hooray!']), false);
 
         assert.equal(signet.isTypeOf('variant<int; string>')(10), true);
         assert.equal(signet.isTypeOf('variant<int; string>')('I am a string'), true);
@@ -429,6 +429,13 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('testTuple<array; object>')([[], {}]), true);
         assert.equal(signet.isTypeOf('testPartialTuple<string>')([5, 'foo']), true);
         assert.equal(signet.isTypeOf('testPartialTuple<string>')([5, 6]), false);
+    });
+
+    it('should parse function definition with nested function definition', function () {
+        function doStuff () {}
+        signet.sign('(* => boolean) => array', doStuff);
+
+        assert.equal(doStuff.signature, 'function<* => boolean> => array');
     });
 
 });

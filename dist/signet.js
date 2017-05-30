@@ -105,6 +105,7 @@ function signetParser() {
     'use strict';
 
     var typeLevelMacros = [];
+    var signatureLevelMacros = [];
 
     function identity(value) {
         return value;
@@ -116,12 +117,12 @@ function signetParser() {
         }
     }
 
-    function applyTypeLeveMacros(typeStr) {
+    function applyMacros(macroSet, typeStr) {
         var result = typeStr;
-        var macroLength = typeLevelMacros.length;
+        var macroLength = macroSet.length;
 
         for (var i = 0; i < macroLength; i++) {
-            result = typeLevelMacros[i](result);
+            result = macroSet[i](result);
             throwOnBadMacroResult(result);
         }
 
@@ -132,7 +133,11 @@ function signetParser() {
         typeLevelMacros.push(macro);
     }
 
-    function isDelimiter (symbol) {
+    function registerSignatureLevelMacro(macro) {
+        signatureLevelMacros.push(macro);
+    }
+
+    function isDelimiter(symbol) {
         return symbol === ';' || symbol === ',';
     }
 
@@ -181,36 +186,24 @@ function signetParser() {
         }
     }
 
+    function getSubtypeData(typeStr) {
+        var subtypeToken = typeStr.trim().split('<').slice(1).join('<');
+        return subtypeToken.substring(0, subtypeToken.length - 1);
+    }
+
+    function isSubtypeSeparator(value) {
+        return value === ';' || value === ',';
+    }
+
     function parseSubtype(typeStr) {
-        var subtypeStr = '';
-        var subtypeInfo = [];
-        var bracketStack = [];
-
-        var getSubtypeStr = getUpdatedSubtypeStr(bracketStack, buildAppender(bracketStack));
-        var updateSubtypes = updateSubtypeInfo(bracketStack, subtypeInfo);
-
-        var typeStringTokens = typeStr.split('');
-
-        for(var i = 0; i < typeStringTokens.length; i++) {
-            var currentChar = typeStringTokens[i];
-
-            if(currentChar === '%') {
-                i++;
-                subtypeStr += typeStringTokens[i];
-                continue;
-            }
-
-            updateStack(bracketStack, currentChar);
-            updateSubtypes(subtypeStr, currentChar);
-
-            subtypeStr = getSubtypeStr(subtypeStr, currentChar);
-        }
-
-        return subtypeInfo;
+        var optionalPattern = /^\[(.*)\]$/
+        var subtypeData = getSubtypeData(typeStr.trim().replace(optionalPattern, '$1'));
+        return splitOnSymbol(isSubtypeSeparator, subtypeData)
+            .map(function (value) { return value.trim(); });
     }
 
     function parseType(typeStr) {
-        var transformedTypeStr = applyTypeLeveMacros(typeStr);
+        var transformedTypeStr = applyMacros(typeLevelMacros, typeStr);
 
         var typePattern = /^([^:<]+)\:(.+)$/;
         var typeName = transformedTypeStr.replace(typePattern, '$1');
@@ -234,7 +227,7 @@ function signetParser() {
         }
     }
 
-    function parseDependentMetadata (metadataStr) {
+    function parseDependentMetadata(metadataStr) {
         return metadataStr.split(/\,\s*/g).map(parseDependentMetadataToken);
     }
 
@@ -256,33 +249,39 @@ function signetParser() {
         return typeValues;
     }
 
-    function bracketStackFactory () {
+    function bracketStackFactory() {
         var stack = [];
 
         function update(symbol) {
-            if(symbol === '<') {
+            if (symbol === '<') {
                 stack.push('<');
             }
-            if(symbol === '>') {
+            if (symbol === '>') {
                 stack.pop();
             }
-            if(symbol === '::') {
+            if (symbol === '::') {
                 stack.length = 0;
             }
         }
 
         return {
             update: update,
-            get length () {
+            get length() {
                 return stack.length;
             }
         };
     }
 
-    function isSequenceChar (symbol) {
-        return symbol === '=' || 
-            symbol === '%' || 
+    function isSequenceChar(symbol) {
+        return symbol === '=' ||
+            symbol === '%' ||
             symbol === ':';
+    }
+
+    function isSpecialSquence(symbol) {
+        return symbol[0] === '%' ||
+            symbol === '=>' ||
+            symbol === '::';
     }
 
     function splitOnSymbol(isSplitSymbol, signature) {
@@ -291,17 +290,23 @@ function signetParser() {
         var currentSymbol = '';
         var bracketStack = bracketStackFactory();
 
-        for(var i = 0; i < signature.length; i++){
+        for (var i = 0; i < signature.length; i++) {
             currentSymbol = signature[i];
 
-            if(isSequenceChar(currentSymbol)) {
+            if (bracketStack.length === 0 && currentSymbol === '%') {
+                i++;
+                currentToken += signature[i];
+                continue;
+            }
+            
+            if (isSequenceChar(currentSymbol) && isSpecialSquence(currentSymbol + signature[i + 1])) {
                 i++;
                 currentSymbol = currentSymbol + signature[i];
             }
 
             bracketStack.update(currentSymbol);
 
-            if(isSplitSymbol(currentSymbol) && bracketStack.length === 0) {
+            if (isSplitSymbol(currentSymbol) && bracketStack.length === 0) {
                 tokens.push(currentToken);
                 currentToken = '';
                 continue;
@@ -310,7 +315,7 @@ function signetParser() {
             currentToken += currentSymbol;
         }
 
-        if(currentToken !== '') {
+        if (currentToken !== '') {
             tokens.push(currentToken);
         }
 
@@ -322,12 +327,14 @@ function signetParser() {
     }
 
     function parseSignature(signature) {
-        return splitOnSymbol(isArrow, signature).map(parseParams);
+        var resolvedSignature = applyMacros(signatureLevelMacros, signature);
+        return splitOnSymbol(isArrow, resolvedSignature).map(parseParams);
     }
 
     return {
         parseSignature: parseSignature,
         parseType: parseType,
+        registerSignatureLevelMacro: registerSignatureLevelMacro,
         registerTypeLevelMacro: registerTypeLevelMacro
     };
 }
@@ -946,7 +953,7 @@ function signetCoreTypes(
     }
 
     function optionsToRegex(options) {
-        return RegExp(options.join(';'));
+        return options.length === 1 ? options[0] : options.join(';');
     }
 
     function checkFormattedString(value, regex) {
@@ -1052,6 +1059,13 @@ function signetCoreTypes(
         return /^\(\s*\)$/.test(value.trim()) ? '*' : value;
     });
 
+    parser.registerSignatureLevelMacro(function signatureToFunction(value) {
+        var signaturePattern = /(\()((.*\=\>)+(.*))(\))/
+        var signatureMatch = signaturePattern.test(value);
+
+        return signatureMatch ? value.replace(signaturePattern, 'function<$2>') : value;
+    });
+
     extend('boolean', isType('boolean'));
     extend('function', isType('function'));
     extend('number', isType('number'));
@@ -1074,17 +1088,17 @@ function signetCoreTypes(
     subtype('array')('unorderedProduct', isUnorderedProduct);
     subtype('object')('arguments', checkArgumentsObject);
 
-    alias('typeValue', 'variant<string; function>');
+    alias('typeValue', 'variant<string, function>');
     subtype('typeValue')('type', isRegisteredType);
 
     alias('any', '*');
     alias('void', '*');
 
-    alias('leftBounded', 'bounded<_; Infinity>');
-    alias('rightBounded', 'bounded<-Infinity; _>');
+    alias('leftBounded', 'bounded<_, Infinity>');
+    alias('rightBounded', 'bounded<-Infinity, _>');
     
-    alias('leftBoundedInt', 'bounded<_; Infinity>');
-    alias('rightBoundedInt', 'bounded<-Infinity; _>');
+    alias('leftBoundedInt', 'bounded<_, Infinity>');
+    alias('rightBoundedInt', 'bounded<-Infinity, _>');
 
     defineDependentOperatorOn('number')('>', greater);
     defineDependentOperatorOn('number')('<', less);
@@ -1131,7 +1145,7 @@ function signetBuilder(
     'use strict';
 
     var duckTypesModule = duckTypes(typelog, isTypeOf);
-    var placeholderPattern = /([<\;]\s*)(_)(\s*[>\;])/;
+    var placeholderPattern = /([<\;\,]\s*)(_)(\s*[>\;\,])/;
 
     function hasPlaceholder(typeStr) {
         return placeholderPattern.test(typeStr);
@@ -1411,7 +1425,7 @@ function signetBuilder(
         reportDuckTypeErrors: enforce(
             'duckTypeName:string => \
             valueToCheck:object => \
-            array<tuple<string; string; *>>',
+            array<tuple<string, string; *>>',
             duckTypesModule.reportDuckTypeErrors),
         sign: enforce(
             'signature:string, functionToSign:function => function',
@@ -1428,10 +1442,10 @@ function signetBuilder(
             'signedFunctionToVerify:function, functionArguments:arguments => undefined',
             verify),
         whichType: enforce(
-            'typeNames:array<string> => value:* => variant<string; null>',
+            'typeNames:array<string> => value:* => variant<string, null>',
             typeApi.whichType),
         whichVariantType: enforce(
-            'variantString:string => value:* => variant<string; null>',
+            'variantString:string => value:* => variant<string, null>',
             typeApi.whichVariantType)
     };
 }
