@@ -41,7 +41,7 @@ knowledge even if a member of the tribe has long left.
 
 Finally, Signet won't let your documentation get out of date.  Since Signet does real type checking and a review of your function properties against your signature, if you add parameters or change your function, Signet will let you know your documentation is out of date.
 
-All of this only scratches the surface of what you can do with Signet.  You can define your own types, use higher-kinded and algebraic types and even define macros to alter type strings just in time. Beyond that, Signet is 100% ECMAScript 5.1 (Harmony) compliant, so there is no need to transpile anything. As long as your code works, Signet works.
+All of this only scratches the surface of what you can do with Signet.  You can define your own types, use constructed and algebraic types and even define macros to alter type strings just in time. Beyond that, Signet is 100% ECMAScript 5.1 (Harmony) compliant, so there is no need to transpile anything. As long as your code works, Signet works.
 
 Remember, code is not just a program to be run, it is a document programmers read.  Wouldn't you like your document to tell you more?
 
@@ -92,7 +92,7 @@ const range = signet.enforce(
 
 - Type names -- All primary type names should adhere to the list of supported types below
 - Subtype names -- Subtype names must not contain any reserved characters as listed next
-- `<>` -- Angle brackets are for handling higher-kinded types and verify value only when type logic supports it
+- `<>` -- Angle brackets are for handling type constructors and verify value only when type logic supports it
 - `[]` -- Brackets are meant to enclose optional values and should always come in a matched pair
 - `=>` -- Function output "fat-arrow" notation used for expressing output from input
 - `,` -- Commas are required for separating types on functions
@@ -285,7 +285,7 @@ Subtypes can be added by using the subtype function. This is particularly useful
     enforcedIntAdd(99, 3000); // 3099
 ```
 
-Using secondary type information for higher-kinded subtype definition. Any secondary type strings for higher-kinded types will be automatically split on ';' to allow for multiple type arguments.
+Using secondary type information for type constructor definition. Any secondary type strings for type constructors will be automatically split on ';' or ',' to allow for multiple type arguments.
 
 ```
     signet.subtype('array')('triple` function (value) {
@@ -303,7 +303,7 @@ Using secondary type information for higher-kinded subtype definition. Any secon
     multiplyTripleBy5([1, 2, 3]); // [5, 10, 15]
 ```
 
-Types can be aliased using the `alias` function. This allows the programmer to define and declare a custom type based on existing types or a particular implementation on a higher-kinded types.
+Types can be aliased using the `alias` function. This allows the programmer to define and declare a custom type based on existing types or a particular implementation on constructed types.
 
 ```
     signet.alias('R3Point', 'triple<number; number; number>');
@@ -410,7 +410,7 @@ from Signet itself is the `()` type.
 
 ### 3.6.0 ###
 
-- Added partial application to higher-kinded types in type aliasing
+- Added partial application to type constructors in type aliasing
 
 ### 3.5.0 ###
 
@@ -482,7 +482,7 @@ decorated and standard bind, call and apply actions work as expected
 
 ### 0.9.x ###
 
-- valueType is now an array instead of a string; any higher-kinded type definitions relying on a string will need updating
+- valueType is now an array instead of a string; any type constructor definitions relying on a string will need updating
 
 ### 0.4.x ###
 
