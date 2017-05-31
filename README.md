@@ -378,12 +378,14 @@ from Signet itself is the `()` type.
 - alias: `aliasName != typeString :: aliasName:string, typeString:string => undefined`
 - duckTypeFactory: `duckTypeDef:object => function`
 - defineDuckType: `typeName:string, duckTypeDef:object => undefined`
+- defineExactDuckType: `typeName:string, duckTypeDef:object => undefined`
 - defineDependentOperatorOn: `typeName:string => operator:string, operatorCheck:function => undefined`
 - enforce: `signature:string, functionToEnforce:function, options:[object] => function`
     - currently supported options:
         - inputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
         - outputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
 - extend: `typeName:string, typeCheck:function, preprocessor:[function] => undefined`
+- ExactDuckTypeFactory: `duckTypeDef:object => function`
 - isSubtypeOf: `rootTypeName:string => typeNameUnderTest:string => boolean`
 - isType: `typeName:string => boolean`
 - isTypeOf: `typeToCheck:type => value:* => boolean`
@@ -397,6 +399,14 @@ from Signet itself is the `()` type.
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 3.8.0 ###
+
+- Added exact duck types to limit types to only those specified
+
+### 3.7.0 ###
+
+- Added nested function type declarations
 
 ### 3.6.0 ###
 

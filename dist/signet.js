@@ -738,7 +738,7 @@ function signetDuckTypes(typelog, isTypeOf) {
     }
 
     function getErrorValue(value, typeName) {
-        if(typeof duckTypeErrorReporters[typeName] === 'function') {
+        if (typeof duckTypeErrorReporters[typeName] === 'function') {
             return duckTypeErrorReporters[typeName](value);
         }
 
@@ -784,7 +784,7 @@ function signetDuckTypes(typelog, isTypeOf) {
     function reportDuckTypeErrors(typeName) {
         var errorChecker = duckTypeErrorReporters[typeName];
 
-        if(typeof errorChecker === 'undefined') {
+        if (typeof errorChecker === 'undefined') {
             throw new Error('No duck type "' + typeName + '" exists.');
         }
 
@@ -793,10 +793,28 @@ function signetDuckTypes(typelog, isTypeOf) {
         }
     }
 
+    function exactDuckTypeFactory(objectDef) {
+        var propertyLength = Object.keys(objectDef).length;
+        var duckType = duckTypeFactory(objectDef);
+        return function (value) {
+            return propertyLength === Object.keys(value).length && duckType(value);
+        };
+    }
+
+    function defineExactDuckType(typeName, objectDef) {
+        var definitionPairs = buildDefinitionPairs(objectDef);
+
+        typelog.defineSubtypeOf('object')(typeName, exactDuckTypeFactory(objectDef));
+        duckTypeErrorReporters[typeName] = buildDuckTypeErrorReporter(definitionPairs, objectDef);
+
+    }
+
     return {
         buildDuckTypeErrorChecker: buildDuckTypeErrorReporter,
         defineDuckType: defineDuckType,
+        defineExactDuckType: defineExactDuckType,
         duckTypeFactory: duckTypeFactory,
+        exactDuckTypeFactory: exactDuckTypeFactory,
         reportDuckTypeErrors: reportDuckTypeErrors
     };
 }
@@ -1401,12 +1419,18 @@ function signetBuilder(
         defineDuckType: enforce(
             'typeName:string, duckTypeDef:object => undefined',
             duckTypesModule.defineDuckType),
+        defineExactDuckType: enforce(
+            'typeName:string, duckTypeDef:object => undefined',
+            duckTypesModule.defineExactDuckType),
         defineDependentOperatorOn: enforce(
             'typeName:string => operator:string, operatorCheck:function => undefined',
             typelog.defineDependentOperatorOn),
         enforce: enforce(
             'signature:string, functionToEnforce:function, options:[object] => function',
             enforce),
+        exactDuckTypeFactory: enforce(
+            'duckTypeDef:object => function',
+            duckTypesModule.exactDuckTypeFactory),
         extend: enforce(
             'typeName:string, typeCheck:function, preprocessor:[function] => undefined',
             extend),

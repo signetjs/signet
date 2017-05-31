@@ -322,6 +322,30 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('myObj')({ foo: 'blah', bar: 55, baz: [], deeperType: { quux: 'something' } }), true);
     });
 
+    it('should check and exact duck type on an object', function () {
+        var isMyObj = signet.exactDuckTypeFactory({
+            foo: 'string',
+            bar: 'int',
+            baz: 'array'
+        });
+
+        signet.subtype('object')('myExactObj', isMyObj);
+
+        assert.equal(signet.isTypeOf('myExactObj')({ foo: 'blah', bar: 55, baz: [], quux: '' }), false);
+        assert.equal(signet.isTypeOf('myExactObj')({ foo: 'blah', bar: 55, baz: [] }), true);
+    });
+
+    it('should check and exact duck type on an object', function () {
+        var isMyObj = signet.defineExactDuckType('myExactObj', {
+            foo: 'string',
+            bar: 'int',
+            baz: 'array'
+        });
+
+        assert.equal(signet.isTypeOf('myExactObj')({ foo: 'blah', bar: 55, baz: [], quux: '' }), false);
+        assert.equal(signet.isTypeOf('myExactObj')({ foo: 'blah', bar: 55, baz: [] }), true);
+    });
+
     it('should properly check dependent types', function () {
         function orderedProperly(a, b) {
             return a > b;
@@ -399,7 +423,7 @@ describe('Signet Library', function () {
     it('should properly enforce object methods', function () {
         var testMethodSpy = sinon.spy();
 
-        function MyObj(a) { 
+        function MyObj(a) {
             this.a = a;
         }
 
@@ -432,7 +456,7 @@ describe('Signet Library', function () {
     });
 
     it('should parse function definition with nested function definition', function () {
-        function doStuff () {}
+        function doStuff() { }
         signet.sign('(* => boolean) => array', doStuff);
 
         assert.equal(doStuff.signature, 'function<* => boolean> => array');
@@ -440,6 +464,6 @@ describe('Signet Library', function () {
 
 });
 
-if(typeof global.runQuokkaMochaBdd === 'function') {
+if (typeof global.runQuokkaMochaBdd === 'function') {
     runQuokkaMochaBdd();
 }

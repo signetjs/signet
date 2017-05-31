@@ -266,12 +266,18 @@ function signetBuilder(
         defineDuckType: enforce(
             'typeName:string, duckTypeDef:object => undefined',
             duckTypesModule.defineDuckType),
+        defineExactDuckType: enforce(
+            'typeName:string, duckTypeDef:object => undefined',
+            duckTypesModule.defineExactDuckType),
         defineDependentOperatorOn: enforce(
             'typeName:string => operator:string, operatorCheck:function => undefined',
             typelog.defineDependentOperatorOn),
         enforce: enforce(
             'signature:string, functionToEnforce:function, options:[object] => function',
             enforce),
+        exactDuckTypeFactory: enforce(
+            'duckTypeDef:object => function',
+            duckTypesModule.exactDuckTypeFactory),
         extend: enforce(
             'typeName:string, typeCheck:function, preprocessor:[function] => undefined',
             extend),
