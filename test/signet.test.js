@@ -462,10 +462,17 @@ describe('Signet Library', function () {
     });
 
     it('should parse function definition with nested function definition', function () {
-        function doStuff() { }
+        function doStuff() { return []; }
         signet.sign('(* => boolean) => array', doStuff);
 
         assert.equal(doStuff.signature, 'function<* => boolean> => array');
+    });
+
+    it('should not throw when function type is declared with constructor argument', function () {
+        function doStuff() { return []; }
+        signet.enforce('function<*, * => string, boolean => boolean> => array', doStuff);
+
+        assert.doesNotThrow(doStuff.bind(null, function () {}));
     });
 
     it('should handle type arity up front', function () {

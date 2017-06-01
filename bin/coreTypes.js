@@ -152,6 +152,10 @@ function signetCoreTypes(
         return options.map(isTypeOf);
     }
 
+    function optionsToFunction(options) {
+        return options.join(', ');
+    }
+
     function checkArgumentsObject(value) {
         return !isNull(value);
     }
