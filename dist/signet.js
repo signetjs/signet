@@ -951,12 +951,8 @@ function signetCoreTypes(
     }
 
 
-    function rangeBuilder() {
-        function checkRange(value, range) {
-            return range.min <= value && value <= range.max;
-        }
-
-        return checkRange;
+    function checkRange(value, range) {
+        return range.min <= value && value <= range.max;
     }
 
     function optionsToRangeObject(options) {
@@ -1066,17 +1062,27 @@ function signetCoreTypes(
         return isVariant(value, options);
     }
 
+    function checkCompositeType(value, typePredicates) {
+        return typePredicates.reduce(function (result, predicate) {
+            return result && predicate(value);
+        }, true);
+    }
+
+    function checkNot(value, typePredicates) {
+        return !typePredicates[0](value);
+    }
+
     var starTypeDef = parser.parseType('*');
 
     function isRegisteredType(value) {
         return typeof value === 'function' || isSignetType(parser.parseType(value).type);
     }
 
-    function equalLength (a, b) {
+    function equalLength(a, b) {
         return a.length === b.length;
     }
 
-    function longer (a, b){
+    function longer(a, b) {
         return a.length > b.length;
     }
 
@@ -1102,15 +1108,16 @@ function signetCoreTypes(
     extend('string', isType('string'));
     extend('symbol', isType('symbol'));
     extend('undefined', isType('undefined'));
+    extend('not', checkNot, optionsToFunctions);
     extend('null', isNull);
     extend('variant', isVariant, optionsToFunctions);
     extend('taggedUnion', checkTaggedUnion, optionsToFunctions);
+    extend('composite', checkCompositeType, optionsToFunctions);
 
     subtype('object')('array', checkArray);
     subtype('object')('regexp', isRegExp);
     subtype('number')('int', checkInt);
-    subtype('number')('bounded', rangeBuilder(), optionsToRangeObject);
-    subtype('int')('boundedInt', rangeBuilder(), optionsToRangeObject);
+    subtype('number')('bounded', checkRange, optionsToRangeObject);
     subtype('string')('boundedString', checkBoundedString, optionsToRangeObject);
     subtype('string')('formattedString', checkFormattedString, optionsToRegex);
     subtype('array')('tuple', checkTuple, optionsToFunctions);
@@ -1125,9 +1132,11 @@ function signetCoreTypes(
 
     alias('leftBounded', 'bounded<_, Infinity>');
     alias('rightBounded', 'bounded<-Infinity, _>');
-    
-    alias('leftBoundedInt', 'bounded<_, Infinity>');
-    alias('rightBoundedInt', 'bounded<-Infinity, _>');
+
+    alias('boundedInt', 'composite<int, bounded<_, _>>')
+
+    alias('leftBoundedInt', 'boundedInt<_, Infinity>');
+    alias('rightBoundedInt', 'boundedInt<-Infinity, _>');
 
     defineDependentOperatorOn('number')('>', greater);
     defineDependentOperatorOn('number')('<', less);

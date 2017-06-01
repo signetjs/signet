@@ -118,6 +118,12 @@ describe('Signet Library', function () {
 
         assert.equal(signet.isTypeOf('()')('foo'), true);
         assert.doesNotThrow(signet.enforce('() => undefined', function () { }));
+
+        assert.equal(signet.isTypeOf('not<null>')('foo'), true);
+        assert.equal(signet.isTypeOf('not<null>')(null), false);
+
+        assert.equal(signet.isTypeOf('composite<not<null>, object>')({}), true);
+        assert.equal(signet.isTypeOf('composite<not<null>, object>')(undefined), false);
     });
 
     it('should pre-register signet type aliases', function () {

@@ -137,13 +137,15 @@ In the browser environment, signet.min.js and signet.types.min.js in that order 
 Extended types, and their inheritance chain, are as follows:
 
 - `arguments` - `* -> variant<array; object>`
-- `int` - `* -> number -> int`
 - `bounded<min:number;max:number>` - `* -> number -> bounded`
 - `boundedInt<min:number;max:number>` - `* -> number -> int -> bounded -> boundedInt`
 - `boundedString<minLength:int;maxLength:int>` - `* -> string -> boundedString`
+- `composite` - `* -> composite` (Type constructor only, evaluates left to right)
 - `formattedString<regex>` - `* -> string -> formattedString`
+- `int` - `* -> number -> int`
 - `leftBounded<min:number>` - `* -> number -> leftBounded`
 - `leftBoundedInt<min:int>` - `* -> number -> int -> leftBoundedInt`
+- `not` - `* -> not` (Type constructor only)
 - `regexp` - `* -> object -> regexp`
 - `rightBounded<max:number>` - `* -> number -> rightBounded`
 - `rightBoundedInt<max:int>` - `* -> number -> int -> rightBoundedInt`
@@ -406,6 +408,10 @@ from Signet itself is the `()` type.
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 3.10.0 ###
+
+- Added `not` type negation and `composite` type composition
 
 ### 3.9.0 ###
 
