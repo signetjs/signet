@@ -157,7 +157,7 @@ Types can be named and dependencies can be declared between two arguments in the
 
 Example for a range function might look like the following:
 
-`start < end :: start:int, end:int, increment:int => array<int>`
+`start < end :: start:int, end:int, increment:[leftBoundedInt<1>] => array<int>`
 
 Built in type operations are as follows:
 
