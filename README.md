@@ -171,6 +171,13 @@ Built in type operations are as follows:
 - string:
     - `=` (value equality)
     - `!=` (value inequality)
+    - `#=` (length equality)
+    - `#<` (A.length less than B.length)
+    - `#>` (A.length greater than B.length)
+- array
+    - `#=` (length equality)
+    - `#<` (A.length less than B.length)
+    - `#>` (A.length greater than B.length)
 - object:
     - `=` (property equality)
     - `!=`(property inequality)
@@ -399,6 +406,10 @@ from Signet itself is the `()` type.
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 3.9.0 ###
+
+- Added #=, #< and #> operators for string and array
 
 ### 3.8.0 ###
 

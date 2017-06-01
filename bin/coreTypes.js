@@ -246,6 +246,17 @@ function signetCoreTypes(
         return typeof value === 'function' || isSignetType(parser.parseType(value).type);
     }
 
+    function equalLength (a, b) {
+        return a.length === b.length;
+    }
+
+    function longer (a, b){
+        return a.length > b.length;
+    }
+
+    function shorter(a, b) {
+        return a.length < b.length;
+    }
 
     parser.registerTypeLevelMacro(function emptyParamsToStar(value) {
         return /^\(\s*\)$/.test(value.trim()) ? '*' : value;
@@ -301,6 +312,13 @@ function signetCoreTypes(
 
     defineDependentOperatorOn('string')('=', equal);
     defineDependentOperatorOn('string')('!=', not(equal));
+    defineDependentOperatorOn('string')('#=', equalLength);
+    defineDependentOperatorOn('string')('#<', shorter);
+    defineDependentOperatorOn('string')('#>', longer);
+
+    defineDependentOperatorOn('array')('#=', equalLength);
+    defineDependentOperatorOn('array')('#<', shorter);
+    defineDependentOperatorOn('array')('#>', longer);
 
     defineDependentOperatorOn('object')('=', objectsAreEqual);
     defineDependentOperatorOn('object')('!=', not(objectsAreEqual));
