@@ -285,7 +285,7 @@ Subtypes can be added by using the subtype function. This is particularly useful
 ```
     signet.subtype('number')('int', (value) => Math.floor(value) === value && value !== infinity);
     
-    var enforcedIntAdd = signet.enforce(
+    const enforcedIntAdd = signet.enforce(
         'a:int, b:int => sum:int',
         (a, b) => a + b
     );
@@ -303,7 +303,7 @@ Using secondary type information for type constructor definition. Any secondary 
             isTypeOf(typeObj.valueType[2])(value[2]);
     });
 
-    var multiplyTripleBy5 = signet.enforce(
+    const multiplyTripleBy5 = signet.enforce(
         'triple<int; int; int> => triple<int; int; int>', 
         (values) => values.map(x => x * 5)
     );
@@ -331,11 +331,11 @@ Types can be checked from outside of a function call with isTypeOf.  The isTypeO
 type check can be reused without recomputing the type object definition:
 
 ```
-    var isInt = signet.isTypeOf('int');
+    const isInt = signet.isTypeOf('int');
     isInt(7); // true
     isInt(83.7); // false
     
-    var isRanged3to4 = signet.isTypeOf('ranged<3;4>');
+    const isRanged3to4 = signet.isTypeOf('ranged<3;4>');
     isRanged3to4(3.72); // true
     isRanged3to4(4000); // false
 ```
@@ -346,8 +346,8 @@ Duck typing functions can be created using the duckTypeFactory function.  This m
 type depends on extant properties with correct types, it can be predefined with an object type definition.
 
 ```
-    var myObjDef = { foo: 'string', bar: 'array' };
-    var checkMyObj = signet.duckTypeFactory(myObjDef);
+    const myObjDef = { foo: 'string', bar: 'array' };
+    const checkMyObj = signet.duckTypeFactory(myObjDef);
 
     signet.subtype('object')('myObj', checkMyObj);
 
@@ -374,7 +374,7 @@ useful if you want to create a type name which contains special characters.  The
 from Signet itself is the `()` type.
 
 ```
-    var starTypeDef = parser.parseType('*');
+    const starTypeDef = parser.parseType('*');
 
     parser.registerTypeLevelMacro('()', function () { return starTypeDef; });
 
