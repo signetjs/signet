@@ -468,6 +468,38 @@ describe('Signet Library', function () {
         assert.equal(doStuff.signature, 'function<* => boolean> => array');
     });
 
+    it('should handle type arity up front', function () {
+        signet.extend('myTestType0', function () {});
+        signet.extend('myTestType1{1}', function () {});
+        signet.extend('myTestType1OrMore{1,}', function () {});
+        signet.extend('myTestType2To5{2, 5}', function () {});
+
+        assert.doesNotThrow(signet.isTypeOf.bind(null, 'myTestType0<1, 2, 3>'));
+        assert.throws(
+            signet.isTypeOf('myTestType1<1, 2, 3>').bind(null, 'foo'),
+            'Type myTestType1 accepts, at most, 1 arguments');
+        assert.throws(
+            signet.isTypeOf('myTestType1').bind(null, 'foo'),
+            'Type myTestType1 requires, at least, 1 arguments');
+
+        assert.doesNotThrow(signet.isTypeOf('myTestType1OrMore<1, 2, 3>').bind(null, 'foo'));
+        assert.throws(
+            signet.isTypeOf('myTestType1OrMore').bind(null, 'foo'),
+            'Type myTestType1OrMore requires, at least, 1 arguments');
+
+        assert.doesNotThrow(signet.isTypeOf('myTestType2To5<1, 2, 3>').bind(null, 'foo'));
+        assert.throws(
+            signet.isTypeOf('myTestType2To5').bind(null, 'foo'),
+            'Type myTestType2To5 requires, at least, 2 arguments');
+        assert.throws(
+            signet.isTypeOf('myTestType2To5<1, 2, 3, 4, 5, 6>').bind(null, 'foo'),
+            'Type myTestType2To5 accepts, at most, 5 arguments');
+
+        assert.throws(
+            signet.extend.bind(null, 'myTestTypeBroken{5, 1}', function () {}),
+            'Error in myTestTypeBroken arity declaration: min cannot be greater than max');
+    });
+
 });
 
 if (typeof global.runQuokkaMochaBdd === 'function') {

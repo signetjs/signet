@@ -275,42 +275,42 @@ function signetCoreTypes(
         return signatureMatch ? value.replace(signaturePattern, 'function<$2>') : value;
     });
 
-    extend('boolean', isType('boolean'));
-    extend('function', isType('function'));
-    extend('number', isType('number'));
-    extend('object', isType('object'));
-    extend('string', isType('string'));
-    extend('symbol', isType('symbol'));
-    extend('undefined', isType('undefined'));
-    extend('not', checkNot, optionsToFunctions);
-    extend('null', isNull);
-    extend('variant', isVariant, optionsToFunctions);
-    extend('taggedUnion', checkTaggedUnion, optionsToFunctions);
-    extend('composite', checkCompositeType, optionsToFunctions);
+    extend('boolean{0}', isType('boolean'));
+    extend('function{0,1}', isType('function'));
+    extend('number{0}', isType('number'));
+    extend('object{0}', isType('object'));
+    extend('string{0}', isType('string'));
+    extend('symbol{0}', isType('symbol'));
+    extend('undefined{0}', isType('undefined'));
+    extend('not{1}', checkNot, optionsToFunctions);
+    extend('null{0}', isNull);
+    extend('variant{1,}', isVariant, optionsToFunctions);
+    extend('taggedUnion{1,}', checkTaggedUnion, optionsToFunctions);
+    extend('composite{1,}', checkCompositeType, optionsToFunctions);
 
-    subtype('object')('array', checkArray);
-    subtype('object')('regexp', isRegExp);
-    subtype('number')('int', checkInt);
-    subtype('number')('bounded', checkRange, optionsToRangeObject);
-    subtype('string')('boundedString', checkBoundedString, optionsToRangeObject);
-    subtype('string')('formattedString', checkFormattedString, optionsToRegex);
-    subtype('array')('tuple', checkTuple, optionsToFunctions);
-    subtype('array')('unorderedProduct', isUnorderedProduct);
-    subtype('object')('arguments', checkArgumentsObject);
+    subtype('object')('array{0,1}', checkArray);
+    subtype('object')('regexp{0}', isRegExp);
+    subtype('number')('int{0}', checkInt);
+    subtype('number')('bounded{2}', checkRange, optionsToRangeObject);
+    subtype('string')('boundedString{2}', checkBoundedString, optionsToRangeObject);
+    subtype('string')('formattedString{1}', checkFormattedString, optionsToRegex);
+    subtype('array')('tuple{1,}', checkTuple, optionsToFunctions);
+    subtype('array')('unorderedProduct{1,}', isUnorderedProduct);
+    subtype('object')('arguments{0}', checkArgumentsObject);
 
-    alias('typeValue', 'variant<string, function>');
-    subtype('typeValue')('type', isRegisteredType);
+    alias('typeValue{0}', 'variant<string, function>');
+    subtype('typeValue')('type{0}', isRegisteredType);
 
-    alias('any', '*');
-    alias('void', '*');
+    alias('any{0}', '*');
+    alias('void{0}', '*');
 
-    alias('leftBounded', 'bounded<_, Infinity>');
-    alias('rightBounded', 'bounded<-Infinity, _>');
+    alias('leftBounded{1}', 'bounded<_, Infinity>');
+    alias('rightBounded{1}', 'bounded<-Infinity, _>');
 
-    alias('boundedInt', 'composite<int, bounded<_, _>>')
+    alias('boundedInt{2}', 'composite<int, bounded<_, _>>')
 
-    alias('leftBoundedInt', 'boundedInt<_, Infinity>');
-    alias('rightBoundedInt', 'boundedInt<-Infinity, _>');
+    alias('leftBoundedInt{1}', 'boundedInt<_, Infinity>');
+    alias('rightBoundedInt{1}', 'boundedInt<-Infinity, _>');
 
     defineDependentOperatorOn('number')('>', greater);
     defineDependentOperatorOn('number')('<', less);

@@ -1101,42 +1101,42 @@ function signetCoreTypes(
         return signatureMatch ? value.replace(signaturePattern, 'function<$2>') : value;
     });
 
-    extend('boolean', isType('boolean'));
-    extend('function', isType('function'));
-    extend('number', isType('number'));
-    extend('object', isType('object'));
-    extend('string', isType('string'));
-    extend('symbol', isType('symbol'));
-    extend('undefined', isType('undefined'));
-    extend('not', checkNot, optionsToFunctions);
-    extend('null', isNull);
-    extend('variant', isVariant, optionsToFunctions);
-    extend('taggedUnion', checkTaggedUnion, optionsToFunctions);
-    extend('composite', checkCompositeType, optionsToFunctions);
+    extend('boolean{0}', isType('boolean'));
+    extend('function{0,1}', isType('function'));
+    extend('number{0}', isType('number'));
+    extend('object{0}', isType('object'));
+    extend('string{0}', isType('string'));
+    extend('symbol{0}', isType('symbol'));
+    extend('undefined{0}', isType('undefined'));
+    extend('not{1}', checkNot, optionsToFunctions);
+    extend('null{0}', isNull);
+    extend('variant{1,}', isVariant, optionsToFunctions);
+    extend('taggedUnion{1,}', checkTaggedUnion, optionsToFunctions);
+    extend('composite{1,}', checkCompositeType, optionsToFunctions);
 
-    subtype('object')('array', checkArray);
-    subtype('object')('regexp', isRegExp);
-    subtype('number')('int', checkInt);
-    subtype('number')('bounded', checkRange, optionsToRangeObject);
-    subtype('string')('boundedString', checkBoundedString, optionsToRangeObject);
-    subtype('string')('formattedString', checkFormattedString, optionsToRegex);
-    subtype('array')('tuple', checkTuple, optionsToFunctions);
-    subtype('array')('unorderedProduct', isUnorderedProduct);
-    subtype('object')('arguments', checkArgumentsObject);
+    subtype('object')('array{0,1}', checkArray);
+    subtype('object')('regexp{0}', isRegExp);
+    subtype('number')('int{0}', checkInt);
+    subtype('number')('bounded{2}', checkRange, optionsToRangeObject);
+    subtype('string')('boundedString{2}', checkBoundedString, optionsToRangeObject);
+    subtype('string')('formattedString{1}', checkFormattedString, optionsToRegex);
+    subtype('array')('tuple{1,}', checkTuple, optionsToFunctions);
+    subtype('array')('unorderedProduct{1,}', isUnorderedProduct);
+    subtype('object')('arguments{0}', checkArgumentsObject);
 
-    alias('typeValue', 'variant<string, function>');
-    subtype('typeValue')('type', isRegisteredType);
+    alias('typeValue{0}', 'variant<string, function>');
+    subtype('typeValue')('type{0}', isRegisteredType);
 
-    alias('any', '*');
-    alias('void', '*');
+    alias('any{0}', '*');
+    alias('void{0}', '*');
 
-    alias('leftBounded', 'bounded<_, Infinity>');
-    alias('rightBounded', 'bounded<-Infinity, _>');
+    alias('leftBounded{1}', 'bounded<_, Infinity>');
+    alias('rightBounded{1}', 'bounded<-Infinity, _>');
 
-    alias('boundedInt', 'composite<int, bounded<_, _>>')
+    alias('boundedInt{2}', 'composite<int, bounded<_, _>>')
 
-    alias('leftBoundedInt', 'boundedInt<_, Infinity>');
-    alias('rightBoundedInt', 'boundedInt<-Infinity, _>');
+    alias('leftBoundedInt{1}', 'boundedInt<_, Infinity>');
+    alias('rightBoundedInt{1}', 'boundedInt<-Infinity, _>');
 
     defineDependentOperatorOn('number')('>', greater);
     defineDependentOperatorOn('number')('<', less);
@@ -1223,7 +1223,7 @@ function signetBuilder(
         var typeDef = parser.parseType(typeStr);
         var typeAlias = hasPlaceholder(typeStr) ? buildPartialTypeAlias(typeStr) : buildTypeAlias(typeDef);
 
-        typelog.define(key, typeAlias);
+        extend(key, typeAlias);
     }
 
     function isTypeOf(typeValue) {
@@ -1412,17 +1412,75 @@ function signetBuilder(
         }
     }
 
-    function extend(typeName, typeCheck, preprocessor) {
-        attachPreprocessor(typeCheck, preprocessor);
-        typelog.define(typeName, typeCheck);
+    var typeArityPattern = /^([^\{]+)\{([^\}]+)\}$/;
+
+    function getArity(typeName, typeStr) {
+        var arityStr = typeStr.replace(typeArityPattern, '$2');
+        var arityData = arityStr.split(/\,\s*/g);
+        var min = 0;
+        var max = Infinity;
+
+        if (arityStr !== typeStr) {
+            min = parseInt(arityData[0]);
+            max = arityData.length === 1 ? min : parseInt(arityData[1]);
+
+            if (min > max) {
+                throw new Error('Error in ' + typeName + ' arity declaration: min cannot be greater than max');
+            }
+
+            min = isNaN(min) || min < 0 ? 0 : min;
+            max = isNaN(max) || max < 0 ? Infinity : max;
+        }
+
+        return [min, max];
+    }
+
+    function getTypeName(typeStr) {
+        return typeStr.replace(typeArityPattern, '$1').trim();
+    }
+
+    function checkTypeArity(typeName, arity, options) {
+        var optionsIsArray = Object.prototype.toString.call(options) === '[object Array]';
+        var errorMessage = null;
+
+        if (optionsIsArray && options.length < arity[0]) {
+            errorMessage = 'Type ' + typeName + ' requires, at least, ' + arity[0] + ' arguments';
+        } else if (optionsIsArray && options.length > arity[1]) {
+            errorMessage = 'Type ' + typeName + ' accepts, at most, ' + arity[1] + ' arguments';
+        }
+
+        if (errorMessage !== null) {
+            throw new Error(errorMessage);
+        }
+    }
+
+    function decorateWithArityCheck(typeName, typeArity, typeCheck) {
+        return function decoratedTypeCheck(value, options) {
+            checkTypeArity(typeName, typeArity, options);
+
+            return typeCheck(value, options);
+        }
+    }
+
+    function extend(typeStr, typeCheck, preprocessor) {
+        var typeName = getTypeName(typeStr);
+        var typeArity = getArity(typeName, typeStr);
+        var decoratedTypeCheck = decorateWithArityCheck(typeName, typeArity, typeCheck);
+
+        attachPreprocessor(decoratedTypeCheck, preprocessor);
+        typelog.define(typeName, decoratedTypeCheck);
     }
 
     function subtype(parentTypeName) {
         var defineSubtype = typelog.defineSubtypeOf(parentTypeName);
 
-        return function (typeName, typeCheck, preprocessor) {
-            attachPreprocessor(typeCheck, preprocessor);
-            defineSubtype(typeName, typeCheck);
+        return function (typeStr, typeCheck, preprocessor) {
+            var typeName = getTypeName(typeStr);
+            var typeArity = getArity(typeName, typeStr);
+            var decoratedTypeCheck = decorateWithArityCheck(typeName, typeArity, typeCheck);
+
+            attachPreprocessor(decoratedTypeCheck, preprocessor);
+            defineSubtype(typeName, decoratedTypeCheck);
         };
     }
 

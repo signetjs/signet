@@ -382,6 +382,21 @@ from Signet itself is the `()` type.
     signet.isType('()'); // false
 ```
 
+### Type Constructor Arity Declaration ###
+
+You can declare the number of arguments a type constructor requires (the arity of your type constructor) with curly-brace annotation at definition time.  Following are examples of declaring type constructor arity with enforce, subtype and alias:
+
+```
+    // variant requires at least 1 argument, though more are acceptable
+    extend('variant{1,}', isVariant, optionsToFunctions); 
+
+    // array accepts up to 1 argument
+    subtype('object')('array{0,1}', checkArray);
+
+    // leftBounded requires exactly 1 argument
+    alias('leftBounded{1}', 'bounded<_, Infinity>')
+```
+
 ## Signet API ###
 
 - alias: `aliasName != typeString :: aliasName:string, typeString:string => undefined`
@@ -408,6 +423,10 @@ from Signet itself is the `()` type.
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 3.11.0 ###
+
+- Added support for declaring type constructor arity
 
 ### 3.10.0 ###
 
