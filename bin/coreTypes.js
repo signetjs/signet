@@ -292,7 +292,7 @@ function signetCoreTypes(
     extend('taggedUnion{1,}', checkTaggedUnion, optionsToFunctions);
     extend('composite{1,}', checkCompositeType, optionsToFunctions);
 
-    subtype('object')('array{0,1}', checkArray);
+    subtype('object')('array{0,}', checkArray);
     subtype('object')('regexp{0}', isRegExp);
     subtype('number')('int{0}', checkInt);
     subtype('number')('bounded{2}', checkRange, optionsToRangeObject);
