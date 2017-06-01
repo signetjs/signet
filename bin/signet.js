@@ -270,7 +270,9 @@ function signetBuilder(
             'typeName:string, duckTypeDef:object => undefined',
             duckTypesModule.defineExactDuckType),
         defineDependentOperatorOn: enforce(
-            'typeName:string => operator:string, operatorCheck:function => undefined',
+            'typeName:string => \
+            operator:string, operatorCheck:function<*, *, [object], [object] => boolean> => \
+            undefined',
             typelog.defineDependentOperatorOn),
         enforce: enforce(
             'signature:string, functionToEnforce:function, options:[object] => function',
@@ -279,7 +281,7 @@ function signetBuilder(
             'duckTypeDef:object => function',
             duckTypesModule.exactDuckTypeFactory),
         extend: enforce(
-            'typeName:string, typeCheck:function, preprocessor:[function] => undefined',
+            'typeName:string, typeCheck:function, preprocessor:[function<string => string>] => undefined',
             extend),
         isSubtypeOf: enforce(
             'rootTypeName:string => typeNameUnderTest:string => boolean',
@@ -296,14 +298,14 @@ function signetBuilder(
         reportDuckTypeErrors: enforce(
             'duckTypeName:string => \
             valueToCheck:object => \
-            array<tuple<string, string; *>>',
+            array<tuple<string, string, *>>',
             duckTypesModule.reportDuckTypeErrors),
         sign: enforce(
             'signature:string, functionToSign:function => function',
             sign),
         subtype: enforce(
             'rootTypeName:string => \
-            subtypeName:string, subtypeCheck:function, preprocessor:[function] => \
+            subtypeName:string, subtypeCheck:function, preprocessor:[function<string => string>] => \
             undefined',
             subtype),
         typeChain: enforce(
