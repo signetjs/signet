@@ -280,7 +280,7 @@ function signetCoreTypes(
     });
 
     extend('boolean{0}', isType('boolean'));
-    extend('function{0,1}', isType('function'));
+    extend('function{0,1}', isType('function'), optionsToFunction);
     extend('number{0}', isType('number'));
     extend('object{0}', isType('object'));
     extend('string{0}', isType('string'));
