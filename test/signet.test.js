@@ -146,11 +146,12 @@ describe('Signet Library', function () {
     });
 
     it('should sign a function', function () {
-        var signedAdd = signet.sign('number, number => number', addBuilder());
-        var expectedTree = parser.parseSignature('number, number => number');
+        var expectedSignature = 'A < B :: A:number, B:number => number';
+        var signedAdd = signet.sign(expectedSignature, addBuilder());
+        var expectedTree = parser.parseSignature(expectedSignature);
 
         assert.equal(JSON.stringify(signedAdd.signatureTree), JSON.stringify(expectedTree));
-        assert.equal(signedAdd.signature, 'number, number => number');
+        assert.equal(signedAdd.signature, expectedSignature);
     });
 
     it('should throw an error if signature contains a bad type', function () {
