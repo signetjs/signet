@@ -4,6 +4,8 @@
 
 [include]
 ./bin/signet.js
+./bin/coreTypes.js
+./bin/duckTypes.js
 
 [libs]
 
