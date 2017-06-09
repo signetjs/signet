@@ -107,10 +107,6 @@ function signetParser() {
     var typeLevelMacros = [];
     var signatureLevelMacros = [];
 
-    function identity(value) {
-        return value;
-    }
-
     function throwOnBadMacroResult(result) {
         if (typeof result !== 'string') {
             throw new Error('Macro Error: All macros must return a string; got ' + result + ' of type ' + typeof result);
@@ -135,55 +131,6 @@ function signetParser() {
 
     function registerSignatureLevelMacro(macro) {
         signatureLevelMacros.push(macro);
-    }
-
-    function isDelimiter(symbol) {
-        return symbol === ';' || symbol === ',';
-    }
-
-    function terminateSubtype(bracketStack, currentChar) {
-        return (bracketStack.length === 1 && isDelimiter(currentChar))
-            || (currentChar === '>' && bracketStack.length === 0);
-    }
-
-    function isStructuralChar(char) {
-        return char.match(/[\<\;\s\,]/) !== null;
-    }
-
-    function captureChar(bracketStack, currentChar) {
-        return bracketStack.length > 1
-            || (bracketStack.length === 0 && currentChar === '>')
-            || (bracketStack.length > 0 && !isStructuralChar(currentChar));
-    }
-
-    function updateStack(bracketStack, currentChar) {
-        if (currentChar === '<') {
-            bracketStack.push(currentChar);
-        } else if (currentChar === '>') {
-            bracketStack.pop();
-        }
-    }
-
-    function buildAppender(bracketStack) {
-        return function (subtypeStr, currentChar) {
-            var capture = captureChar(bracketStack, currentChar);
-            return capture ? subtypeStr + currentChar : subtypeStr;
-        };
-    }
-
-    function updateSubtypeInfo(bracketStack, subtypeInfo) {
-        return function (subtypeStr, currentChar) {
-            if (terminateSubtype(bracketStack, currentChar)) {
-                subtypeInfo.push(subtypeStr);
-            }
-        }
-    }
-
-    function getUpdatedSubtypeStr(bracketStack, appendOnRule) {
-        return function (subtypeStr, currentChar) {
-            var terminate = terminateSubtype(bracketStack, currentChar);
-            return terminate ? '' : appendOnRule(subtypeStr, currentChar);
-        }
     }
 
     function getSubtypeData(typeStr) {
@@ -554,10 +501,6 @@ var signetValidator = (function () {
     }
 
     return function (typelog, assembler, parser) {
-
-        function isObjectInstance(value) {
-            return typeof value === 'object' && value !== null;
-        }
 
         function validateOptional(typeDef, argument, typeList) {
             return typeDef.optional && (typeList.length > 1 || typeof argument === 'undefined');
