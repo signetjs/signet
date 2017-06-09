@@ -177,19 +177,8 @@ function signetBuilder(
         };
     }
 
-    function buildArgNames(argCount) {
-        var startChar = 'a'.charCodeAt(0);
-        var argNames = [];
-
-        for (var i = 0; i < argCount; i++) {
-            argNames.push(String.fromCharCode(startChar + i));
-        }
-
-        return argNames.join(', ');
-    }
-
     function buildEnforceDecorator(enforcer) {
-        return function enforceDecorator(args) {
+        return function enforceDecorator() {
             var args = Array.prototype.slice.call(arguments, 0);
             return enforcer.apply(this, args);
         }
@@ -197,7 +186,6 @@ function signetBuilder(
 
     function enforceOnTree(signatureTree, fn, options) {
         var enforcer = buildEnforcer(signatureTree, fn, options);
-        var argNames = buildArgNames(fn.length);
         var enforceDecorator = buildEnforceDecorator(enforcer);
 
         enforceDecorator.toString = Function.prototype.toString.bind(fn);

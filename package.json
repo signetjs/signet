@@ -1,6 +1,6 @@
 {
   "name": "signet",
-  "version": "3.11.3",
+  "version": "3.11.4",
   "description": "Signet type library",
   "main": "index.js",
   "repository": {
@@ -13,10 +13,17 @@
   },
   "quokka": {
     "plugins": [
-      "quokka-mocha-bdd"
+      "quokka-mocha-bdd",
+      "quokka-signet-explorer",
+      "quokka-prerun"
     ],
     "quokka-mocha-bdd": {
       "interface": "bdd"
+    },
+    "quokka-prerun": {
+      "prerunCommands": [
+        "grunt build"
+      ]
     }
   },
   "keywords": [
@@ -38,12 +45,16 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
+    "eslint": "^3.19.0",
     "flow-bin": "^0.45.0",
     "grunt": "^1.0.1",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-uglify": "^2.0.0",
+    "grunt-eslint": "^19.0.0",
     "mocha": "^3.1.2",
     "quokka-mocha-bdd": "^1.1.0",
+    "quokka-prerun": "^1.0.0",
+    "quokka-signet-explorer": "^1.0.1",
     "sinon": "^2.3.1"
   }
 }

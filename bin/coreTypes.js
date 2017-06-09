@@ -250,8 +250,6 @@ function signetCoreTypes(
         return !typePredicates[0](value);
     }
 
-    var starTypeDef = parser.parseType('*');
-
     function isRegisteredType(value) {
         return typeof value === 'function' || isSignetType(parser.parseType(value).type);
     }

@@ -43,7 +43,7 @@ function signetDuckTypes(typelog, isTypeOf) {
         };
     }
 
-    function buildDuckType(definitionPairs, objectDef) {
+    function buildDuckType(definitionPairs) {
         return function (value) {
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
