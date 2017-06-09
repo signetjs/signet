@@ -1,6 +1,7 @@
 [ignore]
 ./test
 ./dist
+./node_modules
 
 [include]
 ./bin/signet.js
