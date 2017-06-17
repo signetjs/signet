@@ -43,8 +43,15 @@ function signetDuckTypes(typelog, isTypeOf) {
         };
     }
 
+    var isDuckTypeCheckable = isTypeOf('composite<not<null>, variant<object, function>>')
+
+
     function buildDuckType(definitionPairs) {
         return function (value) {
+            if(!isDuckTypeCheckable(value)) {
+                return false;
+            }
+
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
                 var typePredicate = typePair[1];

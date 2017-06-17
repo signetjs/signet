@@ -9,7 +9,6 @@ function signetBuilder(
 
     'use strict';
 
-    var duckTypesModule = duckTypes(typelog, isTypeOf);
     var placeholderPattern = /([<\;\,]\s*)(_)(\s*[>\;\,])/;
 
     function hasPlaceholder(typeStr) {
@@ -301,6 +300,8 @@ function signetBuilder(
         subtype,
         alias,
         typelog.defineDependentOperatorOn);
+
+    var duckTypesModule = duckTypes(typelog, isTypeOf);
 
     return {
         alias: enforce(

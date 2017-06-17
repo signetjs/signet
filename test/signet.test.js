@@ -198,6 +198,7 @@ describe('Signet Library', function () {
 
     it('should enforce a function return value', function () {
         var add = signet.enforce('number, number => number', function (a, b) {
+            (a, b);
             return true;
         });
 
@@ -208,6 +209,7 @@ describe('Signet Library', function () {
 
     it('should throw a custom error on bad input', function () {
         var add = signet.enforce('number, number => number', function (a, b) {
+            (a, b);
             return true;
         }, {
                 inputErrorBuilder: function (validationResult, args, signatureTree) {
@@ -222,6 +224,7 @@ describe('Signet Library', function () {
 
     it('should throw a custom error on bad output', function () {
         var add = signet.enforce('number, number => number', function (a, b) {
+            (a, b);
             return true;
         }, {
                 outputErrorBuilder: function (validationResult, args, signatureTree) {
@@ -241,7 +244,7 @@ describe('Signet Library', function () {
     });
 
     it('should not throw on unfulfilled optional int argument in a higher-order function containing a variant type', function () {
-        function slice(start, end) { }
+        function slice(start, end) { (end) }
 
         var enforcedSlice = signet.enforce('int, [int] => *', slice);
 
@@ -253,6 +256,7 @@ describe('Signet Library', function () {
     it('should enforce a curried function properly', function () {
         function add(a) {
             return function (b) {
+                (a, b);
                 return 'bar';
             }
         }
@@ -273,6 +277,7 @@ describe('Signet Library', function () {
 
     it('should allow function argument verification inside a function body', function () {
         function test(a, b) {
+            (a, b);
             signet.verify(test, arguments);
         }
 
@@ -297,6 +302,16 @@ describe('Signet Library', function () {
 
         assert.equal(signet.isTypeOf('myObj')({ foo: 55 }), false);
         assert.equal(signet.isTypeOf('myObj')({ foo: 'blah', bar: 55, baz: [] }), true);
+    });
+
+    it('should return false if value is not duck-type verifiable', function () {
+        var isMyObj = signet.duckTypeFactory({
+            foo: 'string',
+            bar: 'int',
+            baz: 'array'
+        });
+
+        assert.equal(isMyObj(null), false);
     });
 
     it('should allow duck types to be defined directly', function () {
@@ -343,11 +358,13 @@ describe('Signet Library', function () {
     });
 
     it('should check and exact duck type on an object', function () {
-        var isMyObj = signet.defineExactDuckType('myExactObj', {
+        var isMyObj = signet.exactDuckTypeFactory({
             foo: 'string',
             bar: 'int',
             baz: 'array'
         });
+
+        signet.subtype('object')('myExactObj', isMyObj);
 
         assert.equal(signet.isTypeOf('myExactObj')({ foo: 'blah', bar: 55, baz: [], quux: '' }), false);
         assert.equal(signet.isTypeOf('myExactObj')({ foo: 'blah', bar: 55, baz: [] }), true);
@@ -373,6 +390,7 @@ describe('Signet Library', function () {
     it('should properly check type dependencies', function () {
         function testFnFactory() {
             return function (a, b) {
+                a + b;
                 return a;
             };
         }
@@ -413,8 +431,8 @@ describe('Signet Library', function () {
         );
 
         MyObj.prototype.testMethod = testMethodSpy;
+        new MyObj(5, 'foo');
 
-        var objInstance = new MyObj(5, 'foo');
         var result = JSON.stringify(testMethodSpy.args[0]);
         var expectedResult = JSON.stringify([5, 'foo']);
 
@@ -428,8 +446,6 @@ describe('Signet Library', function () {
     });
 
     it('should properly enforce object methods', function () {
-        var testMethodSpy = sinon.spy();
-
         function MyObj(a) {
             this.a = a;
         }
@@ -463,8 +479,7 @@ describe('Signet Library', function () {
     });
 
     it('should parse function definition with nested function definition', function () {
-        function doStuff() { return []; }
-        signet.sign('(* => boolean) => array', doStuff);
+        var doStuff = signet.sign('(* => boolean) => array', () => []);
 
         assert.equal(doStuff.signature, 'function<* => boolean> => array');
     });
