@@ -1046,8 +1046,36 @@ function signetCoreTypes(
         return /^\(\s*\)$/.test(value.trim()) ? '*' : value;
     });
 
+    function buildTypePattern(macroPattern) {
+        var token = '{{typePattern}}';
+        var typePattern = '^([^\\:]+\\:)?(\\[)?' + token + '(\\])?$';
+
+        return new RegExp(typePattern.replace(token, macroPattern));
+    }
+
+    function matchAndReplace(value, pattern, replacement){
+        return pattern.test(value) ? value.replace(pattern, replacement) : value;
+    }
+
     parser.registerTypeLevelMacro(function bangStarDefinedValues(value) {
-        return /^\!\*$/.test(value.trim()) ? 'not<variant<undefined, null>>' : value;
+        var pattern = buildTypePattern('(\\!\\*)');
+        var replacementStr = '$1$2not<variant<undefined, null>>$4';
+
+        return matchAndReplace(value.trim(), pattern, replacementStr);
+    });
+
+    parser.registerTypeLevelMacro(function questionMarkToOptionalType(value) {
+        var pattern = buildTypePattern('\\?([^\\]]*)');
+        var replacementStr = '$1$2variant<undefined, $3>$4';
+
+        return matchAndReplace(value.trim(), pattern, replacementStr);
+    });
+
+    parser.registerTypeLevelMacro(function caretToNot(value) {
+        var pattern = buildTypePattern('\\^([^\\]]*)');
+        var replacementStr = '$1$2not<$3>$4';
+
+        return matchAndReplace(value.trim(), pattern, replacementStr);
     });
 
     parser.registerSignatureLevelMacro(function signatureToFunction(value) {

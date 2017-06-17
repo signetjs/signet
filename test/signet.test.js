@@ -128,6 +128,30 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('!*')(undefined), false);
         assert.equal(signet.isTypeOf('!*')(null), false);
         assert.equal(signet.isTypeOf('!*')({}), true);
+
+        assert.equal(signet.isTypeOf('?string')(undefined), true);
+        assert.equal(signet.isTypeOf('?string')('foo'), true);
+        assert.equal(signet.isTypeOf('?string')({}), false);
+
+        assert.equal(signet.isTypeOf('^string')('foo'), false);
+        assert.equal(signet.isTypeOf('^string')(null), true);
+    });
+
+    it('should properly sign a function using macros', function () {
+        var expectedValue = 'something:[not<variant<undefined, null>>], somethingElse:[variant<undefined;string>], aFunction:function<* => *> => null';
+        var testFn = signet.enforce(
+            'something:[!*], somethingElse:[?string], aFunction:(* => *) => null',
+            () => null
+        );
+
+        assert.equal(testFn.signature, expectedValue);
+    });
+
+    it('tuple should produce reliable signatures', function () {
+        const expectedSignature = 'tuple<*;*> => *';
+        const testFn = signet.enforce(expectedSignature, () => null);
+
+        assert.equal(testFn.signature, expectedSignature);
     });
 
     it('should pre-register signet type aliases', function () {

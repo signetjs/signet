@@ -158,8 +158,15 @@ Extended types, and their inheritance chain, are as follows:
 Signet supports type-level and signature-level macros. There are a small set of built-in macros which are as follows:
 
 - `()` - type-level macro for `*`
+    - Example: `()` becomes `*`
 - `!*` - type-level macro for `not<variant<undefined, null>>`
+    - Example: `definedType:!*` becomes `definedType:not<undefined, null>`
+- `^typeName` - type-level macro for `not<typeName>`
+    - Example: `notNull:^null` becomes `notNull:not<null>`
+- `?typeName` - type-level macro for `variant<undefined, typeName>`
+    - Example: `maybeTuple:?tuple<*, *, *>` becomes `maybeTuple:variant<undefined, tuple<*, *, *>>`
 - `(types => types => ...)` - signature-level macro for `function<types => types => ...>`
+    - Example: `(string => int => null)` becomes `function<string => int => null>`
 
 ## Dependent types ##
 
@@ -431,6 +438,10 @@ You can declare the number of arguments a type constructor requires (the arity o
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 3.13.0 ###
+
+- Added `^typeName` macro for `not<typeName>`
 
 ### 3.12.0 ###
 
