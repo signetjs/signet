@@ -124,6 +124,10 @@ describe('Signet Library', function () {
 
         assert.equal(signet.isTypeOf('composite<not<null>, object>')({}), true);
         assert.equal(signet.isTypeOf('composite<not<null>, object>')(undefined), false);
+
+        assert.equal(signet.isTypeOf('!*')(undefined), false);
+        assert.equal(signet.isTypeOf('!*')(null), false);
+        assert.equal(signet.isTypeOf('!*')({}), true);
     });
 
     it('should pre-register signet type aliases', function () {

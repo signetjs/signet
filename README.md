@@ -153,6 +153,14 @@ Extended types, and their inheritance chain, are as follows:
 - `unorderedProduct<type;type;type...>` - `* -> object -> array -> unorderedProduct`
 - `variant<type;type;type...>` - `* -> variant`
 
+## Macro Types ##
+
+Signet supports type-level and signature-level macros. There are a small set of built-in macros which are as follows:
+
+- `()` - type-level macro for `*`
+- `!*` - type-level macro for `not<variant<undefined, null>>`
+- `(types => types => ...)` - signature-level macro for `function<types => types => ...>`
+
 ## Dependent types ##
 
 Types can be named and dependencies can be declared between two arguments in the same call. Signet currently does not have the means to verify dependent types across function calls.  
@@ -423,6 +431,10 @@ You can declare the number of arguments a type constructor requires (the arity o
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 3.12.0 ###
+
+- Added `!*` macro for `not<variant<undefined, null>>`
 
 ### 3.11.0 ###
 

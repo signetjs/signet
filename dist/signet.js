@@ -1046,6 +1046,10 @@ function signetCoreTypes(
         return /^\(\s*\)$/.test(value.trim()) ? '*' : value;
     });
 
+    parser.registerTypeLevelMacro(function bangStarDefinedValues(value) {
+        return /^\!\*$/.test(value.trim()) ? 'not<variant<undefined, null>>' : value;
+    });
+
     parser.registerSignatureLevelMacro(function signatureToFunction(value) {
         var signaturePattern = /(\()((.*\=\>)+(.*))(\))/
         var signatureMatch = signaturePattern.test(value);
