@@ -301,7 +301,11 @@ function signetBuilder(
         alias,
         typelog.defineDependentOperatorOn);
 
-    var duckTypesModule = duckTypes(typelog, isTypeOf);
+    var duckTypesModule = duckTypes(
+        typelog, 
+        isTypeOf, 
+        parser.parseType,
+        assembler.assembleType);
 
     return {
         alias: enforce(

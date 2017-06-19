@@ -663,7 +663,7 @@ if (typeof module !== 'undefined' && typeof module.exports !== undefined) {
     module.exports = signetValidator;
 }
 
-function signetDuckTypes(typelog, isTypeOf) {
+function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
 
     var duckTypeErrorReporters = {};
 
@@ -688,16 +688,26 @@ function signetDuckTypes(typelog, isTypeOf) {
         return value;
     }
 
+    var isString = isTypeOf('string');
+
     function getTypeName(objectDef, key) {
         return typeof objectDef[key] === 'string' ? objectDef[key] : objectDef[key].name;
     }
 
     function buildDuckTypeErrorReporter(definitionPairs, objectDef) {
+        var keys = Object.keys(objectDef);
+        var typeResolvedDefinition = keys.reduce(function (result, key) {
+            var typeValue = objectDef[key];
+            result[key] = isString(typeValue) ? 
+                assembleType(parseType(typeValue)) : typeValue;
+            return result;
+        }, {});
+
         return function (value) {
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
                 var typePredicate = typePair[1];
-                var typeName = getTypeName(objectDef, key);
+                var typeName = getTypeName(typeResolvedDefinition, key);
 
                 if (!typePredicate(value[key])) {
                     result.push([key, typeName, getErrorValue(value[key], typeName)]);
@@ -1465,7 +1475,11 @@ function signetBuilder(
         alias,
         typelog.defineDependentOperatorOn);
 
-    var duckTypesModule = duckTypes(typelog, isTypeOf);
+    var duckTypesModule = duckTypes(
+        typelog, 
+        isTypeOf, 
+        parser.parseType,
+        assembler.assembleType);
 
     return {
         alias: enforce(

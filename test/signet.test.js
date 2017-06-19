@@ -355,7 +355,7 @@ describe('Signet Library', function () {
 
     it('should allow reporting of duck type errors', function () {
         signet.defineDuckType('aTestThingy', {
-            quux: 'string'
+            quux: '!*'
         });
 
         signet.defineDuckType('myObj', {
@@ -366,7 +366,7 @@ describe('Signet Library', function () {
         });
 
         var result = signet.reportDuckTypeErrors('myObj')({ foo: 55, bar: 'bad value', baz: null, deeperType: {} });
-        var expected = '[["foo","string",55],["bar","int","bad value"],["baz","array",null],["deeperType","aTestThingy",[["quux","string",null]]]]';
+        var expected = '[["foo","string",55],["bar","int","bad value"],["baz","array",null],["deeperType","aTestThingy",[["quux","not<variant<undefined, null>>",null]]]]';
 
         assert.equal(JSON.stringify(result), expected);
         assert.equal(signet.isTypeOf('myObj')({ foo: 'blah', bar: 55, baz: [], deeperType: { quux: 'something' } }), true);

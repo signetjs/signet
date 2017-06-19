@@ -439,6 +439,10 @@ You can declare the number of arguments a type constructor requires (the arity o
 
 ## Change Log ##
 
+### 3.14.0 ###
+
+- Updated duck type error reporter to resolve type-level macros to their proper types
+
 ### 3.13.0 ###
 
 - Added `^typeName` macro for `not<typeName>`
