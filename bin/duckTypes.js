@@ -105,12 +105,17 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
 
     }
 
+    function isRegisteredDuckType (typeName) {
+        return typeof duckTypeErrorReporters[typeName] === 'function';
+    }
+
     return {
         buildDuckTypeErrorChecker: buildDuckTypeErrorReporter,
         defineDuckType: defineDuckType,
         defineExactDuckType: defineExactDuckType,
         duckTypeFactory: duckTypeFactory,
         exactDuckTypeFactory: exactDuckTypeFactory,
+        isRegisteredDuckType: isRegisteredDuckType,
         reportDuckTypeErrors: reportDuckTypeErrors
     };
 }

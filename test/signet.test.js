@@ -398,6 +398,13 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('myExactObj')({ foo: 'blah', bar: 55, baz: [] }), true);
     });
 
+    it('should allow querying of registered duck types', function () {
+        signet.defineDuckType('duckFoo', {});
+
+        assert.equal(signet.isRegisteredDuckType('duckFoo'), true);
+        assert.equal(signet.isRegisteredDuckType('duckBar'), false);
+    });
+
     it('should properly check dependent types', function () {
         function orderedProperly(a, b) {
             return a > b;

@@ -770,12 +770,17 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
 
     }
 
+    function isRegisteredDuckType (typeName) {
+        return typeof duckTypeErrorReporters[typeName] === 'function';
+    }
+
     return {
         buildDuckTypeErrorChecker: buildDuckTypeErrorReporter,
         defineDuckType: defineDuckType,
         defineExactDuckType: defineExactDuckType,
         duckTypeFactory: duckTypeFactory,
         exactDuckTypeFactory: exactDuckTypeFactory,
+        isRegisteredDuckType: isRegisteredDuckType,
         reportDuckTypeErrors: reportDuckTypeErrors
     };
 }
@@ -1509,6 +1514,9 @@ function signetBuilder(
         extend: enforce(
             'typeName:string, typeCheck:function, preprocessor:[function<string => string>] => undefined',
             extend),
+        isRegisteredDuckType: enforce(
+            'typeName:string => boolean',
+            duckTypesModule.isRegisteredDuckType),
         isSubtypeOf: enforce(
             'rootTypeName:string => typeNameUnderTest:string => boolean',
             typelog.isSubtypeOf),

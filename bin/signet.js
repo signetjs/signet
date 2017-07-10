@@ -334,6 +334,9 @@ function signetBuilder(
         extend: enforce(
             'typeName:string, typeCheck:function, preprocessor:[function<string => string>] => undefined',
             extend),
+        isRegisteredDuckType: enforce(
+            'typeName:string => boolean',
+            duckTypesModule.isRegisteredDuckType),
         isSubtypeOf: enforce(
             'rootTypeName:string => typeNameUnderTest:string => boolean',
             typelog.isSubtypeOf),
