@@ -424,7 +424,8 @@ You can declare the number of arguments a type constructor requires (the arity o
         - inputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
         - outputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
 - extend: `typeName:string, typeCheck:function, preprocessor:[function] => undefined`
-- ExactDuckTypeFactory: `duckTypeDef:object => function`
+- exactDuckTypeFactory: `duckTypeDef:object => function`
+- isRegisteredDuckType: `typeName:string => boolean`
 - isSubtypeOf: `rootTypeName:string => typeNameUnderTest:string => boolean`
 - isType: `typeName:string => boolean`
 - isTypeOf: `typeToCheck:type => value:* => boolean`
@@ -438,6 +439,10 @@ You can declare the number of arguments a type constructor requires (the arity o
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 3.15.0 ###
+
+- Added isRegisteredDuckType
 
 ### 3.14.0 ###
 
