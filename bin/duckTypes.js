@@ -84,7 +84,8 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
         }
 
         return function (value) {
-            return errorChecker(value);
+            var isDuckTypeable = (value !== null && typeof value === 'object') || typeof value === 'function'
+            return isDuckTypeable ? errorChecker(value) : { unevaluable: value };
         }
     }
 

@@ -348,7 +348,7 @@ function signetBuilder(
             parser.registerTypeLevelMacro),
         reportDuckTypeErrors: enforce(
             'duckTypeName:string => \
-            valueToCheck:object => \
+            valueToCheck:composite<object, not<null>> => \
             array<tuple<string, string, *>>',
             duckTypesModule.reportDuckTypeErrors),
         sign: enforce(

@@ -749,7 +749,8 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
         }
 
         return function (value) {
-            return errorChecker(value);
+            var isDuckTypeable = (value !== null && typeof value === 'object') || typeof value === 'function'
+            return isDuckTypeable ? errorChecker(value) : { unevaluable: value };
         }
     }
 
@@ -1522,7 +1523,7 @@ function signetBuilder(
             parser.registerTypeLevelMacro),
         reportDuckTypeErrors: enforce(
             'duckTypeName:string => \
-            valueToCheck:object => \
+            valueToCheck:composite<object, not<null>> => \
             array<tuple<string, string, *>>',
             duckTypesModule.reportDuckTypeErrors),
         sign: enforce(
