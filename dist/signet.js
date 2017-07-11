@@ -1087,7 +1087,7 @@ function signetCoreTypes(
 
     parser.registerTypeLevelMacro(function questionMarkToOptionalType(value) {
         var pattern = buildTypePattern('\\?([^\\]]*)');
-        var replacementStr = '$1$2variant<undefined, $3>$4';
+        var replacementStr = '$1$2variant<undefined, null, $3>$4';
 
         return matchAndReplace(value.trim(), pattern, replacementStr);
     });
@@ -1513,11 +1513,25 @@ function signetBuilder(
             'aliasName != typeString :: aliasName:string, typeString:string => undefined',
             alias),
         buildInputErrorMessage: enforce(
-            'validationResult:array, args:array, signatureTree:array, functionName:string => string',
+            'validationResult:tuple<\
+                expectedType:type, \
+                actualValue:*\
+            >, \
+            args:array<*>, \
+            signatureTree:array<array<object>>, \
+            functionName:string \
+            => string',
             buildInputErrorMessage
         ),
         buildOutputErrorMessage: enforce(
-            'validationResult:array, args:array, signatureTree:array, functionName:string => string',
+            'validationResult:tuple<\
+                expectedType:type, \
+                actualValue:*\
+            >, \
+            args:array<*>, \
+            signatureTree:array<array<object>>, \
+            functionName:string \
+            => string',
             buildOutputErrorMessage
         ),
         duckTypeFactory: enforce(

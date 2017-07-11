@@ -332,14 +332,7 @@ function signetBuilder(
                 expectedType:type, \
                 actualValue:*\
             >, \
-            args:array<variant<\
-                tuple<\
-                    propertyName:string, \
-                    expectedType:type, \
-                    actualValue:*\
-                >,\
-                array\
-            >>, \
+            args:array<*>, \
             signatureTree:array<array<object>>, \
             functionName:string \
             => string',
@@ -350,14 +343,7 @@ function signetBuilder(
                 expectedType:type, \
                 actualValue:*\
             >, \
-            args:array<variant<\
-                tuple<\
-                    propertyName:string, \
-                    expectedType:type, \
-                    actualValue:*\
-                >,\
-                array\
-            >>, \
+            args:array<*>, \
             signatureTree:array<array<object>>, \
             functionName:string \
             => string',

@@ -138,7 +138,7 @@ describe('Signet Library', function () {
     });
 
     it('should properly sign a function using macros', function () {
-        var expectedValue = 'something:[not<variant<undefined, null>>], somethingElse:[variant<undefined;string>], aFunction:function<* => *> => null';
+        var expectedValue = 'something:[not<variant<undefined, null>>], somethingElse:[variant<undefined;null;string>], aFunction:function<* => *> => null';
         var testFn = signet.enforce(
             'something:[!*], somethingElse:[?string], aFunction:(* => *) => null',
             () => null
