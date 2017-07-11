@@ -698,12 +698,18 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
         var keys = Object.keys(objectDef);
         var typeResolvedDefinition = keys.reduce(function (result, key) {
             var typeValue = objectDef[key];
+            
             result[key] = isString(typeValue) ? 
                 assembleType(parseType(typeValue)) : typeValue;
+
             return result;
         }, {});
 
         return function (value) {
+            if(typeof value !== 'object' || value === null) {
+                return [['badDuckTypeValue', 'object', value]]
+            }
+
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
                 var typePredicate = typePair[1];
@@ -749,8 +755,7 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
         }
 
         return function (value) {
-            var isDuckTypeable = (value !== null && typeof value === 'object') || typeof value === 'function'
-            return isDuckTypeable ? errorChecker(value) : { unevaluable: value };
+            return errorChecker(value);
         }
     }
 
@@ -1292,39 +1297,55 @@ function signetBuilder(
         return list[list.length - 1];
     }
 
-    function throwEvaluationError(valueInfo, prefixMixin, functionName) {
-        var valueType = typeof valueInfo[1];
+    function buildEvaluationError(validationResult, prefixMixin, functionName) {
+        var expectedType = validationResult[0];
+        var value = validationResult[1];
+        var valueType = typeof value;
 
         var errorMessage = functionName + ' expected a ' + prefixMixin + 'value of type ' +
-            valueInfo[0] + ' but got ' +
-            valueInfo[1] + ' of type ' + valueType;
+            expectedType + ' but got ' +
+            validationResult[1] + ' of type ' + valueType;
 
-        throw new TypeError(errorMessage);
+        return errorMessage;
     }
 
     var functionTypeDef = parser.parseType('function');
+
+    function evaluationErrorFactory(prefix) {
+        return function throwEvaluationError(
+            validationResult,
+            errorBuilder,
+            args,
+            signatureTree,
+            functionName
+        ) {
+
+            var errorMessage = buildEvaluationError(validationResult, prefix, functionName);
+
+            if (typeof errorBuilder === 'function') {
+                errorMessage = errorBuilder(validationResult, args, signatureTree, functionName);
+            }
+
+            throw new TypeError(errorMessage);
+        }
+    }
+
+    var throwInputError = evaluationErrorFactory('');
+    var throwOutputError = evaluationErrorFactory('return ');
+
+    function buildInputErrorMessage (validationResult, args, signatureTree, functionName) {
+        return buildEvaluationError(validationResult, '', functionName);
+    }
+
+    function buildOutputErrorMessage (validationResult, args, signatureTree, functionName) {
+        return buildEvaluationError(validationResult, 'return ', functionName);
+    }
 
     function verify(fn, args) {
         var result = validator.validateArguments(fn.signatureTree[0])(args);
 
         if (result !== null) {
-            throwEvaluationError(result, '');
-        }
-    }
-
-    function throwInputError(validationResult, inputErrorBuilder, args, signatureTree, functionName) {
-        if (typeof inputErrorBuilder === 'function') {
-            throw new Error(inputErrorBuilder(validationResult, args, signatureTree, functionName));
-        } else {
-            throwEvaluationError(validationResult, '', functionName);
-        }
-    }
-
-    function throwOutputError(validationResult, outputErrorBuilder, args, signatureTree, functionName) {
-        if (typeof outputErrorBuilder === 'function') {
-            throw new Error(outputErrorBuilder(validationResult, args, signatureTree, functionName));
-        } else {
-            throwEvaluationError(validationResult, 'return ', functionName);
+            throwInputError(result, null, args, fn.signatureTree, getFunctionName(fn));
         }
     }
 
@@ -1482,8 +1503,8 @@ function signetBuilder(
         typelog.defineDependentOperatorOn);
 
     var duckTypesModule = duckTypes(
-        typelog, 
-        isTypeOf, 
+        typelog,
+        isTypeOf,
         parser.parseType,
         assembler.assembleType);
 
@@ -1491,6 +1512,14 @@ function signetBuilder(
         alias: enforce(
             'aliasName != typeString :: aliasName:string, typeString:string => undefined',
             alias),
+        buildInputErrorMessage: enforce(
+            'validationResult:array, args:array, signatureTree:array, functionName:string => string',
+            buildInputErrorMessage
+        ),
+        buildOutputErrorMessage: enforce(
+            'validationResult:array, args:array, signatureTree:array, functionName:string => string',
+            buildOutputErrorMessage
+        ),
         duckTypeFactory: enforce(
             'duckTypeDef:object => function',
             duckTypesModule.duckTypeFactory),
@@ -1531,7 +1560,7 @@ function signetBuilder(
             parser.registerTypeLevelMacro),
         reportDuckTypeErrors: enforce(
             'duckTypeName:string => \
-            valueToCheck:composite<object, not<null>> => \
+            valueToCheck:* => \
             array<tuple<string, string, *>>',
             duckTypesModule.reportDuckTypeErrors),
         sign: enforce(

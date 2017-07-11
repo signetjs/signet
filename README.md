@@ -415,6 +415,8 @@ You can declare the number of arguments a type constructor requires (the arity o
 ## Signet API ###
 
 - alias: `aliasName != typeString :: aliasName:string, typeString:string => undefined`
+- buildInputErrorMessage: `validationResult:array, args:array, signatureTree:array, functionName:string => string`
+- buildOutputErrorMessage: `validationResult:array, args:array, signatureTree:array, functionName:string => string`
 - duckTypeFactory: `duckTypeDef:object => function`
 - defineDuckType: `typeName:string, duckTypeDef:object => undefined`
 - defineExactDuckType: `typeName:string, duckTypeDef:object => undefined`

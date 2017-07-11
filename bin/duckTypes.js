@@ -33,12 +33,18 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
         var keys = Object.keys(objectDef);
         var typeResolvedDefinition = keys.reduce(function (result, key) {
             var typeValue = objectDef[key];
+            
             result[key] = isString(typeValue) ? 
                 assembleType(parseType(typeValue)) : typeValue;
+
             return result;
         }, {});
 
         return function (value) {
+            if(typeof value !== 'object' || value === null) {
+                return [['badDuckTypeValue', 'object', value]]
+            }
+
             return definitionPairs.reduce(function (result, typePair) {
                 var key = typePair[0];
                 var typePredicate = typePair[1];
@@ -84,8 +90,7 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
         }
 
         return function (value) {
-            var isDuckTypeable = (value !== null && typeof value === 'object') || typeof value === 'function'
-            return isDuckTypeable ? errorChecker(value) : { unevaluable: value };
+            return errorChecker(value);
         }
     }
 

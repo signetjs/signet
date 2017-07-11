@@ -250,6 +250,36 @@ describe('Signet Library', function () {
         assert.throws(add.bind(null, 3, 'no'), expectedMessage);
     });
 
+    it('should throw a default error on bad input with core builder', function () {
+        var add = signet.enforce('number, number => number', function (a, b) {
+            (a, b);
+            return true;
+        }, {
+            inputErrorBuilder: function (validationResult, args, signatureTree, functionName) {
+                return signet.buildInputErrorMessage(validationResult, args, signatureTree, functionName);
+            }
+            });
+
+        var expectedMessage = 'Anonymous expected a value of type number but got no of type string';
+
+        assert.throws(add.bind(null, 3, 'no'), expectedMessage);
+    });
+
+    it('should throw a default error on bad output with core builder', function () {
+        var add = signet.enforce('number, number => number', function (a, b) {
+            (a, b);
+            return true;
+        }, { 
+            outputErrorBuilder: function (validationResult, args, signatureTree, functionName) {
+                return signet.buildOutputErrorMessage(validationResult, args, signatureTree, functionName);
+            }
+        });
+
+        var expectedMessage = 'Anonymous expected a return value of type number but got true of type boolean';
+
+        assert.throws(add.bind(null, 3, 4), expectedMessage);
+    });
+
     it('should throw a custom error on bad output', function () {
         var add = signet.enforce('number, number => number', function (a, b) {
             (a, b);
@@ -398,6 +428,15 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('myExactObj')({ foo: 'blah', bar: 55, baz: [] }), true);
     });
 
+    it('should return duck type error on bad object value', function () {
+        signet.defineDuckType('duckTest', {});
+        let checkDuckTest = signet.reportDuckTypeErrors('duckTest');
+
+        assert.equal(JSON.stringify(checkDuckTest(null)), '[["badDuckTypeValue","object",null]]');
+        assert.equal(JSON.stringify(checkDuckTest(55)), '[["badDuckTypeValue","object",55]]');
+        assert.equal(JSON.stringify(checkDuckTest('foo')), '[["badDuckTypeValue","object","foo"]]');
+    });
+
     it('should allow querying of registered duck types', function () {
         signet.defineDuckType('duckFoo', {});
 
@@ -523,14 +562,14 @@ describe('Signet Library', function () {
         function doStuff() { return []; }
         signet.enforce('function<*, * => string, boolean => boolean> => array', doStuff);
 
-        assert.doesNotThrow(doStuff.bind(null, function () {}));
+        assert.doesNotThrow(doStuff.bind(null, function () { }));
     });
 
     it('should handle type arity up front', function () {
-        signet.extend('myTestType0', function () {});
-        signet.extend('myTestType1{1}', function () {});
-        signet.extend('myTestType1OrMore{1,}', function () {});
-        signet.extend('myTestType2To5{2, 5}', function () {});
+        signet.extend('myTestType0', function () { });
+        signet.extend('myTestType1{1}', function () { });
+        signet.extend('myTestType1OrMore{1,}', function () { });
+        signet.extend('myTestType2To5{2, 5}', function () { });
 
         assert.doesNotThrow(signet.isTypeOf.bind(null, 'myTestType0<1, 2, 3>'));
         assert.throws(
@@ -554,7 +593,7 @@ describe('Signet Library', function () {
             'Type myTestType2To5 accepts, at most, 5 arguments');
 
         assert.throws(
-            signet.extend.bind(null, 'myTestTypeBroken{5, 1}', function () {}),
+            signet.extend.bind(null, 'myTestTypeBroken{5, 1}', function () { }),
             'Error in myTestTypeBroken arity declaration: min cannot be greater than max');
     });
 
