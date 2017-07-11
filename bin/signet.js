@@ -328,11 +328,39 @@ function signetBuilder(
             'aliasName != typeString :: aliasName:string, typeString:string => undefined',
             alias),
         buildInputErrorMessage: enforce(
-            'validationResult:array, args:array, signatureTree:array, functionName:string => string',
+            'validationResult:tuple<\
+                expectedType:type, \
+                actualValue:*\
+            >, \
+            args:array<variant<\
+                tuple<\
+                    propertyName:string, \
+                    expectedType:type, \
+                    actualValue:*\
+                >,\
+                array\
+            >>, \
+            signatureTree:array<array<object>>, \
+            functionName:string \
+            => string',
             buildInputErrorMessage
         ),
         buildOutputErrorMessage: enforce(
-            'validationResult:array, args:array, signatureTree:array, functionName:string => string',
+            'validationResult:tuple<\
+                expectedType:type, \
+                actualValue:*\
+            >, \
+            args:array<variant<\
+                tuple<\
+                    propertyName:string, \
+                    expectedType:type, \
+                    actualValue:*\
+                >,\
+                array\
+            >>, \
+            signatureTree:array<array<object>>, \
+            functionName:string \
+            => string',
             buildOutputErrorMessage
         ),
         duckTypeFactory: enforce(

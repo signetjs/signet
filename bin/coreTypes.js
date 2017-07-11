@@ -290,7 +290,7 @@ function signetCoreTypes(
 
     parser.registerTypeLevelMacro(function questionMarkToOptionalType(value) {
         var pattern = buildTypePattern('\\?([^\\]]*)');
-        var replacementStr = '$1$2variant<undefined, $3>$4';
+        var replacementStr = '$1$2variant<undefined, null, $3>$4';
 
         return matchAndReplace(value.trim(), pattern, replacementStr);
     });

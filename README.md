@@ -163,8 +163,8 @@ Signet supports type-level and signature-level macros. There are a small set of 
     - Example: `definedType:!*` becomes `definedType:not<undefined, null>`
 - `^typeName` - type-level macro for `not<typeName>`
     - Example: `notNull:^null` becomes `notNull:not<null>`
-- `?typeName` - type-level macro for `variant<undefined, typeName>`
-    - Example: `maybeTuple:?tuple<*, *, *>` becomes `maybeTuple:variant<undefined, tuple<*, *, *>>`
+- `?typeName` - type-level macro for `variant<undefined, null, typeName>`
+    - Example: `maybeTuple:?tuple<*, *, *>` becomes `maybeTuple:variant<undefined, null, tuple<*, *, *>>`
 - `(types => types => ...)` - signature-level macro for `function<types => types => ...>`
     - Example: `(string => int => null)` becomes `function<string => int => null>`
 
