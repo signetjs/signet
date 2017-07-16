@@ -597,6 +597,45 @@ describe('Signet Library', function () {
             'Error in myTestTypeBroken arity declaration: min cannot be greater than max');
     });
 
+    function setImmutableValue (obj, key, value) {
+        Object.defineProperty(obj, key, {
+            writeable: false,
+            value: value
+        });
+    }
+
+    function cons(value, list) {
+        const newNode = {};
+
+        setImmutableValue(newNode, 'value', value);
+        setImmutableValue(newNode, 'next', list);
+
+        return newNode;
+    }
+
+    it('should allow easy creation of a recursive type', function () {
+
+        const isListNode = signet.duckTypeFactory({
+            value: 'int',
+            next: 'composite<not<array>, object>'
+        });
+
+        function buildIterable (value) {
+            var current = value;
+
+            return function () {
+                return isListNode(current) ? (current = current.next) : null;
+            }
+        }
+
+        const isIntList = signet.recursiveTypeFactory(buildIterable, isListNode);
+
+        const testList = cons(1, cons(2, cons(3, cons(4, cons(5, null)))));
+        
+        assert.equal(isIntList(testList), true);
+        assert.equal(isIntList('blerg'), false);
+    });
+
 });
 
 if (typeof global.runQuokkaMochaBdd === 'function') {

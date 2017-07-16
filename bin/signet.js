@@ -5,7 +5,8 @@ function signetBuilder(
     parser,
     assembler,
     duckTypes,
-    coreTypes) {
+    coreTypes,
+    recursiveTypes) {
 
     'use strict';
 
@@ -148,11 +149,11 @@ function signetBuilder(
     var throwInputError = evaluationErrorFactory('');
     var throwOutputError = evaluationErrorFactory('return ');
 
-    function buildInputErrorMessage (validationResult, args, signatureTree, functionName) {
+    function buildInputErrorMessage(validationResult, args, signatureTree, functionName) {
         return buildEvaluationError(validationResult, '', functionName);
     }
 
-    function buildOutputErrorMessage (validationResult, args, signatureTree, functionName) {
+    function buildOutputErrorMessage(validationResult, args, signatureTree, functionName) {
         return buildEvaluationError(validationResult, 'return ', functionName);
     }
 
@@ -323,6 +324,8 @@ function signetBuilder(
         parser.parseType,
         assembler.assembleType);
 
+    var recursiveTypeModule = recursiveTypes(typelog, isTypeOf);
+
     return {
         alias: enforce(
             'aliasName != typeString :: aliasName:string, typeString:string => undefined',
@@ -384,6 +387,9 @@ function signetBuilder(
         isTypeOf: enforce(
             'typeToCheck:type => value:* => boolean',
             isTypeOf),
+        recursiveTypeFactory: enforce(
+            'iteratorFactory:function, vertexType:type, nodeType:[type] => valueToCheck:* => boolean',
+            recursiveTypeModule.recursiveTypeFactory),
         registerTypeLevelMacro: enforce(
             'macro:function => undefined',
             parser.registerTypeLevelMacro),

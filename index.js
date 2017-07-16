@@ -8,7 +8,8 @@ var typelogBuilder = require('signet-typelog');
 var validatorBuilder = require('signet-validator');
 var signetBuilder = require('./bin/signet');
 var duckTypes = require('./bin/duckTypes');
-var coreTypes = require('./bin/coreTypes')
+var coreTypes = require('./bin/coreTypes');
+var recursiveTypes = require('./bin/recursiveTypes');
 
 module.exports = function () {
 
@@ -20,11 +21,12 @@ module.exports = function () {
 
     return signetBuilder(
         typelog,
-        validator, 
-        checker, 
-        parser, 
-        assembler, 
+        validator,
+        checker,
+        parser,
+        assembler,
         duckTypes,
-        coreTypes);
+        coreTypes,
+        recursiveTypes);
 
 };
