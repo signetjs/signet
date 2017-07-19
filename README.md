@@ -371,6 +371,55 @@ type depends on extant properties with correct types, it can be predefined with 
     signet.isTypeOf('myObj')({ foo: 42, bar: [] }); // false
 ```
 
+### Building Recursive Types ###
+
+Though recursive types such as trees and linked lists can be created with the signet type definition method, but this requires a fair amount of recursive thinking. Instead, Signet provides a means for simply creating recursive types without the recursive thinking.  
+
+Here is an example of creating a linked list type function:
+
+```
+    const isListNode = signet.duckTypeFactory({
+        value: 'int',
+        next: 'composite<not<array>, object>'
+    });
+
+    const iterableFactory = signet.iterateOn('next');
+    const isIntList = signet.recursiveTypeFactory(iterableFactory, isListNode);
+```
+
+To create a more complex type like a binary tree, we would do the following:
+
+```
+    const isBinaryTreeNode = signet.recursiveTypeFactory('binaryTreeNode', {
+        value: 'int',
+        left: 'composite<^array, object>',
+        right: 'composite<^array, object>',
+    });
+
+    const isNodeOrNull = (node) => node === null || isBinaryTreeNode(node);
+
+    function isOrderedNode (node) {
+        return isBinaryTreeNode(node)
+            || isNodeOrNull(node.left)
+            || isNodeOrNull(node.right)
+            || (node.value > node.left 
+                && node.value <= node.right);
+    }
+
+    signet.subtype('object')('orderedBinaryTreeNode', isOrderedNode);
+
+    function iteratorFactory (value) {
+        var iterable = [];
+
+        iterable = value.left !== null ? iterable.concat([value.left]) : iterable;
+        iterable = value.right !== null ? iterable.concat([value.right]) : iterable;
+
+        return signet.iterateOnArray(iterable);
+    }
+
+    signet.defineRecursiveType('orderedBinaryTree', iteratorFactory, 'binaryTreeNode');
+```
+
 ### Type Chain Information ###
 
 Signet supports accessing a type's inheritance chain.  This means, if you want to know what a type does, you can review the chain
@@ -421,6 +470,7 @@ You can declare the number of arguments a type constructor requires (the arity o
 - defineDuckType: `typeName:string, duckTypeDef:object => undefined`
 - defineExactDuckType: `typeName:string, duckTypeDef:object => undefined`
 - defineDependentOperatorOn: `typeName:string => operator:string, operatorCheck:function => undefined`
+- defineRecursiveType: `typeName:string, iteratorFactory:function, nodeType:type, typePreprocessor:[function] => undefined`
 - enforce: `signature:string, functionToEnforce:function, options:[object] => function`
     - currently supported options:
         - inputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
@@ -431,6 +481,9 @@ You can declare the number of arguments a type constructor requires (the arity o
 - isSubtypeOf: `rootTypeName:string => typeNameUnderTest:string => boolean`
 - isType: `typeName:string => boolean`
 - isTypeOf: `typeToCheck:type => value:* => boolean`
+- iterateOn: `propertyKey:string => value:* => undefined => *`
+- iterateOnArray: `iterationArray:array => undefined => *`
+- recursiveTypeFactory: `iteratorFactory:function, nodeType:type => valueToCheck:* => boolean`
 - registerTypeLevelMacro: `macro:function => undefined`
 - reportDuckTypeErrors: `duckTypeName:string => valueToCheck:object => array<tuple<string; string; *>>`
 - sign: `signature:string, functionToSign:function => function`

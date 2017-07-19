@@ -324,99 +324,154 @@ function signetBuilder(
         parser.parseType,
         assembler.assembleType);
 
-    var recursiveTypeModule = recursiveTypes(typelog, isTypeOf);
+    var recursiveTypeModule = recursiveTypes(extend, isTypeOf);
 
     return {
         alias: enforce(
-            'aliasName != typeString :: aliasName:string, typeString:string => undefined',
+            'aliasName != typeString ' +
+            ':: aliasName:string, ' + 
+                'typeString:string ' + 
+                '=> undefined',
             alias),
         buildInputErrorMessage: enforce(
-            'validationResult:tuple<\
-                expectedType:type, \
-                actualValue:*\
-            >, \
-            args:array<*>, \
-            signatureTree:array<array<object>>, \
-            functionName:string \
-            => string',
+            'validationResult:tuple<' +
+                'expectedType:type, ' +
+                'actualValue:*' + 
+            '>, ' +
+            'args:array<*>, ' +
+            'signatureTree:array<array<object>>, ' +
+            'functionName:string ' +
+            '=> string',
             buildInputErrorMessage
         ),
         buildOutputErrorMessage: enforce(
-            'validationResult:tuple<\
-                expectedType:type, \
-                actualValue:*\
-            >, \
-            args:array<*>, \
-            signatureTree:array<array<object>>, \
-            functionName:string \
-            => string',
+            'validationResult:tuple<' +
+                'expectedType:type, ' +
+                'actualValue:*' + 
+            '>, ' +
+            'args:array<*>, ' +
+            'signatureTree:array<array<object>>, ' +
+            'functionName:string ' +
+            '=> string',
             buildOutputErrorMessage
         ),
         duckTypeFactory: enforce(
             'duckTypeDef:object => function',
             duckTypesModule.duckTypeFactory),
         defineDuckType: enforce(
-            'typeName:string, duckTypeDef:object => undefined',
+            'typeName:string, ' +
+            'duckTypeDef:object ' +
+            '=> undefined',
             duckTypesModule.defineDuckType),
         defineExactDuckType: enforce(
-            'typeName:string, duckTypeDef:object => undefined',
+            'typeName:string, ' +
+            'duckTypeDef:object ' +
+            '=> undefined',
             duckTypesModule.defineExactDuckType),
         defineDependentOperatorOn: enforce(
-            'typeName:string => \
-            operator:string, operatorCheck:function<*, *, [object], [object] => boolean> => \
-            undefined',
+            'typeName:string => ' +
+            'operator:string, operatorCheck:function<' +
+                'valueA:*, ' +
+                'valueB:*, ' +
+                'typeDefinitionA:[object], ' +
+                'typeDefinitionB:[object] ' +
+                '=> boolean' + 
+            '> ' +
+            '=> undefined',
             typelog.defineDependentOperatorOn),
+        defineRecursiveType: enforce(
+            'typeName:string, ' +
+            'iteratorFactory:function, ' + 
+            'nodeType:type, ' + 
+            'typePreprocessor:[function] ' +
+            '=> undefined',
+            recursiveTypeModule.defineRecursiveType),
         enforce: enforce(
-            'signature:string, functionToEnforce:function, options:[object] => function',
+            'signature:string, ' + 
+            'functionToEnforce:function, ' +
+            'options:[object] ' + 
+            '=> function',
             enforce),
         exactDuckTypeFactory: enforce(
             'duckTypeDef:object => function',
             duckTypesModule.exactDuckTypeFactory),
         extend: enforce(
-            'typeName:string, typeCheck:function, preprocessor:[function<string => string>] => undefined',
+            'typeName:string, ' +
+            'typeCheck:function, ' + 
+            'preprocessor:[function<string => string>] ' + 
+            '=> undefined',
             extend),
         isRegisteredDuckType: enforce(
-            'typeName:string => boolean',
+            'typeName:string ' + 
+            '=> boolean',
             duckTypesModule.isRegisteredDuckType),
         isSubtypeOf: enforce(
-            'rootTypeName:string => typeNameUnderTest:string => boolean',
+            'rootTypeName:string ' +
+            '=> typeNameUnderTest:string ' +
+            '=> boolean',
             typelog.isSubtypeOf),
         isType: enforce(
             'typeName:string => boolean',
             typelog.isType),
         isTypeOf: enforce(
-            'typeToCheck:type => value:* => boolean',
+            'typeToCheck:type ' + 
+            '=> value:* ' + 
+            '=> boolean',
             isTypeOf),
+        iterateOn: enforce(
+            'propertyKey:string ' +
+            '=> value:* ' +
+            '=> undefined ' +
+            '=> *',
+            recursiveTypeModule.iterateOn
+        ),
+        iterateOnArray: enforce(
+            'iterationArray:array ' +
+            '=> undefined ' +
+            '=> *',
+            recursiveTypeModule.iterateOnArray
+        ),
         recursiveTypeFactory: enforce(
-            'iteratorFactory:function, vertexType:type, nodeType:[type] => valueToCheck:* => boolean',
+            'iteratorFactory:function, ' +
+            'nodeType:type ' +
+            '=> valueToCheck:* ' +
+            '=> boolean',
             recursiveTypeModule.recursiveTypeFactory),
         registerTypeLevelMacro: enforce(
             'macro:function => undefined',
             parser.registerTypeLevelMacro),
         reportDuckTypeErrors: enforce(
-            'duckTypeName:string => \
-            valueToCheck:* => \
-            array<tuple<string, string, *>>',
+            'duckTypeName:string ' +
+            '=> valueToCheck:* ' +
+            '=> array<tuple<string, string, *>>',
             duckTypesModule.reportDuckTypeErrors),
         sign: enforce(
             'signature:string, functionToSign:function => function',
             sign),
         subtype: enforce(
-            'rootTypeName:string => \
-            subtypeName:string, subtypeCheck:function, preprocessor:[function<string => string>] => \
-            undefined',
+            'rootTypeName:string ' +
+            '=> subtypeName:string, ' +
+                'subtypeCheck:function, ' +
+                'preprocessor:[function<string => string>] ' +
+            '=> undefined',
             subtype),
         typeChain: enforce(
             'typeName:string => string',
             typelog.getTypeChain),
         verify: enforce(
-            'signedFunctionToVerify:function, functionArguments:arguments => undefined',
+            'signedFunctionToVerify:function, ' +
+            'functionArguments:arguments ' +
+            '=> undefined',
             verify),
         whichType: enforce(
-            'typeNames:array<string> => value:* => variant<string, null>',
+            'typeNames:array<string> => ' +
+            'value:* ' +
+            '=> variant<string, null>',
             typeApi.whichType),
         whichVariantType: enforce(
-            'variantString:string => value:* => variant<string, null>',
+            'variantString:string => ' +
+            'value:* ' +
+            '=> variant<string, null>',
             typeApi.whichVariantType)
     };
 }

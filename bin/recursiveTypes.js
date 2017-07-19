@@ -1,5 +1,6 @@
-function signetRecursiveTypes(typelog, isTypeOf) {
-    var isType = isTypeOf('type');
+function signetRecursiveTypes(extend, isTypeOf) {
+    var isArray = isTypeOf('array');
+    var isUndefined = isTypeOf('undefined');
 
     function checkIterator(nextValue, action) {
         var currentValue = nextValue();
@@ -13,21 +14,47 @@ function signetRecursiveTypes(typelog, isTypeOf) {
         return isOk;
     }
 
-    function recursiveTypeFactory(iteratorFactory, vertexType, nodeType) {
-        var isVertex = isTypeOf(vertexType);
-        var isNode = isType(nodeType) ? isTypeOf(nodeType) : isVertex;
+    function recursiveTypeFactory(iteratorFactory, nodeType) {
+        var isNode = isTypeOf(nodeType);
 
-        function checkType(value) {
+        return function checkType(value) {
             var iterator = iteratorFactory(value);
-            return isVertex(value)
-                ? checkIterator(iterator, checkType)
-                : isNode(value);
-        }
+            return isNode(value) && checkIterator(iterator, checkType);
+        };
+    }
 
-        return checkType
+    function iterateOn (key) {
+        return function iteratorFactory(value) {
+            var iterableValues = isArray(value[key]) 
+                ? value[key].slice(0) 
+                : [value[key]];
+
+            return function getNextValue() {
+                var nextValue = iterableValues.shift();
+                return isUndefined(nextValue) ? null : nextValue;
+            }
+        }
+    }
+
+    function iterateOnArray (values) {
+        var iterableValues = values.slice(0);
+
+        return function () {
+            var nextValue = iterableValues.shift();
+            return isUndefined(nextValue) ? null : nextValue;
+        }
+    }
+
+    function defineRecursiveType (typeName, iteratorFactory, nodeType, preprocessor) {
+        var recursiveType = recursiveTypeFactory(iteratorFactory, nodeType);
+        extend(typeName, recursiveType, preprocessor);
+
     }
 
     return {
+        defineRecursiveType: defineRecursiveType,
+        iterateOn: iterateOn,
+        iterateOnArray: iterateOnArray,
         recursiveTypeFactory: recursiveTypeFactory
     };
 }

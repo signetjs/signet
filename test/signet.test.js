@@ -255,9 +255,9 @@ describe('Signet Library', function () {
             (a, b);
             return true;
         }, {
-            inputErrorBuilder: function (validationResult, args, signatureTree, functionName) {
-                return signet.buildInputErrorMessage(validationResult, args, signatureTree, functionName);
-            }
+                inputErrorBuilder: function (validationResult, args, signatureTree, functionName) {
+                    return signet.buildInputErrorMessage(validationResult, args, signatureTree, functionName);
+                }
             });
 
         var expectedMessage = 'Anonymous expected a value of type number but got no of type string';
@@ -269,11 +269,11 @@ describe('Signet Library', function () {
         var add = signet.enforce('number, number => number', function (a, b) {
             (a, b);
             return true;
-        }, { 
-            outputErrorBuilder: function (validationResult, args, signatureTree, functionName) {
-                return signet.buildOutputErrorMessage(validationResult, args, signatureTree, functionName);
-            }
-        });
+        }, {
+                outputErrorBuilder: function (validationResult, args, signatureTree, functionName) {
+                    return signet.buildOutputErrorMessage(validationResult, args, signatureTree, functionName);
+                }
+            });
 
         var expectedMessage = 'Anonymous expected a return value of type number but got true of type boolean';
 
@@ -597,7 +597,7 @@ describe('Signet Library', function () {
             'Error in myTestTypeBroken arity declaration: min cannot be greater than max');
     });
 
-    function setImmutableValue (obj, key, value) {
+    function setImmutableValue(obj, key, value) {
         Object.defineProperty(obj, key, {
             writeable: false,
             value: value
@@ -620,20 +620,90 @@ describe('Signet Library', function () {
             next: 'composite<not<array>, object>'
         });
 
-        function buildIterable (value) {
-            var current = value;
-
-            return function () {
-                return isListNode(current) ? (current = current.next) : null;
-            }
-        }
-
-        const isIntList = signet.recursiveTypeFactory(buildIterable, isListNode);
+        const iterableFactory = signet.iterateOn('next');
+        const isIntList = signet.recursiveTypeFactory(iterableFactory, isListNode);
 
         const testList = cons(1, cons(2, cons(3, cons(4, cons(5, null)))));
-        
+
         assert.equal(isIntList(testList), true);
+        assert.equal(isIntList({ value: 1 }), false);
         assert.equal(isIntList('blerg'), false);
+    });
+
+    it('should properly recurse through a binary tree with left and right values', function () {
+        const isBinaryTreeNode = signet.duckTypeFactory({
+            value: 'int',
+            left: 'composite<^array, object>',
+            right: 'composite<^array, object>',
+        });
+
+        function isOrderedNode(node) {
+            return isBinaryTreeNode(node)
+                && ((node.left === null || node.right === null)
+                    || (node.value > node.left.value 
+                        && node.value <= node.right.value));
+        }
+
+        signet.subtype('object')('orderedBinaryTreeNode', isOrderedNode);
+
+        function iteratorFactory(value) {
+            var iterable = [];
+
+            iterable = value.left !== null ? iterable.concat([value.left]) : iterable;
+            iterable = value.right !== null ? iterable.concat([value.right]) : iterable;
+
+            return signet.iterateOnArray(iterable);
+        }
+
+        signet.defineRecursiveType('orderedBinaryTree', iteratorFactory, 'orderedBinaryTreeNode');
+
+        const isOrderedIntTree = signet.isTypeOf('orderedBinaryTree');
+
+        const goodBinaryTree = {
+            value: 0,
+            left: {
+                value: -1,
+                left: null,
+                right: null
+            },
+            right: {
+                value: 1,
+                left: {
+                    value: 1,
+                    left: null,
+                    right: null
+                },
+                right: null
+            }
+        };
+
+        const badTree = {
+            value: 0,
+            left: {
+                value: -1,
+                left: null,
+                right: null
+            },
+            right: {
+                value: -3,
+                left: {
+                    value: 1,
+                    left: null,
+                    right: null
+                },
+                right: null
+            }
+        };
+
+        const malformedTree = {
+            value: 0,
+            left: null
+        };
+
+        assert.equal(isOrderedIntTree(goodBinaryTree), true);
+        assert.equal(isOrderedIntTree(badTree), false);
+        assert.equal(isOrderedIntTree(malformedTree), false);
+
     });
 
 });
