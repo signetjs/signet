@@ -1,6 +1,6 @@
 {
   "name": "signet",
-  "version": "3.17.0",
+  "version": "4.0.0",
   "description": "Signet type library",
   "main": "index.js",
   "repository": {
@@ -8,7 +8,7 @@
     "url": "git+https://github.com/signetjs/signet.git"
   },
   "scripts": {
-    "test": "node ./node_modules/mocha/bin/mocha ./test/*.test.js"
+    "test": "grunt test"
   },
   "quokka": {
     "plugins": [

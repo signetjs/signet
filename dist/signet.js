@@ -903,6 +903,77 @@ function signetCoreTypes(
         return value === null;
     }
 
+    function isFinite(value) {
+        return Math.abs(value) !== Infinity;
+    }
+
+    function isNumber(value) {
+        return typeof value === 'number' && !Number.isNaN(value);
+    }
+
+    var checkNumberSubtype = isSignetSubtypeOf('number');
+
+    function isNumberOrSubtype(typeName) {
+        return typeName === 'number' || checkNumberSubtype(typeName);
+    }
+
+    var checkStringSubtype = isSignetSubtypeOf('string');
+
+    function isStringOrSubtype(typeName) {
+        return typeName === 'string' || checkStringSubtype(typeName);
+    }
+
+    var checkArraySubtype = isSignetSubtypeOf('array');
+
+    function isArrayOrSubtype(typeName) {
+        return typeName === 'array' || checkArraySubtype(typeName);
+    }
+
+    function getTypeFromTypeString (typeString) {
+        return parser.parseType(typeString).type;
+    }
+
+    function isSequence(value, options) {
+        var subtypeName = getTypeFromTypeString(options[0]);
+
+        if (!isNumberOrSubtype(subtypeName) && !isStringOrSubtype(subtypeName)) {
+            throw new Error('A sequence may only be comprised of numbers, strings or their subtypes.');
+        }
+
+        return checkArray(value, options);
+    }
+
+    function getMonotoneCompare(values) {
+        return greater(values[0], values[1]) ? greater : less
+    }
+
+    function checkMonotoneValues(values) {
+        var result = true;
+        var compare = getMonotoneCompare(values);
+
+        for (var i = 1; i < values.length; i++) {
+            result = result && compare(values[i - 1], values[i]);
+        }
+
+        return result;
+    }
+
+    function isMonotone(values, options) {
+        return isSequence(values, options) && checkMonotoneValues(values);
+    }
+
+    function isIncreasing(values, options) {
+        var firstValuesOk = values.length < 2 || less(values[0], values[1]);
+
+        return isMonotone(values, options) && firstValuesOk;
+    }
+
+    function isDecreasing(values, options) {
+        var firstValuesOk = values.length < 2 || greater(values[0], values[1]);
+
+        return isMonotone(values, options) && firstValuesOk;
+    }
+
     function checkArrayValues(arrayValues, options) {
         if (options.length === 0 || options[0] === '*') {
             return true;
@@ -912,29 +983,43 @@ function signetCoreTypes(
         }
     }
 
+    function isArrayType(value) {
+        return Object.prototype.toString.call(value) === '[object Array]';
+    }
+
+
     function checkArray(value, options) {
-        var arrayIsOk = Object.prototype.toString.call(value) === '[object Array]';
-        return arrayIsOk && checkArrayValues(value, options);
+        return isArrayType(value) && checkArrayValues(value, options);
     }
 
     function checkInt(value) {
         return Math.floor(value) === value && value !== Infinity;
     }
 
+    function isBounded(value, options) {
+        var typeName = getTypeFromTypeString(options[0]);
+        var range = optionsToRangeObject(options);
+        var isArrayOrString = isArrayOrSubtype(typeName) || isStringOrSubtype(typeName);
+        var valueToCheck = isArrayOrString ? value.length : value;
+
+        if(isNumber(valueToCheck)) {
+            return isTypeOf(options[0])(value) && checkRange(valueToCheck, range);
+        } else if(isNumberOrSubtype(typeName)) {
+            var errorMessage = 'Bounded type only accepts types of number, string, array or subtypes of these.'
+            throw new Error(errorMessage);
+        }
+    }
 
     function checkRange(value, range) {
         return range.min <= value && value <= range.max;
     }
 
     function optionsToRangeObject(options) {
-        return {
-            min: Number(options[0]),
-            max: Number(options[1])
+        var range = {
+            min: Number(options[1]),
+            max: Number(options[2])
         };
-    }
-
-    function checkBoundedString(value, range) {
-        return range.min <= value.length && value.length <= range.max;
+        return range;
     }
 
     function optionsToRegex(options) {
@@ -1074,7 +1159,7 @@ function signetCoreTypes(
         return new RegExp(typePattern.replace(token, macroPattern));
     }
 
-    function matchAndReplace(value, pattern, replacement){
+    function matchAndReplace(value, pattern, replacement) {
         return pattern.test(value) ? value.replace(pattern, replacement) : value;
     }
 
@@ -1108,7 +1193,7 @@ function signetCoreTypes(
 
     extend('boolean{0}', isType('boolean'));
     extend('function{0,1}', isType('function'), optionsToFunction);
-    extend('number{0}', isType('number'));
+    extend('number{0}', isNumber);
     extend('object{0}', isType('object'));
     extend('string{0}', isType('string'));
     extend('symbol{0}', isType('symbol'));
@@ -1118,30 +1203,51 @@ function signetCoreTypes(
     extend('variant{1,}', isVariant, optionsToFunctions);
     extend('taggedUnion{1,}', checkTaggedUnion, optionsToFunctions);
     extend('composite{1,}', checkCompositeType, optionsToFunctions);
+    extend('bounded{3}', isBounded);
 
     subtype('object')('array{0,}', checkArray);
     subtype('object')('regexp{0}', isRegExp);
+    subtype('number')('finiteNumber', isFinite);
     subtype('number')('int{0}', checkInt);
-    subtype('number')('bounded{2}', checkRange, optionsToRangeObject);
-    subtype('string')('boundedString{2}', checkBoundedString, optionsToRangeObject);
+    subtype('finiteNumber')('finiteInt{0}', checkInt);
     subtype('string')('formattedString{1}', checkFormattedString, optionsToRegex);
     subtype('array')('tuple{1,}', checkTuple, optionsToFunctions);
     subtype('array')('unorderedProduct{1,}', isUnorderedProduct);
     subtype('object')('arguments{0}', checkArgumentsObject);
+
+    subtype('array')('sequence{1}', isSequence);
+    subtype('array')('monotoneSequence{1}', isMonotone);
+    subtype('array')('increasingSequence{1}', isIncreasing);
+    subtype('array')('decreasingSequence{1}', isDecreasing);
+
+    alias('leftBounded', 'bounded<_, _, Infinity>');
+    alias('rightBounded', 'bounded<_, -Infinity, _>');
+
+    alias('boundedString{2}', 'bounded<string, _, _>');
+    alias('leftBoundedString{1}', 'leftBounded<string, _>');
+    alias('rightBoundedString{1}', 'rightBounded<string, _>');
+
+    alias('boundedNumber{2}', 'bounded<number, _, _>');
+    alias('leftBoundedNumber{1}', 'leftBounded<number, _>');
+    alias('rightBoundedNumber{1}', 'rightBounded<number, _>');
+
+    alias('boundedFiniteNumber{2}', 'bounded<finiteNumber, _, _>');
+    alias('leftBoundedFiniteNumber{1}', 'leftBounded<finiteNumber, _>');
+    alias('rightBoundedFiniteNumber{1}', 'rightBounded<finiteNumber, _>');
+
+    alias('boundedInt{2}', 'bounded<int, _, _>');
+    alias('leftBoundedInt{1}', 'leftBounded<int, _>');
+    alias('rightBoundedInt{1}', 'rightBounded<int, _>');
+
+    alias('boundedFiniteInt{2}', 'bounded<finiteInt, _, _>');
+    alias('leftBoundedFiniteInt{1}', 'leftBounded<finiteInt, _>');
+    alias('rightBoundedFiniteInt{1}', 'rightBounded<finiteInt, _>');
 
     alias('typeValue{0}', 'variant<string, function>');
     subtype('typeValue')('type{0}', isRegisteredType);
 
     alias('any{0}', '*');
     alias('void{0}', '*');
-
-    alias('leftBounded{1}', 'bounded<_, Infinity>');
-    alias('rightBounded{1}', 'bounded<-Infinity, _>');
-
-    alias('boundedInt{2}', 'composite<int, bounded<_, _>>')
-
-    alias('leftBoundedInt{1}', 'boundedInt<_, Infinity>');
-    alias('rightBoundedInt{1}', 'boundedInt<-Infinity, _>');
 
     defineDependentOperatorOn('number')('>', greater);
     defineDependentOperatorOn('number')('<', less);

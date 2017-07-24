@@ -60,17 +60,19 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('int')(5), true);
         assert.equal(signet.isTypeOf('int')(5.3), false);
 
-        assert.equal(signet.isTypeOf('bounded<1; 5>')(3), true);
-        assert.equal(signet.isTypeOf('bounded<1; 5>')(5.1), false);
-        assert.equal(signet.isTypeOf('bounded<1; 5>')(0), false);
+        assert.equal(signet.isTypeOf('bounded<int, 1, 5>')(3), true);
+        assert.equal(signet.isTypeOf('bounded<number, 1, 5>')(5.1), false);
+        assert.equal(signet.isTypeOf('bounded<int, 1, 5>')(0), false);
 
-        assert.equal(signet.isTypeOf('leftBounded<0>')(0), true);
-        assert.equal(signet.isTypeOf('leftBounded<0>')(1), true);
-        assert.equal(signet.isTypeOf('leftBounded<0>')(-1), false);
+        assert.equal(signet.isTypeOf('leftBounded<number, 0>')(0), true);
+        assert.equal(signet.isTypeOf('leftBounded<number, 0>')(1), true);
+        assert.equal(signet.isTypeOf('leftBounded<number, 0>')(-1), false);
 
-        assert.equal(signet.isTypeOf('rightBounded<0>')(0), true);
-        assert.equal(signet.isTypeOf('rightBounded<0>')(-1), true);
-        assert.equal(signet.isTypeOf('rightBounded<0>')(1), false);
+        assert.equal(signet.isTypeOf('rightBounded<number, 0>')(0), true);
+        assert.equal(signet.isTypeOf('rightBounded<number, 0>')(-1), true);
+        assert.equal(signet.isTypeOf('rightBounded<number, 0>')(1), false);
+
+        assert.equal(signet.isTypeOf('rightBounded<int, 5>')(1.3), false);
 
         assert.equal(signet.isTypeOf('boundedInt<1; 5>')(3), true);
         assert.equal(signet.isTypeOf('boundedInt<1; 5>')(3.1), false);
@@ -135,6 +137,25 @@ describe('Signet Library', function () {
 
         assert.equal(signet.isTypeOf('^string')('foo'), false);
         assert.equal(signet.isTypeOf('^string')(null), true);
+
+        assert.equal(signet.isTypeOf('sequence<int>')([1, 2, 3, 4]), true);
+        assert.equal(signet.isTypeOf('sequence<int>')([1, 2, 3.5, 4]), false);
+        assert.throws(signet.isTypeOf('sequence<boolean>').bind(null, []), 'A sequence may only be comprised of numbers, strings or their subtypes.');
+
+        assert.equal(signet.isTypeOf('monotoneSequence<number>')([1, 2.5, 3, 4.7]), true);
+        assert.equal(signet.isTypeOf('monotoneSequence<string>')(['d', 'c', 'b', 'a']), true);
+        assert.equal(signet.isTypeOf('monotoneSequence<int>')([1]), true);
+        assert.equal(signet.isTypeOf('monotoneSequence<int>')([1, 2, -1, 5]), false);
+
+        assert.equal(signet.isTypeOf('increasingSequence<number>')([1, 2.5, 3, 4.7]), true, 'Not an increasing sequence of int');
+        assert.equal(signet.isTypeOf('increasingSequence<string>')(['d', 'c', 'b', 'a']), false, 'Is an increasing sequence of string');
+        assert.equal(signet.isTypeOf('increasingSequence<int>')([1]), true, 'Not an increasing sequence of one value');
+        assert.equal(signet.isTypeOf('increasingSequence<int>')([1, 2, -1, 5]), false, 'Is an increasing sequence of int with a negative');
+
+        assert.equal(signet.isTypeOf('decreasingSequence<number>')([1, 2.5, 3, 4.7]), false, 'Not an increasing sequence of int');
+        assert.equal(signet.isTypeOf('decreasingSequence<string>')(['d', 'c', 'b', 'a']), true, 'Is an increasing sequence of string');
+        assert.equal(signet.isTypeOf('decreasingSequence<int>')([1]), true, 'Not an increasing sequence of one value');
+        assert.equal(signet.isTypeOf('decreasingSequence<int>')([1, 2, -1, 5]), false, 'Is an increasing sequence of int with a negative');
     });
 
     it('should properly sign a function using macros', function () {

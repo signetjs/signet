@@ -137,18 +137,33 @@ In the browser environment, signet.min.js and signet.types.min.js in that order 
 Extended types, and their inheritance chain, are as follows:
 
 - `arguments` - `* -> variant<array; object>`
-- `bounded<min:number;max:number>` - `* -> number -> bounded`
-- `boundedInt<min:number;max:number>` - `* -> number -> int -> bounded -> boundedInt`
-- `boundedString<minLength:int;maxLength:int>` - `* -> string -> boundedString`
+- `bounded<typeString:type, min:number, max:number>` - `* -> bounded`
+- `boundedFiniteInt<min:number;max:number>` - `* ->  boundedFiniteInt`
+- `boundedFiniteNumber<min:number;max:number>` - `* ->  boundedFiniteNumber`
+- `boundedInt<min:number;max:number>` - `* ->  boundedInt`
+- `boundedNumber<min:number;max:number>` - `* ->  boundedNumber`
+- `boundedString<minLength:int;maxLength:int>` - `* -> boundedString`
 - `composite` - `* -> composite` (Type constructor only, evaluates left to right)
+- `decreasing<typeString:type>`- `* -> array -> (sequence ->) decreasing`
 - `formattedString<regex>` - `* -> string -> formattedString`
 - `int` - `* -> number -> int`
-- `leftBounded<min:number>` - `* -> number -> leftBounded`
-- `leftBoundedInt<min:int>` - `* -> number -> int -> leftBoundedInt`
+- `increasing<typeString:type>`- `* -> array -> (sequence ->) increasing`
+- `leftBounded<typeString:type, min:number>` - `* -> leftBounded`
+- `leftBoundedFiniteInt<min:number>` - `* -> leftBoundedFiniteInt`
+- `leftBoundedFiniteNumber<min:number>` - `* -> leftBoundedFiniteNumber`
+- `leftBoundedInt<min:number>` - `* -> leftBoundedInt`
+- `leftBoundedNumber<min:number>` - `* -> leftBoundedNumber`
+- `leftBoundedString<min:number>` - `* -> leftBoundedString`
+- `monotone<typeString:type>`- `* -> array -> (sequence ->) monotone`
 - `not` - `* -> not` (Type constructor only)
 - `regexp` - `* -> object -> regexp`
-- `rightBounded<max:number>` - `* -> number -> rightBounded`
-- `rightBoundedInt<max:int>` - `* -> number -> int -> rightBoundedInt`
+- `rightBounded<typeString:type, max:number>` - `* -> number -> rightBounded`
+- `rightBoundedFiniteInt<max:int>` - `* -> rightBoundedFiniteInt`
+- `rightBoundedFiniteNumber<max:int>` - `* -> rightBoundedFiniteNumber`
+- `rightBoundedInt<max:int>` - `* -> rightBoundedInt`
+- `rightBoundedNumber<max:int>` - `* -> rightBoundedInt`
+- `rightBoundedString<max:int>` - `* -> rightBoundedString`
+- `sequence<typeString:type>` - `* -> array -> sequence`
 - `tuple<type;type;type...>` - `* -> object -> array -> tuple`
 - `unorderedProduct<type;type;type...>` - `* -> object -> array -> unorderedProduct`
 - `variant<type;type;type...>` - `* -> variant`
@@ -494,6 +509,11 @@ You can declare the number of arguments a type constructor requires (the arity o
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 4.0.0 ###
+
+- Changed bounded type to polymorphic type on strings, arrays and numbers (and associated proper subtypes)
+- Introduced sequence, monotone, increasing and decreasing types
 
 ### 3.15.0 ###
 
