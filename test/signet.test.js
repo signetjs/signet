@@ -82,6 +82,7 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('leftBoundedInt<0>')(0), true);
         assert.equal(signet.isTypeOf('leftBoundedInt<0>')(1), true);
         assert.equal(signet.isTypeOf('leftBoundedInt<0>')(-1), false);
+        assert.equal(signet.isTypeOf('leftBoundedInt<0>')(), false);
 
         assert.equal(signet.isTypeOf('rightBoundedInt<0>')(0), true);
         assert.equal(signet.isTypeOf('rightBoundedInt<0>')(-1), true);

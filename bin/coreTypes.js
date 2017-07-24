@@ -203,9 +203,10 @@ function signetCoreTypes(
         var typeName = getTypeFromTypeString(options[0]);
         var range = optionsToRangeObject(options);
         var isArrayOrString = isArrayOrSubtype(typeName) || isStringOrSubtype(typeName);
+        var isNumberType = isNumberOrSubtype(typeName);
         var valueToCheck = isArrayOrString ? value.length : value;
 
-        if(isNumber(valueToCheck)) {
+        if(isNumberType || isArrayOrString) {
             return isTypeOf(options[0])(value) && checkRange(valueToCheck, range);
         } else if(isNumberOrSubtype(typeName)) {
             var errorMessage = 'Bounded type only accepts types of number, string, array or subtypes of these.'
