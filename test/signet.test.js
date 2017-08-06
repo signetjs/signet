@@ -728,6 +728,21 @@ describe('Signet Library', function () {
 
     });
 
+    it('should preserve properties on enforced function', function () {
+        function adder (a, b) {
+            return a + b;
+        }
+
+        adder.myProp = () => 'yay!';
+
+        const add = signet.enforce(
+            'number, number => number',
+            adder
+        );
+
+        assert.equal(add.myProp(), 'yay!');
+    });
+
 });
 
 if (typeof global.runQuokkaMochaBdd === 'function') {

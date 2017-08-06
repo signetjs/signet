@@ -200,13 +200,24 @@ function signetBuilder(
         }
     }
 
+    function attachProps (fn, enforcedFn) {
+        var keys = Object.keys(fn);
+
+        return keys.reduce(function (enforcedFn, key) {
+            enforcedFn[key] = fn[key];
+            return enforcedFn;
+        }, enforcedFn);
+    }
+
     function enforceOnTree(signatureTree, fn, options) {
         var enforcer = buildEnforcer(signatureTree, fn, options);
         var enforceDecorator = buildEnforceDecorator(enforcer);
 
         enforceDecorator.toString = Function.prototype.toString.bind(fn);
 
-        return signFn(signatureTree, enforceDecorator);
+        var signedEnforceDecorator = signFn(signatureTree, enforceDecorator);
+
+        return attachProps(fn, signedEnforceDecorator);
     }
 
     function addTypeCheck(typeDef) {
