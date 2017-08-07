@@ -1495,10 +1495,15 @@ function signetBuilder(
     function attachProps (fn, enforcedFn) {
         var keys = Object.keys(fn);
 
-        return keys.reduce(function (enforcedFn, key) {
+        keys.reduce(function (enforcedFn, key) {
             enforcedFn[key] = fn[key];
             return enforcedFn;
         }, enforcedFn);
+
+        return Object.defineProperty(enforcedFn, 'length', {
+            writeable: false,
+            value: fn.length
+        });
     }
 
     function enforceOnTree(signatureTree, fn, options) {
