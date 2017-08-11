@@ -40,7 +40,7 @@
     "signet-parser": "5.2.4",
     "signet-registrar": "2.0.0",
     "signet-typelog": "1.4.0",
-    "signet-validator": "2.0.1"
+    "signet-validator": "^3.0.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",

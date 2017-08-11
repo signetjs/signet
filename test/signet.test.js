@@ -755,6 +755,17 @@ describe('Signet Library', function () {
         assert.equal(add.length, 2);
     });
 
+    it('should support a cross-execution environment table', function () {
+        const addIncreasing = signet.enforce(
+            'a < b, b < sum :: a:int => b:int => sum:int',
+            a => b => a - b
+        );
+
+
+        assert.throws(addIncreasing(5).bind(null, 4), 'Anonymous expected a value of type a < b but got a = 5 and b = 4 of type string');
+        assert.throws(addIncreasing(5).bind(null, 6), 'Anonymous expected a return value of type b < sum but got b = 6 and sum = -1 of type string');
+    });
+
 });
 
 if (typeof global.runQuokkaMochaBdd === 'function') {

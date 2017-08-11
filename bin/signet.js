@@ -109,10 +109,6 @@ function signetBuilder(
         return signFn(signatureTree, fn);
     }
 
-    function last(list) {
-        return list[list.length - 1];
-    }
-
     function buildEvaluationError(validationResult, prefixMixin, functionName) {
         var expectedType = validationResult[0];
         var value = validationResult[1];
@@ -124,8 +120,6 @@ function signetBuilder(
 
         return errorMessage;
     }
-
-    var functionTypeDef = parser.parseType('function');
 
     function evaluationErrorFactory(prefix) {
         return function throwEvaluationError(
@@ -157,8 +151,8 @@ function signetBuilder(
         return buildEvaluationError(validationResult, 'return ', functionName);
     }
 
-    function verify(fn, args) {
-        var result = validator.validateArguments(fn.signatureTree[0])(args);
+    function verify(fn, args, environment) {
+        var result = validator.validateArguments(fn.signatureTree[0], environment)(args);
 
         if (result !== null) {
             throwInputError(result, null, args, fn.signatureTree, getFunctionName(fn));
@@ -171,25 +165,54 @@ function signetBuilder(
 
     function buildEnforcer(signatureTree, fn, options) {
         var functionName = getFunctionName(fn);
+
         return function () {
             var args = Array.prototype.slice.call(arguments, 0);
-            var validationResult = validator.validateArguments(signatureTree[0])(args);
+
+            var environmentTable = typeof signatureTree.environment === 'object'
+                ? Object.create(signatureTree.environment)
+                : {};
+
+            var validationResult = validator.validateArguments(signatureTree[0], environmentTable)(args);
+            var nextTree = signatureTree.slice(1);
 
             if (validationResult !== null) {
-                throwInputError(validationResult, options.inputErrorBuilder, args, signatureTree, functionName);
+                throwInputError(
+                    validationResult, 
+                    options.inputErrorBuilder, 
+                    args, 
+                    signatureTree, 
+                    functionName);
             }
 
             var signatureIsCurried = signatureTree.length > 2;
-            var returnType = !signatureIsCurried ? last(signatureTree)[0] : functionTypeDef;
-            var returnTypeStr = assembler.assembleType(returnType);
 
             var result = fn.apply(this, args);
 
-            if (!validator.validateType(returnType)(result)) {
-                throwOutputError([returnTypeStr, result], options.outputErrorBuilder, args, signatureTree, functionName);
+            var isFinalResult = nextTree.length === 1;
+
+            var resultCheckTree = nextTree[0];
+            resultCheckTree.dependent = signatureTree[0].dependent;
+
+            var resultValidation = isFinalResult
+                ? validator.validateArguments(resultCheckTree, environmentTable)([result])
+                : null;
+            
+            if (resultValidation !== null) {
+                throwOutputError(
+                    resultValidation, 
+                    options.outputErrorBuilder, 
+                    args, 
+                    signatureTree, 
+                    functionName);
             }
 
-            return !signatureIsCurried ? result : enforceOnTree(signatureTree.slice(1), result, options);
+            nextTree.environment = environmentTable;
+            nextTree[0].dependent = signatureTree[0].dependent;
+
+            return signatureIsCurried
+                ? enforceOnTree(nextTree, result, options)
+                : result;
         };
     }
 
@@ -200,7 +223,7 @@ function signetBuilder(
         }
     }
 
-    function attachProps (fn, enforcedFn) {
+    function attachProps(fn, enforcedFn) {
         var keys = Object.keys(fn);
 
         keys.reduce(function (enforcedFn, key) {
@@ -345,14 +368,14 @@ function signetBuilder(
     return {
         alias: enforce(
             'aliasName != typeString ' +
-            ':: aliasName:string, ' + 
-                'typeString:string ' + 
-                '=> undefined',
+            ':: aliasName:string, ' +
+            'typeString:string ' +
+            '=> undefined',
             alias),
         buildInputErrorMessage: enforce(
             'validationResult:tuple<' +
-                'expectedType:type, ' +
-                'actualValue:*' + 
+            'expectedType:type, ' +
+            'actualValue:*' +
             '>, ' +
             'args:array<*>, ' +
             'signatureTree:array<array<object>>, ' +
@@ -362,8 +385,8 @@ function signetBuilder(
         ),
         buildOutputErrorMessage: enforce(
             'validationResult:tuple<' +
-                'expectedType:type, ' +
-                'actualValue:*' + 
+            'expectedType:type, ' +
+            'actualValue:*' +
             '>, ' +
             'args:array<*>, ' +
             'signatureTree:array<array<object>>, ' +
@@ -387,25 +410,25 @@ function signetBuilder(
         defineDependentOperatorOn: enforce(
             'typeName:string => ' +
             'operator:string, operatorCheck:function<' +
-                'valueA:*, ' +
-                'valueB:*, ' +
-                'typeDefinitionA:[object], ' +
-                'typeDefinitionB:[object] ' +
-                '=> boolean' + 
+            'valueA:*, ' +
+            'valueB:*, ' +
+            'typeDefinitionA:[object], ' +
+            'typeDefinitionB:[object] ' +
+            '=> boolean' +
             '> ' +
             '=> undefined',
             typelog.defineDependentOperatorOn),
         defineRecursiveType: enforce(
             'typeName:string, ' +
-            'iteratorFactory:function, ' + 
-            'nodeType:type, ' + 
+            'iteratorFactory:function, ' +
+            'nodeType:type, ' +
             'typePreprocessor:[function] ' +
             '=> undefined',
             recursiveTypeModule.defineRecursiveType),
         enforce: enforce(
-            'signature:string, ' + 
+            'signature:string, ' +
             'functionToEnforce:function, ' +
-            'options:[object] ' + 
+            'options:[object] ' +
             '=> function',
             enforce),
         exactDuckTypeFactory: enforce(
@@ -413,12 +436,12 @@ function signetBuilder(
             duckTypesModule.exactDuckTypeFactory),
         extend: enforce(
             'typeName:string, ' +
-            'typeCheck:function, ' + 
-            'preprocessor:[function<string => string>] ' + 
+            'typeCheck:function, ' +
+            'preprocessor:[function<string => string>] ' +
             '=> undefined',
             extend),
         isRegisteredDuckType: enforce(
-            'typeName:string ' + 
+            'typeName:string ' +
             '=> boolean',
             duckTypesModule.isRegisteredDuckType),
         isSubtypeOf: enforce(
@@ -430,8 +453,8 @@ function signetBuilder(
             'typeName:string => boolean',
             typelog.isType),
         isTypeOf: enforce(
-            'typeToCheck:type ' + 
-            '=> value:* ' + 
+            'typeToCheck:type ' +
+            '=> value:* ' +
             '=> boolean',
             isTypeOf),
         iterateOn: enforce(
@@ -467,8 +490,8 @@ function signetBuilder(
         subtype: enforce(
             'rootTypeName:string ' +
             '=> subtypeName:string, ' +
-                'subtypeCheck:function, ' +
-                'preprocessor:[function<string => string>] ' +
+            'subtypeCheck:function, ' +
+            'preprocessor:[function<string => string>] ' +
             '=> undefined',
             subtype),
         typeChain: enforce(
