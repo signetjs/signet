@@ -1206,8 +1206,33 @@ function signetCoreTypes(
         return signatureMatch ? value.replace(signaturePattern, 'function<$2>') : value;
     });
 
+    function checkSignatureMatch (fn, signature) {
+        return signature !== ''
+            ? fn.signature === signature
+            : typeof fn.signature === 'string';
+    }
+
+    var enforcePattern = /enforceDecorator/ig;
+
+    function isEnforceFunction (fn) {
+        var fnString = Function.prototype.toString.call(fn);
+        return enforcePattern.test(fnString);
+    }
+
+    function isEnforcedFunction(value, options) {
+        var signature = typeof options !== 'undefined'
+            ? options.join(',').trim()
+            : '';
+        var valueIsFunction = typeof value === 'function';
+        
+        return valueIsFunction 
+            && isEnforceFunction(value)
+            && checkSignatureMatch(value, signature);
+    }
+
     extend('boolean{0}', isType('boolean'));
     extend('function{0,1}', isType('function'), optionsToFunction);
+    extend('enforcedFunction{0,1}', isEnforcedFunction);
     extend('number{0}', isNumber);
     extend('object{0}', isType('object'));
     extend('string{0}', isType('string'));

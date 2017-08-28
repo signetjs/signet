@@ -157,6 +157,14 @@ describe('Signet Library', function () {
         assert.equal(signet.isTypeOf('decreasingSequence<string>')(['d', 'c', 'b', 'a']), true, 'Is an increasing sequence of string');
         assert.equal(signet.isTypeOf('decreasingSequence<int>')([1]), true, 'Not an increasing sequence of one value');
         assert.equal(signet.isTypeOf('decreasingSequence<int>')([1, 2, -1, 5]), false, 'Is an increasing sequence of int with a negative');
+
+        const goodEnforcedFunction = signet.enforce('* => *', () => null);
+        const badEnforcedFunction = signet.enforce('* => null', () => null);
+
+        assert.equal(signet.isTypeOf('enforcedFunction<* => *>')(goodEnforcedFunction), true);
+        assert.equal(signet.isTypeOf('enforcedFunction<* => *>')(badEnforcedFunction), false);
+        assert.equal(signet.isTypeOf('enforcedFunction<* => *>')(() => null), false);
+        
     });
 
     it('should properly sign a function using macros', function () {
