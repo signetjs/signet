@@ -1469,59 +1469,47 @@ function signetBuilder(
         return fn.name === '' ? 'Anonymous' : fn.name;
     }
 
-    function buildArgPairs(args, typeList) {
-        var argTypePairs = [];
-        var argIndex = 0;
-        var typeIndex = 0;
-
-        for (argIndex; argIndex < args.length; argIndex++) {
-            var currentArg = args[argIndex];
-            var argPair = [currentArg];
-
-            for (typeIndex; typeIndex < typeList; typeIndex++) {
-                var currentType = typeList[typeIndex];
-
-                if (currentType.typeCheck(currentArg)) {
-                    argPair.push(currentType);
-                    break;
-                }
-            }
-
-            argTypePairs.push(argPair);
-        }
-
-        return argTypePairs;
-    }
-
-    function processFunction(fn, type) {
+    function processFunction(fn, type, options) {
         var signature = type.subtype.join(', ').trim();
 
         if(signature !== '') {
-            return enforce(fn, signature);
+            return enforce(signature, fn, options);
         } else {
             fn;
         }
     }
 
-    function processArg(arg, type) {
+    function processArg(arg, type, options) {
         var cleanType = typeof type === 'object' ? type : {};
 
         if(cleanType.type === 'function') {
-            return processFunction(arg, cleanType);
+            return processFunction(arg, cleanType, options);
         } else {
             return arg;
         }
     }
 
-    function processArgs(args, typeList) {
-        var argPairs = buildArgPairs(args, typeList);
+    function processArgs(args, typeList, options) {
+        var argResults = [];
+        var argIndex = 0;
+        var typeIndex = 0;
 
-        return argPairs.map(function (argPair) {
-            var arg = argPair[0];
-            var type = argPair[1];
+        for (argIndex; argIndex < args.length; argIndex++) {
+            var currentArg = args[argIndex];
+            var currentType = undefined
 
-            return processArg(arg, type);
-        });
+            for (typeIndex; typeIndex < typeList; typeIndex++) {
+                currentType = typeList[typeIndex];
+
+                if (currentType.typeCheck(currentArg)) {
+                    break;
+                }
+            }
+
+            argResults.push(processArg(currentArg, currentType, options));
+        }
+
+        return argResults;
     }
 
     function buildEnforcer(signatureTree, fn, options) {
@@ -1548,7 +1536,7 @@ function signetBuilder(
 
             var signatureIsCurried = signatureTree.length > 2;
 
-            var processedArgs = processArgs(args, signatureTree[0]);
+            var processedArgs = processArgs(args, signatureTree[0], options);
             var result = fn.apply(this, processedArgs);
 
             var isFinalResult = nextTree.length === 1;

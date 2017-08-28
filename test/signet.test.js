@@ -746,7 +746,7 @@ describe('Signet Library', function () {
     it('should return a function with the correct arity', function () {
         const add = signet.enforce(
             'a:*, b:* => *',
-            
+
             function add(a, b) {
                 return a + b;
             }
@@ -769,11 +769,29 @@ describe('Signet Library', function () {
     it('should enforce passed functions when a signature is provided', function () {
         const testFn = signet.enforce(
             'function<* => boolean> => * => boolean',
-            function (fn){ return () => fn(); });
-        
-        function badFn () { return 'foo'; }
+            function (fn) { return () => fn(); });
+
+        function badFn() { return 'foo'; }
 
         assert.throws(testFn(badFn), 'Anonymous expected a return value of type boolean but got foo of type string');
+    });
+
+    it('should should pass options along to sub-enforcement', function () {
+        const options = {
+            outputErrorBuilder: function (validationResult, args, signatureTree) {
+                return 'This is a custom output error!' + validationResult.toString() + args.toString() + signatureTree.toString();
+            }
+        };
+
+        const testFn = signet.enforce(
+            'function<* => boolean> => * => boolean',
+            function (fn) { return () => fn(); },
+            options);
+
+
+        function badFn() { return 'foo'; }
+
+        assert.throws(testFn(badFn), 'This is a custom output error!boolean,foo[object Object],[object Object]');
     });
 
 });
