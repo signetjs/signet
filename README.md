@@ -510,6 +510,10 @@ You can declare the number of arguments a type constructor requires (the arity o
 
 ## Change Log ##
 
+### 6.0.0 ###
+
+- Added enforcement around function type signatures for higher-order functions
+
 ### 4.0.0 ###
 
 - Changed bounded type to polymorphic type on strings, arrays and numbers (and associated proper subtypes)

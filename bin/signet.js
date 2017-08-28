@@ -163,6 +163,61 @@ function signetBuilder(
         return fn.name === '' ? 'Anonymous' : fn.name;
     }
 
+    function buildArgPairs(args, typeList) {
+        var argTypePairs = [];
+        var argIndex = 0;
+        var typeIndex = 0;
+
+        for (argIndex; argIndex < args.length; argIndex++) {
+            var currentArg = args[argIndex];
+            var argPair = [currentArg];
+
+            for (typeIndex; typeIndex < typeList; typeIndex++) {
+                var currentType = typeList[typeIndex];
+
+                if (currentType.typeCheck(currentArg)) {
+                    argPair.push(currentType);
+                    break;
+                }
+            }
+
+            argTypePairs.push(argPair);
+        }
+
+        return argTypePairs;
+    }
+
+    function processFunction(fn, type) {
+        var signature = type.subtype.join(', ').trim();
+
+        if(signature !== '') {
+            return enforce(fn, signature);
+        } else {
+            fn;
+        }
+    }
+
+    function processArg(arg, type) {
+        var cleanType = typeof type === 'object' ? type : {};
+
+        if(cleanType.type === 'function') {
+            return processFunction(arg, cleanType);
+        } else {
+            return arg;
+        }
+    }
+
+    function processArgs(args, typeList) {
+        var argPairs = buildArgPairs(args, typeList);
+
+        return argPairs.map(function (argPair) {
+            var arg = argPair[0];
+            var type = argPair[1];
+
+            return processArg(arg, type);
+        });
+    }
+
     function buildEnforcer(signatureTree, fn, options) {
         var functionName = getFunctionName(fn);
 
@@ -178,16 +233,17 @@ function signetBuilder(
 
             if (validationResult !== null) {
                 throwInputError(
-                    validationResult, 
-                    options.inputErrorBuilder, 
-                    args, 
-                    signatureTree, 
+                    validationResult,
+                    options.inputErrorBuilder,
+                    args,
+                    signatureTree,
                     functionName);
             }
 
             var signatureIsCurried = signatureTree.length > 2;
 
-            var result = fn.apply(this, args);
+            var processedArgs = processArgs(args, signatureTree[0]);
+            var result = fn.apply(this, processedArgs);
 
             var isFinalResult = nextTree.length === 1;
 
@@ -197,13 +253,13 @@ function signetBuilder(
             var resultValidation = isFinalResult
                 ? validator.validateArguments(resultCheckTree, environmentTable)([result])
                 : null;
-            
+
             if (resultValidation !== null) {
                 throwOutputError(
-                    resultValidation, 
-                    options.outputErrorBuilder, 
-                    args, 
-                    signatureTree, 
+                    resultValidation,
+                    options.outputErrorBuilder,
+                    processedArgs,
+                    signatureTree,
                     functionName);
             }
 

@@ -766,6 +766,16 @@ describe('Signet Library', function () {
         assert.throws(addIncreasing(5).bind(null, 6), 'Anonymous expected a return value of type b < sum but got b = 6 and sum = -1 of type string');
     });
 
+    it('should enforce passed functions when a signature is provided', function () {
+        const testFn = signet.enforce(
+            'function<* => boolean> => * => boolean',
+            function (fn){ return () => fn(); });
+        
+        function badFn () { return 'foo'; }
+
+        assert.throws(testFn(badFn), 'Anonymous expected a return value of type boolean but got foo of type string');
+    });
+
 });
 
 if (typeof global.runQuokkaMochaBdd === 'function') {
