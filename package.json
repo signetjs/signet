@@ -1,6 +1,6 @@
 {
   "name": "signet",
-  "version": "6.2.0",
+  "version": "6.2.1",
   "description": "Signet type library",
   "main": "index.js",
   "repository": {

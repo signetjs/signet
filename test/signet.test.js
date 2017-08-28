@@ -781,7 +781,7 @@ describe('Signet Library', function () {
 
         function badFn() { return 'foo'; }
 
-        assert.throws(testFn(badFn), 'Anonymous expected a return value of type boolean but got foo of type string');
+        assert.throws(testFn(badFn), 'badFn expected a return value of type boolean but got foo of type string');
     });
 
     it('should should pass options along to sub-enforcement', function () {
@@ -792,7 +792,7 @@ describe('Signet Library', function () {
         };
 
         const testFn = signet.enforce(
-            'function<* => boolean> => * => boolean',
+            'function<* => boolean> => * => string',
             function (fn) { return () => fn(); },
             options);
 

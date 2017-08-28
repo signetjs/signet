@@ -1496,12 +1496,11 @@ function signetBuilder(
 
     function processFunction(fn, type, options) {
         var signature = type.subtype.join(', ').trim();
+        var returnFn = signature !== ''
+            ? enforce(signature, fn, options)
+            : fn;
 
-        if(signature !== '') {
-            return enforce(signature, fn, options);
-        } else {
-            fn;
-        }
+        return returnFn;
     }
 
     function processArg(arg, type, options) {
@@ -1523,7 +1522,7 @@ function signetBuilder(
             var currentArg = args[argIndex];
             var currentType = undefined
 
-            for (typeIndex; typeIndex < typeList; typeIndex++) {
+            for (typeIndex; typeIndex < typeList.length; typeIndex++) {
                 currentType = typeList[typeIndex];
 
                 if (currentType.typeCheck(currentArg)) {
