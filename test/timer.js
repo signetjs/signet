@@ -11,8 +11,7 @@ function timerFactory () {
     }
 
     function stop() {
-        total += process.hrtime(startTime);
-        console.log(total);
+        total += process.hrtime(startTime)[1] / Math.pow(10, 6);
         startTime = 0;
     }
 
@@ -25,8 +24,10 @@ function timerFactory () {
     }
 
     function report() {
+        console.log('Run time: %dms', total);
+
         if(total > max) {
-            console.log('Long run detected: ' + total + 'ms');
+            console.log('Long run detected: %dms', total);
         }
     }
 

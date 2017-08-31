@@ -3,16 +3,11 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
     var duckTypeErrorReporters = {};
 
     function defineDuckType(typeName, objectDef) {
-        var definitionPairs = buildDefinitionPairs(objectDef);
+        var duckType = buildDuckType(objectDef);
+        var duckTypeErrorReporter = buildDuckTypeErrorReporter(objectDef);
 
-        typelog.defineSubtypeOf('object')(typeName, buildDuckType(definitionPairs, objectDef));
-        duckTypeErrorReporters[typeName] = buildDuckTypeErrorReporter(definitionPairs, objectDef);
-    }
-
-    function buildDefinitionPairs(objectDef) {
-        return Object.keys(objectDef).map(function (key) {
-            return [key, isTypeOf(objectDef[key])];
-        });
+        typelog.defineSubtypeOf('object')(typeName, duckType);
+        duckTypeErrorReporters[typeName] = duckTypeErrorReporter;
     }
 
     function getErrorValue(value, typeName) {
@@ -29,57 +24,106 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
         return typeof objectDef[key] === 'string' ? objectDef[key] : objectDef[key].name;
     }
 
-    function buildDuckTypeErrorReporter(definitionPairs, objectDef) {
-        var keys = Object.keys(objectDef);
-        var typeResolvedDefinition = keys.reduce(function (result, key) {
+    function buildTypeResolvedDefinition(keys, objectDef) {
+        var result = {};
+
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
             var typeValue = objectDef[key];
-            
-            result[key] = isString(typeValue) ? 
-                assembleType(parseType(typeValue)) : typeValue;
+
+            result[key] = isString(typeValue)
+                ? assembleType(parseType(typeValue))
+                : typeValue
+        }
+
+        return result;
+    }
+
+    function isObjectInstance(value) {
+        return typeof value === 'object' && value !== null;
+    }
+
+    function passThrough(result) {
+        return result;
+    }
+
+    function buildTestAndReport(key, typeName, typePredicate) {
+        return function (result, value) {
+            if (!typePredicate(value[key])) {
+                result.push([key, typeName, getErrorValue(value[key], typeName)]);
+            }
 
             return result;
-        }, {});
+        };
+    }
+
+    function combineReporters(reporter1, reporter2) {
+        return function (result, value) {
+            result = reporter1(result, value);
+            return reporter2(result, value);
+        };
+    }
+
+    function buildDuckTypeReporter(keys, objectDef, typeResolvedDefinition) {
+        var testAndReport = passThrough;
+
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            var typePredicate = isTypeOf(objectDef[key]);
+            var typeName = getTypeName(typeResolvedDefinition, key);
+
+            var currentReporter = buildTestAndReport(key, typeName, typePredicate);
+            testAndReport = combineReporters(testAndReport, currentReporter);
+        }
 
         return function (value) {
-            if(typeof value !== 'object' || value === null) {
+            return testAndReport([], value);
+        };
+    }
+
+    function buildDuckTypeErrorReporter(objectDef) {
+        var keys = Object.keys(objectDef);
+        var typeResolvedDefinition = buildTypeResolvedDefinition(keys, objectDef);
+        var duckTypeReporter = buildDuckTypeReporter(keys, objectDef, typeResolvedDefinition);
+
+        return function (value) {
+            if (!isObjectInstance(value)) {
                 return [['badDuckTypeValue', 'object', value]]
             }
 
-            return definitionPairs.reduce(function (result, typePair) {
-                var key = typePair[0];
-                var typePredicate = typePair[1];
-                var typeName = getTypeName(typeResolvedDefinition, key);
-
-                if (!typePredicate(value[key])) {
-                    result.push([key, typeName, getErrorValue(value[key], typeName)]);
-                }
-
-                return result;
-            }, []);
+            return duckTypeReporter(value);
         };
     }
 
     var isDuckTypeCheckable = isTypeOf('composite<not<null>, variant<object, function>>')
 
 
-    function buildDuckType(definitionPairs) {
-        return function (value) {
-            if(!isDuckTypeCheckable(value)) {
-                return false;
-            }
+    function alwaysTrue() { return true; }
 
-            return definitionPairs.reduce(function (result, typePair) {
-                var key = typePair[0];
-                var typePredicate = typePair[1];
+    function buildPropCheck(propCheck, key, type) {
+        var typeCheck = isTypeOf(type);
 
-                return result && typePredicate(value[key]);
-            }, true);
-        };
+        return function (obj) {
+            return typeCheck(obj[key]) && propCheck(obj);
+        }
+    }
+
+    function buildDuckType(definition) {
+        var keys = Object.keys(definition);
+        var typeCheck = alwaysTrue;
+
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            typeCheck = buildPropCheck(typeCheck, key, definition[key])
+        }
+
+        return function (obj) {
+            return isDuckTypeCheckable(obj) && typeCheck(obj);
+        }
     }
 
     function duckTypeFactory(objectDef) {
-        var definitionPairs = buildDefinitionPairs(objectDef);
-        return buildDuckType(definitionPairs, objectDef);
+        return buildDuckType(objectDef);
     }
 
     function reportDuckTypeErrors(typeName) {
@@ -97,20 +141,22 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
     function exactDuckTypeFactory(objectDef) {
         var propertyLength = Object.keys(objectDef).length;
         var duckType = duckTypeFactory(objectDef);
+
         return function (value) {
             return propertyLength === Object.keys(value).length && duckType(value);
         };
     }
 
     function defineExactDuckType(typeName, objectDef) {
-        var definitionPairs = buildDefinitionPairs(objectDef);
+        var duckType = exactDuckTypeFactory(objectDef);
+        var duckTypeErrorReporter = buildDuckTypeErrorReporter(objectDef);
 
-        typelog.defineSubtypeOf('object')(typeName, exactDuckTypeFactory(objectDef));
-        duckTypeErrorReporters[typeName] = buildDuckTypeErrorReporter(definitionPairs, objectDef);
+        typelog.defineSubtypeOf('object')(typeName, duckType);
+        duckTypeErrorReporters[typeName] = duckTypeErrorReporter;
 
     }
 
-    function isRegisteredDuckType (typeName) {
+    function isRegisteredDuckType(typeName) {
         return typeof duckTypeErrorReporters[typeName] === 'function';
     }
 

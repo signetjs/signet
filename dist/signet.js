@@ -682,16 +682,11 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
     var duckTypeErrorReporters = {};
 
     function defineDuckType(typeName, objectDef) {
-        var definitionPairs = buildDefinitionPairs(objectDef);
+        var duckType = buildDuckType(objectDef);
+        var duckTypeErrorReporter = buildDuckTypeErrorReporter(objectDef);
 
-        typelog.defineSubtypeOf('object')(typeName, buildDuckType(definitionPairs, objectDef));
-        duckTypeErrorReporters[typeName] = buildDuckTypeErrorReporter(definitionPairs, objectDef);
-    }
-
-    function buildDefinitionPairs(objectDef) {
-        return Object.keys(objectDef).map(function (key) {
-            return [key, isTypeOf(objectDef[key])];
-        });
+        typelog.defineSubtypeOf('object')(typeName, duckType);
+        duckTypeErrorReporters[typeName] = duckTypeErrorReporter;
     }
 
     function getErrorValue(value, typeName) {
@@ -708,57 +703,106 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
         return typeof objectDef[key] === 'string' ? objectDef[key] : objectDef[key].name;
     }
 
-    function buildDuckTypeErrorReporter(definitionPairs, objectDef) {
-        var keys = Object.keys(objectDef);
-        var typeResolvedDefinition = keys.reduce(function (result, key) {
+    function buildTypeResolvedDefinition(keys, objectDef) {
+        var result = {};
+
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
             var typeValue = objectDef[key];
-            
-            result[key] = isString(typeValue) ? 
-                assembleType(parseType(typeValue)) : typeValue;
+
+            result[key] = isString(typeValue)
+                ? assembleType(parseType(typeValue))
+                : typeValue
+        }
+
+        return result;
+    }
+
+    function isObjectInstance(value) {
+        return typeof value === 'object' && value !== null;
+    }
+
+    function passThrough(result) {
+        return result;
+    }
+
+    function buildTestAndReport(key, typeName, typePredicate) {
+        return function (result, value) {
+            if (!typePredicate(value[key])) {
+                result.push([key, typeName, getErrorValue(value[key], typeName)]);
+            }
 
             return result;
-        }, {});
+        };
+    }
+
+    function combineReporters(reporter1, reporter2) {
+        return function (result, value) {
+            result = reporter1(result, value);
+            return reporter2(result, value);
+        };
+    }
+
+    function buildDuckTypeReporter(keys, objectDef, typeResolvedDefinition) {
+        var testAndReport = passThrough;
+
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            var typePredicate = isTypeOf(objectDef[key]);
+            var typeName = getTypeName(typeResolvedDefinition, key);
+
+            var currentReporter = buildTestAndReport(key, typeName, typePredicate);
+            testAndReport = combineReporters(testAndReport, currentReporter);
+        }
 
         return function (value) {
-            if(typeof value !== 'object' || value === null) {
+            return testAndReport([], value);
+        };
+    }
+
+    function buildDuckTypeErrorReporter(objectDef) {
+        var keys = Object.keys(objectDef);
+        var typeResolvedDefinition = buildTypeResolvedDefinition(keys, objectDef);
+        var duckTypeReporter = buildDuckTypeReporter(keys, objectDef, typeResolvedDefinition);
+
+        return function (value) {
+            if (!isObjectInstance(value)) {
                 return [['badDuckTypeValue', 'object', value]]
             }
 
-            return definitionPairs.reduce(function (result, typePair) {
-                var key = typePair[0];
-                var typePredicate = typePair[1];
-                var typeName = getTypeName(typeResolvedDefinition, key);
-
-                if (!typePredicate(value[key])) {
-                    result.push([key, typeName, getErrorValue(value[key], typeName)]);
-                }
-
-                return result;
-            }, []);
+            return duckTypeReporter(value);
         };
     }
 
     var isDuckTypeCheckable = isTypeOf('composite<not<null>, variant<object, function>>')
 
 
-    function buildDuckType(definitionPairs) {
-        return function (value) {
-            if(!isDuckTypeCheckable(value)) {
-                return false;
-            }
+    function alwaysTrue() { return true; }
 
-            return definitionPairs.reduce(function (result, typePair) {
-                var key = typePair[0];
-                var typePredicate = typePair[1];
+    function buildPropCheck(propCheck, key, type) {
+        var typeCheck = isTypeOf(type);
 
-                return result && typePredicate(value[key]);
-            }, true);
-        };
+        return function (obj) {
+            return typeCheck(obj[key]) && propCheck(obj);
+        }
+    }
+
+    function buildDuckType(definition) {
+        var keys = Object.keys(definition);
+        var typeCheck = alwaysTrue;
+
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            typeCheck = buildPropCheck(typeCheck, key, definition[key])
+        }
+
+        return function (obj) {
+            return isDuckTypeCheckable(obj) && typeCheck(obj);
+        }
     }
 
     function duckTypeFactory(objectDef) {
-        var definitionPairs = buildDefinitionPairs(objectDef);
-        return buildDuckType(definitionPairs, objectDef);
+        return buildDuckType(objectDef);
     }
 
     function reportDuckTypeErrors(typeName) {
@@ -776,20 +820,22 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
     function exactDuckTypeFactory(objectDef) {
         var propertyLength = Object.keys(objectDef).length;
         var duckType = duckTypeFactory(objectDef);
+
         return function (value) {
             return propertyLength === Object.keys(value).length && duckType(value);
         };
     }
 
     function defineExactDuckType(typeName, objectDef) {
-        var definitionPairs = buildDefinitionPairs(objectDef);
+        var duckType = exactDuckTypeFactory(objectDef);
+        var duckTypeErrorReporter = buildDuckTypeErrorReporter(objectDef);
 
-        typelog.defineSubtypeOf('object')(typeName, exactDuckTypeFactory(objectDef));
-        duckTypeErrorReporters[typeName] = buildDuckTypeErrorReporter(definitionPairs, objectDef);
+        typelog.defineSubtypeOf('object')(typeName, duckType);
+        duckTypeErrorReporters[typeName] = duckTypeErrorReporter;
 
     }
 
-    function isRegisteredDuckType (typeName) {
+    function isRegisteredDuckType(typeName) {
         return typeof duckTypeErrorReporters[typeName] === 'function';
     }
 
@@ -943,7 +989,7 @@ function signetCoreTypes(
         return typeName === 'array' || checkArraySubtype(typeName);
     }
 
-    function getTypeFromTypeString (typeString) {
+    function getTypeFromTypeString(typeString) {
         return parser.parseType(typeString).type;
     }
 
@@ -989,12 +1035,18 @@ function signetCoreTypes(
     }
 
     function checkArrayValues(arrayValues, options) {
-        if (options.length === 0 || options[0] === '*') {
-            return true;
-        } else {
-            var checkType = isTypeOf(options[0]);
-            return arrayValues.filter(checkType).length === arrayValues.length;
+        var result = true;
+        var checkType = isTypeOf(options[0]);
+
+        for (var i = 0; i < arrayValues.length; i++) {
+            result = checkType(arrayValues[i]);
+
+            if (!result) {
+                break;
+            }
         }
+
+        return result;
     }
 
     function isArrayType(value) {
@@ -1003,7 +1055,10 @@ function signetCoreTypes(
 
 
     function checkArray(value, options) {
-        return isArrayType(value) && checkArrayValues(value, options);
+        var checkValues = options.length > 0 && options[0] !== '*';
+
+        return isArrayType(value)
+            && (!checkValues || checkArrayValues(value, options));
     }
 
     function checkInt(value) {
@@ -1017,9 +1072,9 @@ function signetCoreTypes(
         var isNumberType = isNumberOrSubtype(typeName);
         var valueToCheck = isArrayOrString ? value.length : value;
 
-        if(isNumberType || isArrayOrString) {
+        if (isNumberType || isArrayOrString) {
             return isTypeOf(options[0])(value) && checkRange(valueToCheck, range);
-        } else if(isNumberOrSubtype(typeName)) {
+        } else if (isNumberOrSubtype(typeName)) {
             var errorMessage = 'Bounded type only accepts types of number, string, array or subtypes of these.'
             throw new Error(errorMessage);
         }
@@ -1086,32 +1141,39 @@ function signetCoreTypes(
         return typeNames.reduce(insertTypeName, []);
     }
 
+    function castOutOn(predicate, values) {
+        var result = false;
+
+        for(var i = 0; i < values.length; i++) {
+            result = predicate(values[i]);
+
+            if(result) {
+                values.splice(i, 1);
+                break;
+            }
+        }
+
+        return result;
+    }
+
     function typeDoesNotExistIn(values) {
         var valuesCopy = values.slice(0);
 
         return function (typeName) {
-            var typeCheckOk = false;
             var isTypeOfTypeName = isTypeOf(typeName);
 
-            for (var i = 0; i < valuesCopy.length; i++) {
-                if (isTypeOfTypeName(valuesCopy[i])) {
-                    typeCheckOk = true;
-                    valuesCopy.splice(i, 1);
-                    break;
-                }
-            }
-
-            return !typeCheckOk;
+            return !castOutOn(isTypeOfTypeName, valuesCopy);
         };
     }
 
     function checkValueTypes(values, typeNames) {
-        return typeNames.filter(typeDoesNotExistIn(values)).length === 0;
+        var sortedTypeNames = sortTypeNames(typeNames);
+        return sortedTypeNames.filter(typeDoesNotExistIn(values)).length === 0;
     }
 
     function isUnorderedProduct(value, typeNames) {
         var isCorrectLength = value.length === typeNames.length;
-        return isCorrectLength && checkValueTypes(value, sortTypeNames(typeNames));
+        return isCorrectLength && checkValueTypes(value, typeNames);
     }
 
     function checkTuple(value, options) {
@@ -1206,7 +1268,7 @@ function signetCoreTypes(
         return signatureMatch ? value.replace(signaturePattern, 'function<$2>') : value;
     });
 
-    function checkSignatureMatch (fn, signature) {
+    function checkSignatureMatch(fn, signature) {
         return signature !== ''
             ? fn.signature === signature
             : typeof fn.signature === 'string';
@@ -1214,7 +1276,7 @@ function signetCoreTypes(
 
     var enforcePattern = /enforceDecorator/ig;
 
-    function isEnforceFunction (fn) {
+    function isEnforceFunction(fn) {
         var fnString = Function.prototype.toString.call(fn);
         return enforcePattern.test(fnString);
     }
@@ -1224,8 +1286,8 @@ function signetCoreTypes(
             ? options.join(',').trim()
             : '';
         var valueIsFunction = typeof value === 'function';
-        
-        return valueIsFunction 
+
+        return valueIsFunction
             && isEnforceFunction(value)
             && checkSignatureMatch(value, signature);
     }

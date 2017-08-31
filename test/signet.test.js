@@ -21,7 +21,9 @@ describe('Signet Library', function () {
     beforeEach(function () {
         parser = signetParser();
         signet = signetBuilder();
+
         timer = timerFactory();
+        timer.setMaxAcceptableTime(10);
         timer.start();
     });
 

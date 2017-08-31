@@ -132,7 +132,7 @@ function signetCoreTypes(
         return typeName === 'array' || checkArraySubtype(typeName);
     }
 
-    function getTypeFromTypeString (typeString) {
+    function getTypeFromTypeString(typeString) {
         return parser.parseType(typeString).type;
     }
 
@@ -178,12 +178,18 @@ function signetCoreTypes(
     }
 
     function checkArrayValues(arrayValues, options) {
-        if (options.length === 0 || options[0] === '*') {
-            return true;
-        } else {
-            var checkType = isTypeOf(options[0]);
-            return arrayValues.filter(checkType).length === arrayValues.length;
+        var result = true;
+        var checkType = isTypeOf(options[0]);
+
+        for (var i = 0; i < arrayValues.length; i++) {
+            result = checkType(arrayValues[i]);
+
+            if (!result) {
+                break;
+            }
         }
+
+        return result;
     }
 
     function isArrayType(value) {
@@ -192,7 +198,10 @@ function signetCoreTypes(
 
 
     function checkArray(value, options) {
-        return isArrayType(value) && checkArrayValues(value, options);
+        var checkValues = options.length > 0 && options[0] !== '*';
+
+        return isArrayType(value)
+            && (!checkValues || checkArrayValues(value, options));
     }
 
     function checkInt(value) {
@@ -206,9 +215,9 @@ function signetCoreTypes(
         var isNumberType = isNumberOrSubtype(typeName);
         var valueToCheck = isArrayOrString ? value.length : value;
 
-        if(isNumberType || isArrayOrString) {
+        if (isNumberType || isArrayOrString) {
             return isTypeOf(options[0])(value) && checkRange(valueToCheck, range);
-        } else if(isNumberOrSubtype(typeName)) {
+        } else if (isNumberOrSubtype(typeName)) {
             var errorMessage = 'Bounded type only accepts types of number, string, array or subtypes of these.'
             throw new Error(errorMessage);
         }
@@ -275,32 +284,39 @@ function signetCoreTypes(
         return typeNames.reduce(insertTypeName, []);
     }
 
+    function castOutOn(predicate, values) {
+        var result = false;
+
+        for(var i = 0; i < values.length; i++) {
+            result = predicate(values[i]);
+
+            if(result) {
+                values.splice(i, 1);
+                break;
+            }
+        }
+
+        return result;
+    }
+
     function typeDoesNotExistIn(values) {
         var valuesCopy = values.slice(0);
 
         return function (typeName) {
-            var typeCheckOk = false;
             var isTypeOfTypeName = isTypeOf(typeName);
 
-            for (var i = 0; i < valuesCopy.length; i++) {
-                if (isTypeOfTypeName(valuesCopy[i])) {
-                    typeCheckOk = true;
-                    valuesCopy.splice(i, 1);
-                    break;
-                }
-            }
-
-            return !typeCheckOk;
+            return !castOutOn(isTypeOfTypeName, valuesCopy);
         };
     }
 
     function checkValueTypes(values, typeNames) {
-        return typeNames.filter(typeDoesNotExistIn(values)).length === 0;
+        var sortedTypeNames = sortTypeNames(typeNames);
+        return sortedTypeNames.filter(typeDoesNotExistIn(values)).length === 0;
     }
 
     function isUnorderedProduct(value, typeNames) {
         var isCorrectLength = value.length === typeNames.length;
-        return isCorrectLength && checkValueTypes(value, sortTypeNames(typeNames));
+        return isCorrectLength && checkValueTypes(value, typeNames);
     }
 
     function checkTuple(value, options) {
@@ -395,7 +411,7 @@ function signetCoreTypes(
         return signatureMatch ? value.replace(signaturePattern, 'function<$2>') : value;
     });
 
-    function checkSignatureMatch (fn, signature) {
+    function checkSignatureMatch(fn, signature) {
         return signature !== ''
             ? fn.signature === signature
             : typeof fn.signature === 'string';
@@ -403,7 +419,7 @@ function signetCoreTypes(
 
     var enforcePattern = /enforceDecorator/ig;
 
-    function isEnforceFunction (fn) {
+    function isEnforceFunction(fn) {
         var fnString = Function.prototype.toString.call(fn);
         return enforcePattern.test(fnString);
     }
@@ -413,8 +429,8 @@ function signetCoreTypes(
             ? options.join(',').trim()
             : '';
         var valueIsFunction = typeof value === 'function';
-        
-        return valueIsFunction 
+
+        return valueIsFunction
             && isEnforceFunction(value)
             && checkSignatureMatch(value, signature);
     }
