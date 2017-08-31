@@ -29,7 +29,7 @@ describe('Signet Library', function () {
 
     afterEach(function () {
         timer.stop();
-        timer.report();
+        // timer.report();
     });
 
     it('should automatically register the * type', function () {

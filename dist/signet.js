@@ -872,29 +872,31 @@ function signetCoreTypes(
         }
     }
 
+    function compareSubsetProps(a, b) {
+        var keys = Object.keys(b);
+        var keyLength = keys.length;
+        var compareOk = true;
+
+        for (var i = 0; i < keyLength && compareOk; i++) {
+            var key = keys[i];
+            compareOk = a[key] === b[key];
+        }
+
+        return compareOk;
+    }
+
     function objectsAreEqual(a, b) {
         if (isNull(a) || isNull(b) || a === b) { return a === b; }
-
-        function propsInequal(key) {
-            return a[key] !== b[key];
-        }
 
         var objAKeys = Object.keys(a);
         var keyLengthEqual = objAKeys.length === Object.keys(b).length;
 
-        return !keyLengthEqual ? false : objAKeys.filter(propsInequal).length === 0;
-
-    }
-
-    function verifyPropertyMatches(a, b) {
-        return Object.keys(b).filter(function (key) {
-            return typeof a[key] === typeof b[key];
-        }).length === 0;
+        return !keyLengthEqual ? false : compareSubsetProps(a, b);
     }
 
     function propertySuperSet(a, b) {
         var keyLengthOk = !(Object.keys(a).length < Object.keys(b).length);
-        return keyLengthOk && verifyPropertyMatches(a, b);
+        return keyLengthOk && compareSubsetProps(a, b);
     }
 
     function propertySubSet(a, b) {
@@ -903,7 +905,7 @@ function signetCoreTypes(
 
     function propertyCongruence(a, b) {
         var keyLengthOk = Object.keys(a).length === Object.keys(b).length;
-        return keyLengthOk && verifyPropertyMatches(a, b);
+        return keyLengthOk && compareSubsetProps(a, b);
     }
 
     function isSameType(a, b, aType, bType) {
@@ -923,9 +925,27 @@ function signetCoreTypes(
         return whichType(variantStrings);
     }
 
+    function find(predicate, values) {
+        var arrayLength = values.length;
+        var result = null;
+
+        for (var i = 0; i < arrayLength; i++) {
+            if (predicate(values[i])) {
+                result = values[i];
+                break;
+            }
+        }
+
+        return result;
+    }
+
     function whichType(typeStrings) {
         return function (value) {
-            var result = typeStrings.filter(function (typeString) { return isTypeOf(typeString)(value); })[0];
+            function isMatch(typeString) {
+                return isTypeOf(typeString)(value);
+            }
+
+            var result = find(isMatch, typeStrings);
             return typeof result !== 'string' ? null : result;
         };
     }
@@ -1144,10 +1164,10 @@ function signetCoreTypes(
     function castOutOn(predicate, values) {
         var result = false;
 
-        for(var i = 0; i < values.length; i++) {
+        for (var i = 0; i < values.length; i++) {
             result = predicate(values[i]);
 
-            if(result) {
+            if (result) {
                 values.splice(i, 1);
                 break;
             }
@@ -1166,9 +1186,34 @@ function signetCoreTypes(
         };
     }
 
+    function reduce(action, values, initial) {
+        var arrayLength = values.length;
+        var result = initial;
+
+        for(var i = 0; i < arrayLength; i++) {
+            result = action(result, values[i]);
+        }
+
+        return result;
+    }
+
+    function filterOn(predicate) {
+        return function (result, value) {
+            if(predicate(value)) {
+                result.push(value);
+            }
+            return result;
+        }
+    }
+
+    function filter(predicate, values) {
+        return reduce(filterOn(predicate), values, []);
+    }
+
     function checkValueTypes(values, typeNames) {
         var sortedTypeNames = sortTypeNames(typeNames);
-        return sortedTypeNames.filter(typeDoesNotExistIn(values)).length === 0;
+        var filterResult = filter(typeDoesNotExistIn(values), sortedTypeNames);
+        return filterResult.length === 0;
     }
 
     function isUnorderedProduct(value, typeNames) {
@@ -1187,7 +1232,8 @@ function signetCoreTypes(
     }
 
     function isVariant(value, options) {
-        return options.length === 0 || options.filter(checkValueType).length > 0;
+        return options.length === 0 
+            || filter(checkValueType, options).length > 0;
 
         function checkValueType(validator) {
             return validator(value);
