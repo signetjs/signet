@@ -1202,6 +1202,7 @@ function signetCoreTypes(
             if(predicate(value)) {
                 result.push(value);
             }
+            
             return result;
         }
     }
@@ -1644,18 +1645,28 @@ function signetBuilder(
         return argResults;
     }
 
+    function quickSliceFrom (index, values) {
+        var result = [];
+
+        for(var i = index; i < values.length; i++) {
+            result.push(values[i]);
+        }
+
+        return result;
+    }
+
     function buildEnforcer(signatureTree, fn, options) {
         var functionName = getFunctionName(fn);
 
         return function () {
-            var args = Array.prototype.slice.call(arguments, 0);
+            var args = quickSliceFrom(0, arguments);
 
             var environmentTable = typeof signatureTree.environment === 'object'
                 ? Object.create(signatureTree.environment)
                 : {};
 
             var validationResult = validator.validateArguments(signatureTree[0], environmentTable)(args);
-            var nextTree = signatureTree.slice(1);
+            var nextTree = quickSliceFrom(1, signatureTree);
 
             if (validationResult !== null) {
                 throwInputError(
@@ -1700,7 +1711,7 @@ function signetBuilder(
 
     function buildEnforceDecorator(enforcer) {
         return function enforceDecorator() {
-            var args = Array.prototype.slice.call(arguments, 0);
+            var args = quickSliceFrom(0, arguments);
             return enforcer.apply(this, args);
         }
     }
@@ -1759,7 +1770,12 @@ function signetBuilder(
 
     var typeArityPattern = /^([^\{]+)\{([^\}]+)\}$/;
 
+    function hasArityDeclaration (typeName) {
+        return typeName.indexOf(typeName, '{') > -1;
+    }
+
     function getArity(typeName, typeStr) {
+        console.log(hasArityDeclaration(typeName));
         var arityStr = typeStr.replace(typeArityPattern, '$2');
         var arityData = arityStr.split(/\,\s*/g);
         var min = 0;

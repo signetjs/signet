@@ -23,13 +23,13 @@ describe('Signet Library', function () {
         signet = signetBuilder();
 
         timer = timerFactory();
-        timer.setMaxAcceptableTime(10);
+        timer.setMaxAcceptableTime(3);
         timer.start();
     });
 
     afterEach(function () {
         timer.stop();
-        // timer.report();
+        timer.report();
     });
 
     it('should automatically register the * type', function () {
