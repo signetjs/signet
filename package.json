@@ -1,6 +1,6 @@
 {
   "name": "signet",
-  "version": "6.3.0",
+  "version": "6.4.0",
   "description": "Signet type library",
   "main": "index.js",
   "repository": {
@@ -37,7 +37,7 @@
   "dependencies": {
     "signet-assembler": "2.1.0",
     "signet-checker": "1.1.0",
-    "signet-parser": "5.2.4",
+    "signet-parser": "5.3.0",
     "signet-registrar": "2.0.0",
     "signet-typelog": "^1.4.0",
     "signet-validator": "^3.0.0"

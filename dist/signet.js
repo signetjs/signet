@@ -149,7 +149,9 @@ function signetParser() {
             .map(function (value) { return value.trim(); });
     }
 
-    function parseType(typeStr) {
+
+
+    function typeParser(typeStr) {
         var transformedTypeStr = applyMacros(typeLevelMacros, typeStr);
 
         var typePattern = /^([^:<]+)\:(.+)$/;
@@ -163,6 +165,51 @@ function signetParser() {
             optional: rawType.trim().match(/^\[[^\]]+\]$/) !== null
         };
     }
+
+    function isArray (value) {
+        return typeof value === 'object' 
+            && value !== null 
+            && Object.prototype.toString.call(value) === '[object Array]';
+    }
+
+    function copyArray (values) {
+        var result = [];
+        for(var i = 0; i < values.length; i++) {
+            result.push(values[i]);
+        }
+
+        return result;
+    }
+
+    function copyProps(obj) {
+        var keys = Object.keys(obj);
+        var result = {};
+
+        for(var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            var value = obj[key];
+            
+            result[key] = isArray(value) ? copyArray(value) : value;
+        }
+
+        return result;
+    }
+
+    function copyMemoizerFactory (parser) {
+        var memoizedTypes = {};
+
+        return function (typeStr) {
+            if(typeof memoizedTypes[typeStr] === 'object') {
+                return copyProps(memoizedTypes[typeStr]);
+            } else {
+                var parsedType = parser(typeStr);
+                memoizedTypes[typeStr] = parsedType;
+                return copyProps(parsedType);
+            }
+        }
+    }
+
+    var parseType = copyMemoizerFactory(typeParser);
 
     function parseDependentMetadataToken(metadataStr) {
         var tokens = metadataStr.trim().split(/\s+/g);
@@ -1770,12 +1817,7 @@ function signetBuilder(
 
     var typeArityPattern = /^([^\{]+)\{([^\}]+)\}$/;
 
-    function hasArityDeclaration (typeName) {
-        return typeName.indexOf(typeName, '{') > -1;
-    }
-
     function getArity(typeName, typeStr) {
-        console.log(hasArityDeclaration(typeName));
         var arityStr = typeStr.replace(typeArityPattern, '$2');
         var arityData = arityStr.split(/\,\s*/g);
         var min = 0;

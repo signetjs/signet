@@ -330,14 +330,6 @@ function signetBuilder(
 
     var typeArityPattern = /^([^\{]+)\{([^\}]+)\}$/;
 
-    function hasArityDeclaration (typeName) {
-        return typeName.indexOf(typeName, '{') > -1;
-    }
-
-    function getArityData (typeName) {
-        return typeName.split('{')[0].replace('}', '');
-    }
-
     function getArity(typeName, typeStr) {
         var arityStr = typeStr.replace(typeArityPattern, '$2');
         var arityData = arityStr.split(/\,\s*/g);
