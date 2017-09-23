@@ -149,67 +149,105 @@ function signetParser() {
             .map(function (value) { return value.trim(); });
     }
 
+    function getColonPosition(typeStr) {
+        var colonPosition = -1;
+        var lastChar = '';
 
+        for (var i = 0; i < typeStr.length && lastChar !== '<' && colonPosition === -1; i++) {
+            lastChar = typeStr[i];
+            if (lastChar === ':') {
+                colonPosition = i;
+            }
+        }
+
+        return colonPosition;
+    }
 
     function typeParser(typeStr) {
         var transformedTypeStr = applyMacros(typeLevelMacros, typeStr);
 
-        var typePattern = /^([^:<]+)\:(.+)$/;
-        var typeName = transformedTypeStr.replace(typePattern, '$1');
-        var rawType = transformedTypeStr.replace(typePattern, '$2');
-
         return {
-            name: typeName === transformedTypeStr ? null : typeName.trim(),
-            type: rawType.split('<')[0].replace(/\[|\]/g, '').trim(),
-            subtype: parseSubtype(rawType),
-            optional: rawType.trim().match(/^\[[^\]]+\]$/) !== null
+            type: transformedTypeStr.split('<')[0].replace(/\[|\]/g, '').trim(),
+            subtype: parseSubtype(transformedTypeStr),
+            optional: transformedTypeStr.trim().match(/^\[[^\]]+\]$/) !== null
         };
     }
 
-    function isArray (value) {
-        return typeof value === 'object' 
-            && value !== null 
+    function isObjectInstance(value) {
+        return typeof value === 'object' && value !== null;
+    }
+
+    function isArray(value) {
+        return isObjectInstance(value)
             && Object.prototype.toString.call(value) === '[object Array]';
     }
 
-    function copyArray (values) {
+    function copyArray(values) {
         var result = [];
-        for(var i = 0; i < values.length; i++) {
-            result.push(values[i]);
+        for (var i = 0; i < values.length; i++) {
+            result.push(copyObjectOrReturn(values[i]));
         }
 
+        result.dependent = isArray(values.dependent)
+            ? copyArray(values.dependent)
+            : values.dependent;
+
         return result;
+    }
+
+    function copyObjectOrReturn(value) {
+        if (isArray(value)) {
+            return copyArray(value);
+        } else if (isObjectInstance(value)) {
+            return copyProps(value);
+        } else {
+            return value;
+        }
     }
 
     function copyProps(obj) {
         var keys = Object.keys(obj);
         var result = {};
 
-        for(var i = 0; i < keys.length; i++) {
+        for (var i = 0; i < keys.length; i++) {
             var key = keys[i];
             var value = obj[key];
-            
-            result[key] = isArray(value) ? copyArray(value) : value;
+
+            result[key] = copyObjectOrReturn(value);
         }
 
         return result;
     }
 
-    function copyMemoizerFactory (parser) {
+    function copyMemoizerFactory(parser) {
         var memoizedTypes = {};
 
         return function (typeStr) {
-            if(typeof memoizedTypes[typeStr] === 'object') {
-                return copyProps(memoizedTypes[typeStr]);
-            } else {
-                var parsedType = parser(typeStr);
+            var parsedType = memoizedTypes[typeStr];
+
+            if (typeof parsedType === 'undefined') {
+                parsedType = parser(typeStr);
                 memoizedTypes[typeStr] = parsedType;
-                return copyProps(parsedType);
             }
+
+            return isArray(parsedType) ? copyArray(parsedType) : copyProps(parsedType);
         }
     }
 
-    var parseType = copyMemoizerFactory(typeParser);
+    var memoizedTypeParser = copyMemoizerFactory(typeParser);
+
+    function parseType(typeStr) {
+        var colonPosition = typeStr.indexOf(':') > -1 ? getColonPosition(typeStr) : -1;
+
+        var typeName = colonPosition === -1 ? null : typeStr.substring(0, colonPosition).trim();
+        var rawType = typeStr.substring(colonPosition + 1);
+
+        var parsedType = memoizedTypeParser(rawType);
+
+        parsedType.name = typeName;
+
+        return parsedType;
+    }
 
     function parseDependentMetadataToken(metadataStr) {
         var tokens = metadataStr.trim().split(/\s+/g);
@@ -292,7 +330,7 @@ function signetParser() {
                 currentToken += signature[i];
                 continue;
             }
-            
+
             if (isSequenceChar(currentSymbol) && isSpecialSquence(currentSymbol + signature[i + 1])) {
                 i++;
                 currentSymbol = currentSymbol + signature[i];
@@ -320,10 +358,12 @@ function signetParser() {
         return symbol === '=>';
     }
 
-    function parseSignature(signature) {
+    function signatureParser(signature) {
         var resolvedSignature = applyMacros(signatureLevelMacros, signature);
         return splitOnSymbol(isArrow, resolvedSignature).map(parseParams);
     }
+
+    var parseSignature = copyMemoizerFactory(signatureParser);
 
     return {
         parseSignature: parseSignature,
@@ -1527,8 +1567,9 @@ function signetBuilder(
     }
 
     function alias(key, typeStr) {
-        var typeDef = parser.parseType(typeStr);
-        var typeAlias = hasPlaceholder(typeStr) ? buildPartialTypeAlias(typeStr) : buildTypeAlias(typeDef);
+        var typeAlias = hasPlaceholder(typeStr) 
+            ? buildPartialTypeAlias(typeStr) 
+            : buildTypeAlias(parser.parseType(typeStr));
 
         extend(key, typeAlias);
     }

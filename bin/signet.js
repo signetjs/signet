@@ -40,16 +40,17 @@ function signetBuilder(
     }
 
     function alias(key, typeStr) {
-        var typeDef = parser.parseType(typeStr);
-        var typeAlias = hasPlaceholder(typeStr) ? buildPartialTypeAlias(typeStr) : buildTypeAlias(typeDef);
+        var typeAlias = hasPlaceholder(typeStr) 
+            ? buildPartialTypeAlias(typeStr) 
+            : buildTypeAlias(parser.parseType(typeStr));
 
         extend(key, typeAlias);
     }
 
     function isTypeOf(typeValue) {
-        return typeof typeValue === 'string' ?
-            typelog.isTypeOf(parser.parseType(typeValue)) :
-            typeValue;
+        return typeof typeValue === 'string'
+            ? typelog.isTypeOf(parser.parseType(typeValue))
+            : typeValue;
     }
 
     function addImmutableProperty(obj, key, value) {
