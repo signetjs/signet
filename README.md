@@ -488,8 +488,8 @@ You can declare the number of arguments a type constructor requires (the arity o
 - defineRecursiveType: `typeName:string, iteratorFactory:function, nodeType:type, typePreprocessor:[function] => undefined`
 - enforce: `signature:string, functionToEnforce:function, options:[object] => function`
     - currently supported options:
-        - inputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
-        - outputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array] => 'string'`
+        - inputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array], [functionName:string] => 'string'`
+        - outputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array], [functionName:string] => 'string'`
 - extend: `typeName:string, typeCheck:function, preprocessor:[function] => undefined`
 - exactDuckTypeFactory: `duckTypeDef:object => function`
 - isRegisteredDuckType: `typeName:string => boolean`
