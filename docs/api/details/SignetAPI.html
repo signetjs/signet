@@ -1,0 +1,1377 @@
+<html>
+
+<head>
+    <title>Mochadoc Test Documentation</title>
+
+    <link rel="stylesheet" href="../assets/doc-style.css" media="screen">
+    <link rel="stylesheet" href="../assets/github-gist.css" media="screen">
+</head>
+
+<body>
+    <header>
+        <a href="../index.html"><span id="library-name">Signet</span>
+        <span id="subtitle">Mochadoc-Generated Test Documents</span></a>
+    </header>
+
+    <div class="content">
+        <h1>Signet API</h1>
+
+<ul>
+    <li>
+    <h3>isTypeOf</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should verify against an ad-hoc type</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            function is5(value) {
+                return value &#x3D;&#x3D;&#x3D; 5;
+            }
+
+            assert.equal(signet.isTypeOf(is5)(5), true);
+            assert.equal(signet.isTypeOf(is5)(6), false);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>sign</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should sign a function</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var expectedSignature &#x3D; &#x27;A &lt; B :: A:number, B:number &#x3D;&gt; number&#x27;;
+            var signedAdd &#x3D; signet.sign(expectedSignature, addBuilder());
+            var expectedTree &#x3D; parser.parseSignature(expectedSignature);
+
+            assert.equal(JSON.stringify(signedAdd.signatureTree), JSON.stringify(expectedTree));
+            assert.equal(signedAdd.signature, expectedSignature);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should throw an error if signature contains a bad type</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var fnUnderTest &#x3D; signet.sign.bind(null, &#x27;number, foo &#x3D;&gt; bar&#x27;, addBuilder());
+            var expectedMessage &#x3D; &quot;Signature contains invalid types: foo, bar&quot;;
+
+            assert.throws(fnUnderTest, expectedMessage);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should throw an error if signature does not satisfy all declared arguments</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var fnUnderTest &#x3D; signet.sign.bind(null, &#x27;number &#x3D;&gt; number&#x27;, addBuilder());
+            var expectedMessage &#x3D; &#x27;Signature declaration too short for function with 2 arguments&#x27;;
+
+            assert.throws(fnUnderTest, expectedMessage);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should throw error if signature has no output type</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var fnUnderTest &#x3D; signet.sign.bind(null, &#x27;number, number&#x27;, addBuilder());
+            var expectedMessage &#x3D; &#x27;Signature must have both input and output types&#x27;;
+
+            assert.throws(fnUnderTest, expectedMessage);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should throw error if signature has multiple output types</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var fnUnderTest &#x3D; signet.sign.bind(null, &#x27;number, number &#x3D;&gt; number, number&#x27;, addBuilder());
+            var expectedMessage &#x3D; &#x27;Signature can only have a single output type&#x27;;
+
+            assert.throws(fnUnderTest, expectedMessage);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>enforce</h3>
+    <ul>
+        <li>
+    <h3>Core Behaviors</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>tuple should produce reliable signatures</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                const expectedSignature &#x3D; &#x27;tuple&lt;*;*&gt; &#x3D;&gt; *&#x27;;
+                const testFn &#x3D; signet.enforce(expectedSignature, () &#x3D;&gt; null);
+
+                assert.equal(testFn.signature, expectedSignature);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should wrap an enforced function with an appropriate enforcer</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                var originalAdd &#x3D; addBuilder();
+                var add &#x3D; signet.enforce(&#x27;number, number &#x3D;&gt; number&#x27;, originalAdd);
+
+                assert.equal(add.toString(), originalAdd.toString());
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should enforce a function with a correct argument count</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                var add &#x3D; signet.enforce(&#x27;number, number &#x3D;&gt; number&#x27;, addBuilder());
+                var expectedMessage &#x3D; &#x27;Anonymous expected a value of type number but got 6 of type string&#x27;;
+
+                assert.throws(add.bind(null, 5, &#x27;6&#x27;), expectedMessage);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should enforce a function return value</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                var add &#x3D; signet.enforce(&#x27;number, number &#x3D;&gt; number&#x27;, function (a, b) {
+                    (a, b);
+                    return true;
+                });
+
+                var expectedMessage &#x3D; &#x27;Anonymous expected a return value of type number but got true of type boolean&#x27;;
+
+                assert.throws(add.bind(null, 3, 4), expectedMessage);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should return result from enforced function</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                var add &#x3D; signet.enforce(&#x27;number, number &#x3D;&gt; number&#x27;, addBuilder());
+
+                assert.equal(add(3, 4), 7);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should not throw on unfulfilled optional int argument in a higher-order function containing a variant type</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                function slice(start, end) { (end) }
+
+                var enforcedSlice &#x3D; signet.enforce(&#x27;int, [int] &#x3D;&gt; *&#x27;, slice);
+
+                assert.doesNotThrow(function () {
+                    enforcedSlice(5);
+                });
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should enforce a curried function properly</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                function add(a) {
+                    return function (b) {
+                        (a, b);
+                        return &#x27;bar&#x27;;
+                    }
+                }
+
+                var curriedAdd &#x3D; signet.enforce(&#x27;number &#x3D;&gt; number &#x3D;&gt; number&#x27;, add);
+
+                assert.throws(curriedAdd.bind(null, &#x27;foo&#x27;));
+                assert.throws(curriedAdd(5).bind(null, &#x27;foo&#x27;));
+                assert.throws(curriedAdd(5).bind(null, 6));
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>Custom Errors</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should throw a custom error on bad input</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                var add &#x3D; signet.enforce(&#x27;number, number &#x3D;&gt; number&#x27;, function (a, b) {
+                    (a, b);
+                    return true;
+                }, {
+                        inputErrorBuilder: function (validationResult, args, signatureTree) {
+                            return &#x27;This is a custom input error!&#x27; + validationResult.toString() + args.toString() + signatureTree.toString();
+                        }
+                    });
+
+                var expectedMessage &#x3D; &#x27;This is a custom input error!number,no3,no[object Object],[object Object],[object Object]&#x27;;
+
+                assert.throws(add.bind(null, 3, &#x27;no&#x27;), expectedMessage);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should throw a default error on bad input with core builder</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                var add &#x3D; signet.enforce(&#x27;number, number &#x3D;&gt; number&#x27;, function (a, b) {
+                    (a, b);
+                    return true;
+                }, {
+                        inputErrorBuilder: function (validationResult, args, signatureTree, functionName) {
+                            return signet.buildInputErrorMessage(validationResult, args, signatureTree, functionName);
+                        }
+                    });
+
+                var expectedMessage &#x3D; &#x27;Anonymous expected a value of type number but got no of type string&#x27;;
+
+                assert.throws(add.bind(null, 3, &#x27;no&#x27;), expectedMessage);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should throw a default error on bad output with core builder</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                var add &#x3D; signet.enforce(&#x27;number, number &#x3D;&gt; number&#x27;, function (a, b) {
+                    (a, b);
+                    return true;
+                }, {
+                        outputErrorBuilder: function (validationResult, args, signatureTree, functionName) {
+                            return signet.buildOutputErrorMessage(validationResult, args, signatureTree, functionName);
+                        }
+                    });
+
+                var expectedMessage &#x3D; &#x27;Anonymous expected a return value of type number but got true of type boolean&#x27;;
+
+                assert.throws(add.bind(null, 3, 4), expectedMessage);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should throw a custom error on bad output</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                var add &#x3D; signet.enforce(&#x27;number, number &#x3D;&gt; number&#x27;, function (a, b) {
+                    (a, b);
+                    return true;
+                }, {
+                        outputErrorBuilder: function (validationResult, args, signatureTree) {
+                            return &#x27;This is a custom output error!&#x27; + validationResult.toString() + args.toString() + signatureTree.toString();
+                        }
+                    });
+
+                var expectedMessage &#x3D; &#x27;This is a custom output error!number,true3,4[object Object],[object Object],[object Object]&#x27;;
+
+                assert.throws(add.bind(null, 3, 4), expectedMessage);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>Dependent Type Operator Support</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should properly check symbolic dependent types</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                function orderedProperly(a, b) {
+                    return a &gt; b;
+                }
+
+                var enforcedFn &#x3D; signet.enforce(&#x27;A &gt; B :: A:number, B:number &#x3D;&gt; boolean&#x27;, orderedProperly);
+
+                function testWith(a, b) {
+                    return function () {
+                        return enforcedFn(a, b);
+                    };
+                }
+
+                assert.throws(testWith(5, 6), &#x27;orderedProperly expected a value of type A &gt; B but got A &#x3D; 5 and B &#x3D; 6 of type string&#x27;);
+                assert.equal(testWith(7, 3)(), true);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should properly check symbolic type dependencies</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                function testFnFactory() {
+                    return function (a, b) {
+                        a + b;
+                        return a;
+                    };
+                }
+
+                assert.throws(signet.enforce(
+                    &#x27;A &lt;: B :: A:variant&lt;string;number&gt;, B:variant&lt;string;int&gt; &#x3D;&gt; number&#x27;,
+                    testFnFactory()).bind(null, 2.2, 3),
+                    &#x27;Anonymous expected a value of type A &lt;: B but got A &#x3D; 2.2 and B &#x3D; 3 of type string&#x27;);
+                assert.throws(signet.enforce(
+                    &#x27;A &lt; B, B &gt; C :: A:int, B:int, C:int &#x3D;&gt; number&#x27;,
+                    testFnFactory()).bind(null, 5, 6, 7),
+                    &#x27;Anonymous expected a value of type B &gt; C but got B &#x3D; 6 and C &#x3D; 7 of type string&#x27;);
+
+                assert.doesNotThrow(signet.enforce(
+                    &#x27;A &lt;: B :: A:variant&lt;string;int&gt;, B:variant&lt;string;number&gt; &#x3D;&gt; number&#x27;,
+                    testFnFactory()).bind(null, 5, 6));
+                assert.doesNotThrow(signet.enforce(
+                    &#x27;A &lt; B, B &lt; C :: A:int, B:int, C:int &#x3D;&gt; number&#x27;,
+                    testFnFactory()).bind(null, 5, 6, 7));
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>Object and Constructor Support</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should properly enforce constructors</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                var testMethodSpy &#x3D; sinon.spy();
+
+                var MyObj &#x3D; signet.enforce(
+                    &#x27;a:int, b:string &#x3D;&gt; undefined&#x27;,
+                    function (a, b) {
+                        this.testMethod(a, b);
+                    }
+                );
+
+                MyObj.prototype.testMethod &#x3D; testMethodSpy;
+                new MyObj(5, &#x27;foo&#x27;);
+
+                var result &#x3D; JSON.stringify(testMethodSpy.args[0]);
+                var expectedResult &#x3D; JSON.stringify([5, &#x27;foo&#x27;]);
+
+                assert.equal(testMethodSpy.callCount, 1);
+                assert.equal(result, expectedResult);
+
+                assert.throws(
+                    function () { return new MyObj(&#x27;foo&#x27;, 5); },
+                    &#x27;Anonymous expected a value of type a:int but got foo of type string&#x27;
+                );
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should properly enforce object methods</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                function MyObj(a) {
+                    this.a &#x3D; a;
+                }
+
+                MyObj.prototype &#x3D; {
+                    testMethod: signet.enforce(
+                        &#x27;b:int &#x3D;&gt; result:int&#x27;,
+                        function (b) {
+                            return this.a + b;
+                        }
+                    )
+                }
+
+                var objInstance &#x3D; new MyObj(6);
+
+                assert.equal(objInstance.testMethod(7), 13);
+                assert.throws(
+                    objInstance.testMethod.bind(objInstance, &#x27;7&#x27;),
+                    &#x27;Anonymous expected a value of type b:int but got 7 of type string&#x27;
+                );
+
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>Function Properties</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should preserve properties on enforced function</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                function adder(a, b) {
+                    return a + b;
+                }
+
+                adder.myProp &#x3D; () &#x3D;&gt; &#x27;yay!&#x27;;
+
+                const add &#x3D; signet.enforce(
+                    &#x27;number, number &#x3D;&gt; number&#x27;,
+                    adder
+                );
+
+                assert.equal(add.myProp(), &#x27;yay!&#x27;);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should return a function with the correct arity</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                const add &#x3D; signet.enforce(
+                    &#x27;a:*, b:* &#x3D;&gt; *&#x27;,
+
+                    function add(a, b) {
+                        return a + b;
+                    }
+                );
+
+                assert.equal(add.length, 2);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>Higher-order Function Support</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should support a cross-execution environment table</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                const addIncreasing &#x3D; signet.enforce(
+                    &#x27;a &lt; b, b &lt; sum :: a:int &#x3D;&gt; b:int &#x3D;&gt; sum:int&#x27;,
+                    a &#x3D;&gt; b &#x3D;&gt; a - b
+                );
+
+
+                assert.throws(addIncreasing(5).bind(null, 4), &#x27;Anonymous expected a value of type a &lt; b but got a &#x3D; 5 and b &#x3D; 4 of type string&#x27;);
+                assert.throws(addIncreasing(5).bind(null, 6), &#x27;Anonymous expected a return value of type b &lt; sum but got b &#x3D; 6 and sum &#x3D; -1 of type string&#x27;);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should enforce passed functions when a signature is provided</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                const testFn &#x3D; signet.enforce(
+                    &#x27;function&lt;* &#x3D;&gt; boolean&gt; &#x3D;&gt; * &#x3D;&gt; boolean&#x27;,
+                    function (fn) { return () &#x3D;&gt; fn(); });
+
+                function badFn() { return &#x27;foo&#x27;; }
+
+                assert.throws(testFn(badFn), &#x27;badFn expected a return value of type boolean but got foo of type string&#x27;);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should should pass options along to sub-enforcement</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                const options &#x3D; {
+                    outputErrorBuilder: function (validationResult, args, signatureTree) {
+                        return &#x27;This is a custom output error!&#x27; + validationResult.toString() + args.toString() + signatureTree.toString();
+                    }
+                };
+
+                const testFn &#x3D; signet.enforce(
+                    &#x27;function&lt;* &#x3D;&gt; boolean&gt; &#x3D;&gt; * &#x3D;&gt; string&#x27;,
+                    function (fn) { return () &#x3D;&gt; fn(); },
+                    options);
+
+
+                function badFn() { return &#x27;foo&#x27;; }
+
+                assert.throws(testFn(badFn), &#x27;This is a custom output error!boolean,foo[object Object],[object Object]&#x27;);
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should not throw when function type is declared with constructor argument</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+                function doStuff() { return []; }
+                signet.enforce(&#x27;function&lt;*, * &#x3D;&gt; string, boolean &#x3D;&gt; boolean&gt; &#x3D;&gt; array&#x27;, doStuff);
+
+                assert.doesNotThrow(doStuff.bind(null, function () { }));
+            }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+    </ul>
+</li>
+<li>
+    <h3>extend</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should register a new type</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            signet.extend(&#x27;foo&#x27;, function (value) { return value &#x3D;&#x3D;&#x3D; &#x27;foo&#x27;; });
+
+            assert.equal(signet.isType(&#x27;foo&#x27;), true);
+            assert.equal(signet.isTypeOf(&#x27;foo&#x27;)(&#x27;foo&#x27;), true);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should handle type arity up front</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            signet.extend(&#x27;myTestType0&#x27;, function () { });
+            signet.extend(&#x27;myTestType1{1}&#x27;, function () { });
+            signet.extend(&#x27;myTestType1OrMore{1,}&#x27;, function () { });
+            signet.extend(&#x27;myTestType2To5{2, 5}&#x27;, function () { });
+
+            assert.doesNotThrow(signet.isTypeOf.bind(null, &#x27;myTestType0&lt;1, 2, 3&gt;&#x27;));
+            assert.throws(
+                signet.isTypeOf(&#x27;myTestType1&lt;1, 2, 3&gt;&#x27;).bind(null, &#x27;foo&#x27;),
+                &#x27;Type myTestType1 accepts, at most, 1 arguments&#x27;);
+            assert.throws(
+                signet.isTypeOf(&#x27;myTestType1&#x27;).bind(null, &#x27;foo&#x27;),
+                &#x27;Type myTestType1 requires, at least, 1 arguments&#x27;);
+
+            assert.doesNotThrow(signet.isTypeOf(&#x27;myTestType1OrMore&lt;1, 2, 3&gt;&#x27;).bind(null, &#x27;foo&#x27;));
+            assert.throws(
+                signet.isTypeOf(&#x27;myTestType1OrMore&#x27;).bind(null, &#x27;foo&#x27;),
+                &#x27;Type myTestType1OrMore requires, at least, 1 arguments&#x27;);
+
+            assert.doesNotThrow(signet.isTypeOf(&#x27;myTestType2To5&lt;1, 2, 3&gt;&#x27;).bind(null, &#x27;foo&#x27;));
+            assert.throws(
+                signet.isTypeOf(&#x27;myTestType2To5&#x27;).bind(null, &#x27;foo&#x27;),
+                &#x27;Type myTestType2To5 requires, at least, 2 arguments&#x27;);
+            assert.throws(
+                signet.isTypeOf(&#x27;myTestType2To5&lt;1, 2, 3, 4, 5, 6&gt;&#x27;).bind(null, &#x27;foo&#x27;),
+                &#x27;Type myTestType2To5 accepts, at most, 5 arguments&#x27;);
+
+            assert.throws(
+                signet.extend.bind(null, &#x27;myTestTypeBroken{5, 1}&#x27;, function () { }),
+                &#x27;Error in myTestTypeBroken arity declaration: min cannot be greater than max&#x27;);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>subtype</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should register a subtype</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            signet.subtype(&#x27;number&#x27;)(&#x27;intFoo&#x27;, function (value) { return Math.floor(value) &#x3D;&#x3D;&#x3D; value; });
+
+            assert.equal(signet.isSubtypeOf(&#x27;number&#x27;)(&#x27;intFoo&#x27;), true);
+            assert.equal(signet.isTypeOf(&#x27;intFoo&#x27;)(15), true);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>alias</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should allow aliasing of types by other names</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            signet.alias(&#x27;foo&#x27;, &#x27;string&#x27;);
+
+            assert.equal(signet.isTypeOf(&#x27;foo&#x27;)(&#x27;bar&#x27;), true);
+            assert.equal(signet.isTypeOf(&#x27;foo&#x27;)(5), false);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should partially apply a type value</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            signet.alias(&#x27;testTuple&#x27;, &#x27;tuple&lt;_; _&gt;&#x27;);
+            signet.alias(&#x27;testPartialTuple&#x27;, &#x27;testTuple&lt;int; _&gt;&#x27;);
+
+            assert.equal(signet.isTypeOf(&#x27;testTuple&lt;array; object&gt;&#x27;)([[], {}]), true);
+            assert.equal(signet.isTypeOf(&#x27;testPartialTuple&lt;string&gt;&#x27;)([5, &#x27;foo&#x27;]), true);
+            assert.equal(signet.isTypeOf(&#x27;testPartialTuple&lt;string&gt;&#x27;)([5, 6]), false);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>verify</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should allow function argument verification inside a function body</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            function test(a, b) {
+                (a, b);
+                signet.verify(test, arguments);
+            }
+
+            signet.sign(&#x27;string, number &#x3D;&gt; undefined&#x27;, test);
+
+            assert.throws(test.bind(5, &#x27;five&#x27;));
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>typeChain</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should return correct type chains</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            const arrayTypeChain &#x3D; signet.typeChain(&#x27;array&#x27;);
+            const numberTypeChain &#x3D; signet.typeChain(&#x27;number&#x27;);
+
+            assert.equal(arrayTypeChain, &#x27;* -&gt; object -&gt; array&#x27;);
+            assert.equal(numberTypeChain, &#x27;* -&gt; number&#x27;);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>duckTypeFactory</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should duck type check an object</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var isMyObj &#x3D; signet.duckTypeFactory({
+                foo: &#x27;string&#x27;,
+                bar: &#x27;int&#x27;,
+                baz: &#x27;array&#x27;
+            });
+
+            signet.subtype(&#x27;object&#x27;)(&#x27;myObj&#x27;, isMyObj);
+
+            assert.equal(signet.isTypeOf(&#x27;myObj&#x27;)({ foo: 55 }), false);
+            assert.equal(signet.isTypeOf(&#x27;myObj&#x27;)({ foo: &#x27;blah&#x27;, bar: 55, baz: [] }), true);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should return false if value is not duck-type verifiable</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var isMyObj &#x3D; signet.duckTypeFactory({
+                foo: &#x27;string&#x27;,
+                bar: &#x27;int&#x27;,
+                baz: &#x27;array&#x27;
+            });
+
+            assert.equal(isMyObj(null), false);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>exactDuckTypeFactory</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should check and exact duck type on an object</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var isMyObj &#x3D; signet.exactDuckTypeFactory({
+                foo: &#x27;string&#x27;,
+                bar: &#x27;int&#x27;,
+                baz: &#x27;array&#x27;
+            });
+
+            signet.subtype(&#x27;object&#x27;)(&#x27;myExactObj&#x27;, isMyObj);
+
+            assert.equal(signet.isTypeOf(&#x27;myExactObj&#x27;)({ foo: &#x27;blah&#x27;, bar: 55, baz: [], quux: &#x27;&#x27; }), false);
+            assert.equal(signet.isTypeOf(&#x27;myExactObj&#x27;)({ foo: &#x27;blah&#x27;, bar: 55, baz: [] }), true);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should check and exact duck type on an object</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var isMyObj &#x3D; signet.exactDuckTypeFactory({
+                foo: &#x27;string&#x27;,
+                bar: &#x27;int&#x27;,
+                baz: &#x27;array&#x27;
+            });
+
+            signet.subtype(&#x27;object&#x27;)(&#x27;myExactObj&#x27;, isMyObj);
+
+            assert.equal(signet.isTypeOf(&#x27;myExactObj&#x27;)({ foo: &#x27;blah&#x27;, bar: 55, baz: [], quux: &#x27;&#x27; }), false);
+            assert.equal(signet.isTypeOf(&#x27;myExactObj&#x27;)({ foo: &#x27;blah&#x27;, bar: 55, baz: [] }), true);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>defineDuckType</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should allow duck types to be defined directly</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            signet.defineDuckType(&#x27;myObj&#x27;, {
+                foo: &#x27;string&#x27;,
+                bar: &#x27;int&#x27;,
+                baz: &#x27;array&#x27;
+            });
+
+            assert.equal(signet.isTypeOf(&#x27;myObj&#x27;)({ foo: 55 }), false);
+            assert.equal(signet.isTypeOf(&#x27;myObj&#x27;)({ foo: &#x27;blah&#x27;, bar: 55, baz: [] }), true);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should allow reporting of duck type errors</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            signet.defineDuckType(&#x27;aTestThingy&#x27;, {
+                quux: &#x27;!*&#x27;
+            });
+
+            signet.defineDuckType(&#x27;myObj&#x27;, {
+                foo: &#x27;string&#x27;,
+                bar: &#x27;int&#x27;,
+                baz: &#x27;array&#x27;,
+                deeperType: &#x27;aTestThingy&#x27;
+            });
+
+            var result &#x3D; signet.reportDuckTypeErrors(&#x27;myObj&#x27;)({ foo: 55, bar: &#x27;bad value&#x27;, baz: null, deeperType: {} });
+            var expected &#x3D; &#x27;[[&quot;foo&quot;,&quot;string&quot;,55],[&quot;bar&quot;,&quot;int&quot;,&quot;bad value&quot;],[&quot;baz&quot;,&quot;array&quot;,null],[&quot;deeperType&quot;,&quot;aTestThingy&quot;,[[&quot;quux&quot;,&quot;not&lt;variant&lt;undefined, null&gt;&gt;&quot;,null]]]]&#x27;;
+
+            assert.equal(JSON.stringify(result), expected);
+            assert.equal(signet.isTypeOf(&#x27;myObj&#x27;)({ foo: &#x27;blah&#x27;, bar: 55, baz: [], deeperType: { quux: &#x27;something&#x27; } }), true);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>reportDuckTypeErrors</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should return duck type error on bad object value</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            signet.defineDuckType(&#x27;duckTest&#x27;, {});
+            let checkDuckTest &#x3D; signet.reportDuckTypeErrors(&#x27;duckTest&#x27;);
+
+            const nullCheck &#x3D; checkDuckTest(null);
+            const intCheck &#x3D; checkDuckTest(55);
+            const stringCheck &#x3D; checkDuckTest(&#x27;foo&#x27;);
+
+            assert.equal(JSON.stringify(nullCheck), &#x27;[[&quot;badDuckTypeValue&quot;,&quot;object&quot;,null]]&#x27;);
+            assert.equal(JSON.stringify(intCheck), &#x27;[[&quot;badDuckTypeValue&quot;,&quot;object&quot;,55]]&#x27;);
+            assert.equal(JSON.stringify(stringCheck), &#x27;[[&quot;badDuckTypeValue&quot;,&quot;object&quot;,&quot;foo&quot;]]&#x27;);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>isRegisteredDuckType</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should allow querying of registered duck types</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            signet.defineDuckType(&#x27;duckFoo&#x27;, {});
+
+            assert.equal(signet.isRegisteredDuckType(&#x27;duckFoo&#x27;), true);
+            assert.equal(signet.isRegisteredDuckType(&#x27;duckBar&#x27;), false);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>whichVariantType</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should get variant type of value</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var getValueType &#x3D; signet.whichVariantType(&#x27;variant&lt;string; int&gt;&#x27;);
+
+            assert.equal(getValueType(&#x27;foo&#x27;), &#x27;string&#x27;);
+            assert.equal(getValueType(17), &#x27;int&#x27;);
+            assert.equal(getValueType(17.5), null);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>iterateOn and recursiveTypeFactory</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should allow easy creation of a recursive type</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+
+            const isListNode &#x3D; signet.duckTypeFactory({
+                value: &#x27;int&#x27;,
+                next: &#x27;composite&lt;not&lt;array&gt;, object&gt;&#x27;
+            });
+
+            const iterableFactory &#x3D; signet.iterateOn(&#x27;next&#x27;);
+            const isIntList &#x3D; signet.recursiveTypeFactory(iterableFactory, isListNode);
+
+            const testList &#x3D; cons(1, cons(2, cons(3, cons(4, cons(5, null)))));
+
+            assert.equal(isIntList(testList), true);
+            assert.equal(isIntList({ value: 1 }), false);
+            assert.equal(isIntList(&#x27;blerg&#x27;), false);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should properly recurse through a binary tree with left and right values</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            const isBinaryTreeNode &#x3D; signet.duckTypeFactory({
+                value: &#x27;int&#x27;,
+                left: &#x27;composite&lt;^array, object&gt;&#x27;,
+                right: &#x27;composite&lt;^array, object&gt;&#x27;,
+            });
+
+            function isOrderedNode(node) {
+                return isBinaryTreeNode(node)
+                    &amp;&amp; ((node.left &#x3D;&#x3D;&#x3D; null || node.right &#x3D;&#x3D;&#x3D; null)
+                        || (node.value &gt; node.left.value
+                            &amp;&amp; node.value &lt;&#x3D; node.right.value));
+            }
+
+            signet.subtype(&#x27;object&#x27;)(&#x27;orderedBinaryTreeNode&#x27;, isOrderedNode);
+
+            function iteratorFactory(value) {
+                var iterable &#x3D; [];
+
+                iterable &#x3D; value.left !&#x3D;&#x3D; null ? iterable.concat([value.left]) : iterable;
+                iterable &#x3D; value.right !&#x3D;&#x3D; null ? iterable.concat([value.right]) : iterable;
+
+                return signet.iterateOnArray(iterable);
+            }
+
+            signet.defineRecursiveType(&#x27;orderedBinaryTree&#x27;, iteratorFactory, &#x27;orderedBinaryTreeNode&#x27;);
+
+            const isOrderedIntTree &#x3D; signet.isTypeOf(&#x27;orderedBinaryTree&#x27;);
+
+            const goodBinaryTree &#x3D; {
+                value: 0,
+                left: {
+                    value: -1,
+                    left: null,
+                    right: null
+                },
+                right: {
+                    value: 1,
+                    left: {
+                        value: 1,
+                        left: null,
+                        right: null
+                    },
+                    right: null
+                }
+            };
+
+            const badTree &#x3D; {
+                value: 0,
+                left: {
+                    value: -1,
+                    left: null,
+                    right: null
+                },
+                right: {
+                    value: -3,
+                    left: {
+                        value: 1,
+                        left: null,
+                        right: null
+                    },
+                    right: null
+                }
+            };
+
+            const malformedTree &#x3D; {
+                value: 0,
+                left: null
+            };
+
+            assert.equal(isOrderedIntTree(goodBinaryTree), true);
+            assert.equal(isOrderedIntTree(badTree), false);
+            assert.equal(isOrderedIntTree(malformedTree), false);
+
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+</ul>
+    </div>
+
+    <script src="../assets/code-collapse.js"></script>
+    <script src="../assets/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</body>
+
+</html>

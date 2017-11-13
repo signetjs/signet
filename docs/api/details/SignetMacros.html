@@ -1,0 +1,165 @@
+<html>
+
+<head>
+    <title>Mochadoc Test Documentation</title>
+
+    <link rel="stylesheet" href="../assets/doc-style.css" media="screen">
+    <link rel="stylesheet" href="../assets/github-gist.css" media="screen">
+</head>
+
+<body>
+    <header>
+        <a href="../index.html"><span id="library-name">Signet</span>
+        <span id="subtitle">Mochadoc-Generated Test Documents</span></a>
+    </header>
+
+    <div class="content">
+        <h1>Signet Macros</h1>
+
+<ul>
+    <li>
+    <h3>type-level macros</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should support option type macro</strong>
+    </li>
+    <li>File location: <span class="filename">./test/macros.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            assert.equal(signet.isTypeOf(&#x27;?string&#x27;)(undefined), true);
+            assert.equal(signet.isTypeOf(&#x27;?string&#x27;)(&#x27;foo&#x27;), true);
+            assert.equal(signet.isTypeOf(&#x27;?string&#x27;)({}), false);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should support defined type macro</strong>
+    </li>
+    <li>File location: <span class="filename">./test/macros.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            assert.equal(signet.isTypeOf(&#x27;!*&#x27;)(undefined), false);
+            assert.equal(signet.isTypeOf(&#x27;!*&#x27;)(null), false);
+            assert.equal(signet.isTypeOf(&#x27;!*&#x27;)({}), true);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should support an empty parentheses &quot;any&quot; type macro</strong>
+    </li>
+    <li>File location: <span class="filename">./test/macros.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            assert.equal(signet.isTypeOf(&#x27;()&#x27;)(&#x27;foo&#x27;), true);
+            assert.doesNotThrow(signet.enforce(&#x27;() &#x3D;&gt; undefined&#x27;, function () { }));
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should support a not macro</strong>
+    </li>
+    <li>File location: <span class="filename">./test/macros.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            assert.equal(signet.isTypeOf(&#x27;^string&#x27;)(&#x27;foo&#x27;), false);
+            assert.equal(signet.isTypeOf(&#x27;^string&#x27;)(null), true);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>Signature-level Macros</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should parse function definition with nested function definition</strong>
+    </li>
+    <li>File location: <span class="filename">./test/macros.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var doStuff &#x3D; signet.sign(&#x27;(* &#x3D;&gt; boolean) &#x3D;&gt; array&#x27;, () &#x3D;&gt; []);
+
+            assert.equal(doStuff.signature, &#x27;function&lt;* &#x3D;&gt; boolean&gt; &#x3D;&gt; array&#x27;);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li>
+    <h3>Macro handling</h3>
+    <ul>
+        <ul>
+    <li>
+        <strong>should properly sign a function using macros</strong>
+    </li>
+    <li>File location: <span class="filename">./test/macros.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var expectedValue &#x3D; &#x27;something:[not&lt;variant&lt;undefined, null&gt;&gt;], somethingElse:[variant&lt;undefined;null;string&gt;], aFunction:function&lt;* &#x3D;&gt; *&gt; &#x3D;&gt; null&#x27;;
+            var testFn &#x3D; signet.enforce(
+                &#x27;something:[!*], somethingElse:[?string], aFunction:(* &#x3D;&gt; *) &#x3D;&gt; null&#x27;,
+                () &#x3D;&gt; null
+            );
+
+            assert.equal(testFn.signature, expectedValue);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+</ul>
+    </div>
+
+    <script src="../assets/code-collapse.js"></script>
+    <script src="../assets/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+</body>
+
+</html>
