@@ -511,7 +511,7 @@ You can declare the number of arguments a type constructor requires (the arity o
 
 ## Change Log ##
 
-### 6.1.0 ###
+### 6.5.0 ###
 
 - Added verifyValueType: provides inline value verification for assignments and other non-function-level enforcement
 
