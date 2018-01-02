@@ -505,10 +505,15 @@ You can declare the number of arguments a type constructor requires (the arity o
 - subtype: `rootTypeName:string => subtypeName:string, subtypeCheck:function, preprocessor:[function] => undefined`
 - typeChain: `typeName:string => string`
 - verify: `signedFunctionToVerify:function, functionArguments:arguments => undefined`
+- verifyValueType: `typeToCheck:type => value:* => result:*`
 - whichType: `typeNames:array<string> => value:* => variant<string; null>`
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 6.1.0 ###
+
+- Added verifyValueType: provides inline value verification for assignments and other non-function-level enforcement
 
 ### 6.0.0 ###
 

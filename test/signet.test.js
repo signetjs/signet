@@ -631,6 +631,29 @@ describe('Signet API', function () {
 
     });
 
+    describe('verifyValueType', function () {
+
+        it('should return value when it matches type correctly', function () {
+            var stringValue = 'foo';
+            var stringResult = signet.verifyValueType('string')(stringValue);
+
+            var boundedIntValue = 5;
+            var boundedIntResult = signet.verifyValueType('leftBoundedInt<4>')(boundedIntValue);
+
+            assert.equal(stringResult, stringValue);
+            assert.equal(boundedIntResult, boundedIntValue);
+        });
+
+        it('should throw an error if the value is of incorrect type', function () {
+            var verifyStringValue = signet.verifyValueType('string');
+            var verifyBoundedIntValue = signet.verifyValueType('leftBoundedInt<4>');
+
+            assert.throws(() => verifyStringValue({}));
+            assert.throws(() => verifyBoundedIntValue(-3));
+        });
+
+    });
+
     describe('iterateOn and recursiveTypeFactory', function () {
 
         function setImmutableValue(obj, key, value) {

@@ -40,8 +40,8 @@ function signetBuilder(
     }
 
     function alias(key, typeStr) {
-        var typeAlias = hasPlaceholder(typeStr) 
-            ? buildPartialTypeAlias(typeStr) 
+        var typeAlias = hasPlaceholder(typeStr)
+            ? buildPartialTypeAlias(typeStr)
             : buildTypeAlias(parser.parseType(typeStr));
 
         extend(key, typeAlias);
@@ -51,6 +51,18 @@ function signetBuilder(
         return typeof typeValue === 'string'
             ? typelog.isTypeOf(parser.parseType(typeValue))
             : typeValue;
+    }
+
+    function verifyValueType(typeValue) {
+        var isValidType = isTypeOf(typeValue);
+
+        return function (value) {
+            if(!isValidType(value)) {
+                throw new TypeError('Expected value of type ' + typeValue + ', but got ' + String(value) + ' of type ' + typeof value);
+            }
+
+            return value;
+        };
     }
 
     function addImmutableProperty(obj, key, value) {
@@ -176,7 +188,7 @@ function signetBuilder(
     function processArg(arg, type, options) {
         var cleanType = typeof type === 'object' ? type : {};
 
-        if(cleanType.type === 'function') {
+        if (cleanType.type === 'function') {
             return processFunction(arg, cleanType, options);
         } else {
             return arg;
@@ -206,10 +218,10 @@ function signetBuilder(
         return argResults;
     }
 
-    function quickSliceFrom (index, values) {
+    function quickSliceFrom(index, values) {
         var result = [];
 
-        for(var i = index; i < values.length; i++) {
+        for (var i = index; i < values.length; i++) {
             result.push(values[i]);
         }
 
@@ -556,6 +568,11 @@ function signetBuilder(
             'functionArguments:arguments ' +
             '=> undefined',
             verify),
+        verifyValueType: enforce(
+            'typeToCheck:type ' + 
+            '=> value:* ' + 
+            '=> result:*',
+            verifyValueType),
         whichType: enforce(
             'typeNames:array<string> => ' +
             'value:* ' +

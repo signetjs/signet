@@ -1263,6 +1263,59 @@
     </ul>
 </li>
 <li class="describe-item">
+    <h3>verifyValueType</h3>
+    <div><a href="#" class="describe-link collapse-link"></a></div>
+    <ul class="describe-collapsible shown">
+        <ul>
+    <li>
+        <strong>should return value when it matches type correctly</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#" class="collapse-link"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var stringValue &#x3D; &#x27;foo&#x27;;
+            var stringResult &#x3D; signet.verifyValueType(&#x27;string&#x27;)(stringValue);
+
+            var boundedIntValue &#x3D; 5;
+            var boundedIntResult &#x3D; signet.verifyValueType(&#x27;leftBoundedInt&lt;4&gt;&#x27;)(boundedIntValue);
+
+            assert.equal(stringResult, stringValue);
+            assert.equal(boundedIntResult, boundedIntValue);
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+<ul>
+    <li>
+        <strong>should throw an error if the value is of incorrect type</strong>
+    </li>
+    <li>File location: <span class="filename">./test/signet.test.js</span></li>
+    <li class="code-sample-wrapper">
+        <div class="code-expand">
+            <a href="#" class="collapse-link"></a>
+        </div>
+        <pre class="code-sample">
+            <code>
+        function () {
+            var verifyStringValue &#x3D; signet.verifyValueType(&#x27;string&#x27;);
+            var verifyBoundedIntValue &#x3D; signet.verifyValueType(&#x27;leftBoundedInt&lt;4&gt;&#x27;);
+
+            assert.throws(() &#x3D;&gt; verifyStringValue({}));
+            assert.throws(() &#x3D;&gt; verifyBoundedIntValue(-3));
+        }
+            </code>
+        </pre>
+    </li>
+</ul>
+    </ul>
+</li>
+<li class="describe-item">
     <h3>iterateOn and recursiveTypeFactory</h3>
     <div><a href="#" class="describe-link collapse-link"></a></div>
     <ul class="describe-collapsible shown">
