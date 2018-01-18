@@ -3,6 +3,7 @@
   "version": "6.5.1",
   "description": "Signet type library",
   "main": "index.js",
+  "types": "./signet.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/signetjs/signet.git"
