@@ -10,6 +10,7 @@ var signet = (function () {
         var validator = signetValidator(typelog, assembler);
         var duckTypes = signetDuckTypes;
         var coreTypes = signetCoreTypes;
+        var recursiveTypes = signetRecursiveTypes;
 
         return signetBuilder(
             typelog, 
@@ -18,7 +19,8 @@ var signet = (function () {
             parser, 
             assembler, 
             duckTypes,
-            coreTypes);
+            coreTypes,
+            recursiveTypes);
     }
 
     if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {

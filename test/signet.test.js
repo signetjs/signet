@@ -1,4 +1,5 @@
 var signetBuilder = require('../index');
+// var signetBuilder = require('../dist/signet');
 var signetParser = require('signet-parser');
 
 var assert = require('chai').assert;

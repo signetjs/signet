@@ -12,6 +12,7 @@
             "node_modules/signet-validator/index.js",
             "bin/duckTypes.js",
             "bin/coreTypes.js",
+            "bin/recursiveTypes.js",
             "bin/signet.js",
             "client-index.js"
         ],
