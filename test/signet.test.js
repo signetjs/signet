@@ -335,18 +335,6 @@ describe('Signet API', function () {
                 assert.equal(add.myProp(), 'yay!');
             });
 
-            it('should return a function with the correct arity', function () {
-                const add = signet.enforce(
-                    'a:*, b:* => *',
-
-                    function add(a, b) {
-                        return a + b;
-                    }
-                );
-
-                assert.equal(add.length, 2);
-            });
-
         });
 
         describe('Higher-order Function Support', function () {

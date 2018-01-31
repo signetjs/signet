@@ -1930,10 +1930,7 @@ function signetBuilder(
             return enforcedFn;
         }, enforcedFn);
 
-        return Object.defineProperty(enforcedFn, 'length', {
-            writeable: false,
-            value: fn.length
-        });
+        return enforcedFn;
     }
 
     function enforceOnTree(signatureTree, fn, options) {
