@@ -130,8 +130,12 @@ function signetCoreTypes(
         return Math.abs(value) !== Infinity;
     }
 
+    var isNaN = typeof Number.isNaN === 'undefined'
+        ? function (value) { return value !== value; }
+        : function (value) { return Number.isNaN(value); };
+
     function isNumber(value) {
-        return typeof value === 'number' && !Number.isNaN(value);
+        return typeof value === 'number' && !isNaN(value);
     }
 
     var checkNumberSubtype = isSignetSubtypeOf('number');
