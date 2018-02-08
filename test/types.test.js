@@ -170,6 +170,9 @@ describe('Signet Types', function () {
             assert.isTrue(signet.isTypeOf('decimalPrecision<2>')(12.23));
             assert.isTrue(signet.isTypeOf('decimalPrecision<4>')(3.45));
             assert.isFalse(signet.isTypeOf('decimalPrecision<2>')(1.2345));
+
+            assert.throws(signet.isTypeOf('decimalPrecision<1.23>').bind(null, 123));
+            assert.throws(signet.isTypeOf('decimalPrecision<-5>').bind(null, 123));
         });
     
     });

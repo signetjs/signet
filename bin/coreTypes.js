@@ -493,7 +493,12 @@ function signetCoreTypes(
     }
 
     function checkDecimalPrecision(value, options) {
-        const precision = parseInt(options[0]);
+        const precision = parseFloat(options[0]);
+
+        if(!checkInt(precision) || !checkRange(precision, { min:0, max:Infinity})) {
+            throw new Error('Precision value must be of type leftBoundedInt<0>, but got: ' + precision + 'of type ' + typeof precision);
+        }
+
         return value === setDecimalPrecision(value, precision);
     }
 

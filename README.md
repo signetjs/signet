@@ -144,6 +144,7 @@ Extended types, and their inheritance chain, are as follows:
 - `boundedNumber<min:number;max:number>` - `* ->  boundedNumber`
 - `boundedString<minLength:int;maxLength:int>` - `* -> boundedString`
 - `composite` - `* -> composite` (Type constructor only, evaluates left to right)
+- `decimalPrecision<precision:leftBoundedInt<0>>` - `number -> decimalPrecision`
 - `decreasing<typeString:type>`- `* -> array -> (sequence ->) decreasing`
 - `formattedString<regex>` - `* -> string -> formattedString`
 - `int` - `* -> number -> int`
@@ -510,6 +511,10 @@ You can declare the number of arguments a type constructor requires (the arity o
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 6.6.0 ###
+
+- Introduced decimalPrecision type to declare required or returned decimal precision
 
 ### 6.5.0 ###
 
