@@ -165,6 +165,12 @@ describe('Signet Types', function () {
             assert.equal(signet.isTypeOf('void')(undefined), true);
             assert.equal(signet.isTypeOf('any')('anything'), true);
         });
+
+        it('should support decimal precision number types', function() {
+            assert.isTrue(signet.isTypeOf('decimalPrecision<2>')(12.23));
+            assert.isTrue(signet.isTypeOf('decimalPrecision<4>')(3.45));
+            assert.isFalse(signet.isTypeOf('decimalPrecision<2>')(1.2345));
+        });
     
     });
 });

@@ -486,6 +486,17 @@ function signetCoreTypes(
             && checkSignatureMatch(value, signature);
     }
 
+    function setDecimalPrecision(value, precision) {
+        const magnitude = Math.pow(10, precision);
+
+        return Math.floor(value * magnitude) / magnitude;
+    }
+
+    function checkDecimalPrecision(value, options) {
+        const precision = parseInt(options[0]);
+        return value === setDecimalPrecision(value, precision);
+    }
+
     extend('boolean{0}', isType('boolean'));
     extend('function{0,1}', isType('function'), optionsToFunction);
     extend('enforcedFunction{0,1}', isEnforcedFunction);
@@ -505,6 +516,7 @@ function signetCoreTypes(
     subtype('object')('regexp{0}', isRegExp);
     subtype('number')('finiteNumber', isFinite);
     subtype('number')('int{0}', checkInt);
+    subtype('number')('decimalPrecision{1}', checkDecimalPrecision);
     subtype('finiteNumber')('finiteInt{0}', checkInt);
     subtype('string')('formattedString{1}', checkFormattedString, optionsToRegex);
     subtype('array')('tuple{1,}', checkTuple, optionsToFunctions);
