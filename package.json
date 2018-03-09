@@ -1,6 +1,6 @@
 {
   "name": "signet",
-  "version": "6.6.1",
+  "version": "6.6.2",
   "description": "Signet type library",
   "main": "index.js",
   "types": "./signet.d.ts",
