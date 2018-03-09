@@ -371,6 +371,26 @@ type check can be reused without recomputing the type object definition:
     isRanged3to4(4000); // false
 ```
 
+Types can also be checked as a passthrough using `signet.verifyValueType()`.  This is especially useful for verifying the type of a value as it is being assigned to a variable.
+
+```javascript
+    function anIntegerOperation (myValue) {
+        const myInt = signet.verifyValueType('int')(myValue);
+
+        return doSomeIntegerThing(myInt);
+    }
+
+    // OR
+
+    const verifyIntValue = signet.verifyValueType('int');
+
+    function anIntegerOperation (myValue) {
+        const myInt = verifyIntValue(myValue);
+
+        return doSomeIntegerThing(myInt);
+    }
+```
+
 ### Object duck typing ###
 
 Duck typing functions can be created using the duckTypeFactory function.  This means, if an object 
@@ -506,7 +526,9 @@ You can declare the number of arguments a type constructor requires (the arity o
 - subtype: `rootTypeName:string => subtypeName:string, subtypeCheck:function, preprocessor:[function] => undefined`
 - typeChain: `typeName:string => string`
 - verify: `signedFunctionToVerify:function, functionArguments:arguments => undefined`
+    - Throws on error
 - verifyValueType: `typeToCheck:type => value:* => result:*`
+    - Throws on error
 - whichType: `typeNames:array<string> => value:* => variant<string; null>`
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
