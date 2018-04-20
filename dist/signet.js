@@ -1224,12 +1224,10 @@ function signetCoreTypes(
 
         var typeStringIsValid = isNumberType || isArrayOrString;
 
-        if(!typeStringIsValid){
+        if (!typeStringIsValid) {
             var errorMessage = 'Bounded type only accepts types of number, string, array or subtypes of these.'
             throw new Error(errorMessage);
-        }
-
-        if (isTypeOf(options[0])(value)) {
+        } else if (isTypeOf(options[0])(value)) {
             var valueToCheck = isArrayOrString ? value.length : value;
             return checkRange(valueToCheck, range);
         } else {
