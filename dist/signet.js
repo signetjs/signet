@@ -1221,13 +1221,19 @@ function signetCoreTypes(
         var range = optionsToRangeObject(options);
         var isArrayOrString = isArrayOrSubtype(typeName) || isStringOrSubtype(typeName);
         var isNumberType = isNumberOrSubtype(typeName);
-        var valueToCheck = isArrayOrString ? value.length : value;
 
-        if (isNumberType || isArrayOrString) {
-            return isTypeOf(options[0])(value) && checkRange(valueToCheck, range);
-        } else if (isNumberOrSubtype(typeName)) {
+        var typeStringIsValid = isNumberType || isArrayOrString;
+
+        if(!typeStringIsValid){
             var errorMessage = 'Bounded type only accepts types of number, string, array or subtypes of these.'
             throw new Error(errorMessage);
+        }
+
+        if (isTypeOf(options[0])(value)) {
+            var valueToCheck = isArrayOrString ? value.length : value;
+            return checkRange(valueToCheck, range);
+        } else {
+            return false;
         }
     }
 
@@ -1321,7 +1327,7 @@ function signetCoreTypes(
         var arrayLength = values.length;
         var result = initial;
 
-        for(var i = 0; i < arrayLength; i++) {
+        for (var i = 0; i < arrayLength; i++) {
             result = action(result, values[i]);
         }
 
@@ -1330,10 +1336,10 @@ function signetCoreTypes(
 
     function filterOn(predicate) {
         return function (result, value) {
-            if(predicate(value)) {
+            if (predicate(value)) {
                 result.push(value);
             }
-            
+
             return result;
         }
     }
@@ -1364,7 +1370,7 @@ function signetCoreTypes(
     }
 
     function isVariant(value, options) {
-        return options.length === 0 
+        return options.length === 0
             || filter(checkValueType, options).length > 0;
 
         function checkValueType(validator) {
@@ -1479,7 +1485,7 @@ function signetCoreTypes(
     function checkDecimalPrecision(value, options) {
         var precision = parseFloat(options[0]);
 
-        if(!checkInt(precision) || !checkRange(precision, { min:0, max:Infinity})) {
+        if (!checkInt(precision) || !checkRange(precision, { min: 0, max: Infinity })) {
             throw new Error('Precision value must be of type leftBoundedInt<0>, but got: ' + precision + 'of type ' + typeof precision);
         }
 
