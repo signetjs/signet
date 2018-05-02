@@ -1882,10 +1882,12 @@ function signetBuilder(
             functionName
         ) {
 
-            var errorMessage = buildEvaluationError(validationResult, prefix, functionName);
+            var errorMessage = '';
 
             if (typeof errorBuilder === 'function') {
                 errorMessage = errorBuilder(validationResult, args, signatureTree, functionName);
+            } else {
+                errorMessage = buildEvaluationError(validationResult, prefix, functionName);
             }
 
             throw new TypeError(errorMessage);
@@ -1908,6 +1910,19 @@ function signetBuilder(
 
         if (result !== null) {
             throwInputError(result, null, args, fn.signatureTree, getFunctionName(fn));
+        }
+    }
+
+    function enforceArgs(types) {
+        return function (rawArgs) {
+            var args = Array.prototype.slice.call(rawArgs, 0);
+            var parsedTypes = types.map(parser.parseType);
+            var result = validator.validateArguments(parsedTypes, undefined)(args);
+
+            if (result !== null) {
+                throwInputError(result, null, args, [parsedTypes], 'Called Function');
+            }
+
         }
     }
 
@@ -2197,13 +2212,13 @@ function signetBuilder(
             buildOutputErrorMessage
         ),
         classTypeFactory: enforce(
-            'class:function, ' + 
-            'otherProps:[composite<not<null>, object>] ' + 
+            'class:function, ' +
+            'otherProps:[composite<not<null>, object>] ' +
             '=> function',
             duckTypesModule.classTypeFactory),
         defineClassType: enforce(
-            'class:function, ' + 
-            'otherProps:[composite<not<null>, object>] ' + 
+            'class:function, ' +
+            'otherProps:[composite<not<null>, object>] ' +
             '=> undefined',
             duckTypesModule.defineClassType),
         defineDuckType: enforce(
@@ -2243,6 +2258,9 @@ function signetBuilder(
             'options:[object] ' +
             '=> function',
             enforce),
+        enforceArgs: enforce(
+            'array<string> => arguments => undefined',
+            enforceArgs),
         exactDuckTypeFactory: enforce(
             'duckTypeDef:object => function',
             duckTypesModule.exactDuckTypeFactory),

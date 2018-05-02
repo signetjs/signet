@@ -478,6 +478,31 @@ describe('Signet API', function () {
 
     });
 
+    describe('enforceArgs', function () {
+
+        it('throws an error if arguments do not match requirement', function () {
+            function test(a) {
+                signet.enforceArgs(['a:string'])(arguments);
+            }
+
+            assert.throws(test.bind(null, 5));
+        });
+
+        it('verifies arguments and skips unfulfilled optional arguments', function () {
+            function test(a, b, c) {
+                signet.enforceArgs([
+                    'a: string',
+                    'b: [number]',
+                    'c: string'
+                ])(arguments);
+            }
+
+            // test('foo', 5, 'bar');
+            assert.doesNotThrow(test.bind(null, 'foo', 'bar'));
+        });
+
+    });
+
     describe('typeChain', function () {
 
         it('should return correct type chains', function () {
