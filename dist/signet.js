@@ -651,10 +651,10 @@ var signetValidator = (function () {
             return accepted ? validateNext(nextArgs) : [assembler.assembleType(typeDef), argument];
         }
 
-        function getValidationState(left, right, operatorDef) {
+        function getValidationState(left, right, operatorDef, dependent) {
             var validationState = null;
 
-            if (!operatorDef.operation(left.value, right.value, left.typeNode, right.typeNode)) {
+            if (!operatorDef.operation(left.value, right.value, left.typeNode, right.typeNode, dependent)) {
                 var typeInfo = [left.name, operatorDef.operator, right.name];
                 var typeDef = typeInfo.join(' ');
                 var valueInfo = [left.name, '=', left.value, 'and', right.name, '=', right.value];
@@ -714,8 +714,13 @@ var signetValidator = (function () {
 
         function checkDependentTypes(namedArgs) {
             return function (dependent, validationState) {
-                var left = namedArgs[dependent.left];
-                var right = getRightArg(namedArgs, dependent.right);
+                dependent.leftTokens = dependent.left.split(':');
+                dependent.rightTokens = dependent.right.split(':');
+
+                var leftName = dependent.leftTokens[0];
+                var left = namedArgs[leftName];
+                var rightName = dependent.rightTokens[0];
+                var right = getRightArg(namedArgs, rightName);
 
                 var newValidationState = null;
 
@@ -726,7 +731,7 @@ var signetValidator = (function () {
                 if (validationState === null && namedValuesExist) {
                     var operatorDef = getDependentOperator(left.typeNode.type, dependent.operator);
 
-                    newValidationState = getValidationState(left, right, operatorDef);
+                    newValidationState = getValidationState(left, right, operatorDef, dependent);
                 }
 
                 return newValidationState === null ? validationState : newValidationState;
@@ -814,6 +819,64 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
 
         typelog.defineSubtypeOf('object')(typeName, duckType);
         duckTypeErrorReporters[typeName] = duckTypeErrorReporter;
+    }
+
+    function getValueType(propertyValue) {
+        var propertyType = typeof propertyValue;
+        return isTypeOf('array')(propertyValue)
+            ? 'array'
+            : propertyType;
+    }
+
+    function buildDuckTypeObject(propertyList, baseObject) {
+        return propertyList.reduce(function (result, key) {
+            if (key !== 'constructor') {
+                var propertyValue = baseObject[key];
+                var propertyType = getValueType(propertyValue);
+
+                result[key] = propertyType;
+            }
+
+            return result
+        }, {});
+    }
+
+    function isPrototypalObject (value) {
+        return typeof value === 'function'
+            && typeof value.prototype === 'object'
+    }
+
+    function throwIfNotPrototypalObject(value) {
+        if(!isPrototypalObject(value)) {
+            var message = "Function defineClassType expected a prototypal object or class, but got a value of type " + typeof value;
+            throw new TypeError(message);
+        }
+    }
+
+    function mergeTypeProps(destinationObject, propsObject){
+        Object.keys(propsObject).forEach(function(key) {
+            if(isTypeOf('not<undefined>')(destinationObject[key])) {
+                var message = 'Cannot reassign property ' + key + ' on duck type object';
+                throw new Error(message);
+            }
+
+            destinationObject[key] = propsObject[key];
+        });
+    }
+
+    function defineClassType(prototypalObject, otherProps) {
+        throwIfNotPrototypalObject(prototypalObject);
+
+        var className = prototypalObject.name;
+        var prototype = prototypalObject.prototype;
+
+        var propertyList = Object.getOwnPropertyNames(prototype);
+        var duckTypeObject = buildDuckTypeObject(propertyList, prototype);
+        if(isTypeOf('composite<not<null>, object>')(otherProps)) {
+            mergeTypeProps(duckTypeObject, otherProps);
+        }
+
+        defineDuckType(className, duckTypeObject);
     }
 
     function getErrorValue(value, typeName) {
@@ -968,6 +1031,7 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
 
     return {
         buildDuckTypeErrorChecker: buildDuckTypeErrorReporter,
+        defineClassType: defineClassType,
         defineDuckType: defineDuckType,
         defineExactDuckType: defineExactDuckType,
         duckTypeFactory: duckTypeFactory,
@@ -1087,6 +1151,10 @@ function signetCoreTypes(
     function isSupertypeOf(a, b, aType, bType) {
         return isSubtypeOf(b, a, bType, aType);
     }
+
+    // function typeImplication(a, b, aType, bType) {
+        
+    // }
 
     function greater(a, b) {
         return a > b;
@@ -2114,6 +2182,9 @@ function signetBuilder(
         duckTypeFactory: enforce(
             'duckTypeDef:object => function',
             duckTypesModule.duckTypeFactory),
+        defineClassType: enforce(
+            'class:function => undefined',
+            duckTypesModule.defineClassType),
         defineDuckType: enforce(
             'typeName:string, ' +
             'duckTypeDef:object ' +

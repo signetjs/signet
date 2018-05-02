@@ -41,7 +41,7 @@
     "signet-parser": "^5.5.0",
     "signet-registrar": "2.0.0",
     "signet-typelog": "^1.5.1",
-    "signet-validator": "^3.0.0"
+    "signet-validator": "^3.1.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",

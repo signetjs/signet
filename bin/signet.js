@@ -460,6 +460,9 @@ function signetBuilder(
         duckTypeFactory: enforce(
             'duckTypeDef:object => function',
             duckTypesModule.duckTypeFactory),
+        defineClassType: enforce(
+            'class:function => undefined',
+            duckTypesModule.defineClassType),
         defineDuckType: enforce(
             'typeName:string, ' +
             'duckTypeDef:object ' +

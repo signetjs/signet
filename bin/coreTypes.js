@@ -104,6 +104,10 @@ function signetCoreTypes(
         return isSubtypeOf(b, a, bType, aType);
     }
 
+    // function typeImplication(a, b, aType, bType) {
+        
+    // }
+
     function greater(a, b) {
         return a > b;
     }
