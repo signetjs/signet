@@ -632,6 +632,57 @@ describe('Signet API', function () {
         });
     });
 
+    describe('classTypeFactory', function () {
+        
+        it('verifies a type based on provided class', function () {
+            class MyClass {
+                constructor() {}
+
+                test() {}
+
+                test1() {}
+            }
+
+            const isMyClass = signet.classTypeFactory(MyClass);
+
+            const myInstance = new MyClass();
+
+            assert.isTrue(isMyClass(myInstance));
+            assert.isFalse(isMyClass({}));
+        });
+
+        
+        it('allows for extra properties to be defined', function () {
+            class MyClass {
+                constructor() {
+                    this.foo = 'bar';
+                    this.someInt = 1234;
+                }
+            }
+
+            const isMyClass = signet.classTypeFactory(MyClass, { foo: 'string', someInt: 'int' });
+
+            const myInstance = new MyClass();
+
+            assert.isTrue(isMyClass(myInstance));
+            assert.isFalse(isMyClass({}));
+        });
+        
+        it('throws an error when on attempt to override existing property', function () {
+            class MyClass {
+                constructor() {
+                    this.someInt = 1234;
+                }
+
+                foo() {}
+            }
+
+            const classTypeBuilder = () => signet.classTypeFactory(MyClass, { foo: 'string', someInt: 'int' });
+
+            assert.throws(classTypeBuilder);
+        });
+    });
+
     describe('reportDuckTypeErrors', function () {
         it('should return duck type error on bad object value', function () {
             signet.defineDuckType('duckTest', {});

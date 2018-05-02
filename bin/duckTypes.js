@@ -30,21 +30,20 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
         }, {});
     }
 
-    function isPrototypalObject (value) {
-        return typeof value === 'function'
-            && typeof value.prototype === 'object'
+    function isPrototypalObject(value) {
+        return typeof value.prototype === 'object';
     }
 
     function throwIfNotPrototypalObject(value) {
-        if(!isPrototypalObject(value)) {
+        if (!isPrototypalObject(value)) {
             var message = "Function defineClassType expected a prototypal object or class, but got a value of type " + typeof value;
             throw new TypeError(message);
         }
     }
 
-    function mergeTypeProps(destinationObject, propsObject){
-        Object.keys(propsObject).forEach(function(key) {
-            if(isTypeOf('not<undefined>')(destinationObject[key])) {
+    function mergeTypeProps(destinationObject, propsObject) {
+        Object.keys(propsObject).forEach(function (key) {
+            if (isTypeOf('not<undefined>')(destinationObject[key])) {
                 var message = 'Cannot reassign property ' + key + ' on duck type object';
                 throw new Error(message);
             }
@@ -53,19 +52,32 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
         });
     }
 
-    function defineClassType(prototypalObject, otherProps) {
+    function getDuckTypeObject(prototypalObject, otherProps) {
         throwIfNotPrototypalObject(prototypalObject);
 
-        var className = prototypalObject.name;
         var prototype = prototypalObject.prototype;
 
         var propertyList = Object.getOwnPropertyNames(prototype);
         var duckTypeObject = buildDuckTypeObject(propertyList, prototype);
-        if(isTypeOf('composite<not<null>, object>')(otherProps)) {
+        
+        if (isTypeOf('composite<not<null>, object>')(otherProps)) {
             mergeTypeProps(duckTypeObject, otherProps);
         }
 
+        return duckTypeObject
+    }
+
+    function defineClassType(prototypalObject, otherProps) {
+        var className = prototypalObject.name;
+        var duckTypeObject = getDuckTypeObject(prototypalObject, otherProps)
+
         defineDuckType(className, duckTypeObject);
+    }
+
+    function classTypeFactory(prototypalObject, otherProps) {
+        var duckTypeObject = getDuckTypeObject(prototypalObject, otherProps);
+
+        return duckTypeFactory(duckTypeObject);
     }
 
     function getErrorValue(value, typeName) {
@@ -220,6 +232,7 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
 
     return {
         buildDuckTypeErrorChecker: buildDuckTypeErrorReporter,
+        classTypeFactory: classTypeFactory,
         defineClassType: defineClassType,
         defineDuckType: defineDuckType,
         defineExactDuckType: defineExactDuckType,

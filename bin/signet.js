@@ -57,7 +57,7 @@ function signetBuilder(
         var isValidType = isTypeOf(typeValue);
 
         return function (value) {
-            if(!isValidType(value)) {
+            if (!isValidType(value)) {
                 throw new TypeError('Expected value of type ' + typeValue + ', but got ' + String(value) + ' of type ' + typeof value);
             }
 
@@ -457,11 +457,15 @@ function signetBuilder(
             '=> string',
             buildOutputErrorMessage
         ),
-        duckTypeFactory: enforce(
-            'duckTypeDef:object => function',
-            duckTypesModule.duckTypeFactory),
+        classTypeFactory: enforce(
+            'class:function, ' + 
+            'otherProps:[composite<not<null>, object>] ' + 
+            '=> function',
+            duckTypesModule.classTypeFactory),
         defineClassType: enforce(
-            'class:function => undefined',
+            'class:function, ' + 
+            'otherProps:[composite<not<null>, object>] ' + 
+            '=> undefined',
             duckTypesModule.defineClassType),
         defineDuckType: enforce(
             'typeName:string, ' +
@@ -491,6 +495,9 @@ function signetBuilder(
             'typePreprocessor:[function] ' +
             '=> undefined',
             recursiveTypeModule.defineRecursiveType),
+        duckTypeFactory: enforce(
+            'duckTypeDef:object => function',
+            duckTypesModule.duckTypeFactory),
         enforce: enforce(
             'signature:string, ' +
             'functionToEnforce:function, ' +
@@ -569,8 +576,8 @@ function signetBuilder(
             '=> undefined',
             verify),
         verifyValueType: enforce(
-            'typeToCheck:type ' + 
-            '=> value:* ' + 
+            'typeToCheck:type ' +
+            '=> value:* ' +
             '=> result:*',
             verifyValueType),
         whichType: enforce(
