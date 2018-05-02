@@ -113,6 +113,8 @@ describe('Signet Types', function () {
         });
 
         it('should have registered bounded types', function () {
+            assert.equal(signet.isTypeOf('bounded<array, 0, 5>')(null), false);
+
             assert.equal(signet.isTypeOf('bounded<int, 1, 5>')(3), true);
             assert.equal(signet.isTypeOf('bounded<number, 1, 5>')(5.1), false);
             assert.equal(signet.isTypeOf('bounded<int, 1, 5>')(0), false);
