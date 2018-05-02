@@ -489,15 +489,11 @@ describe('Signet API', function () {
         });
 
         it('verifies arguments and skips unfulfilled optional arguments', function () {
+            
             function test(a, b, c) {
-                signet.enforceArgs([
-                    'a: string',
-                    'b: [number]',
-                    'c: string'
-                ])(arguments);
+                signet.enforceArgs(['a: string', 'b: [number]', 'c: string'])(arguments);
             }
 
-            // test('foo', 5, 'bar');
             assert.doesNotThrow(test.bind(null, 'foo', 'bar'));
         });
 
