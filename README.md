@@ -270,12 +270,13 @@ to the stability of your in-code documentation. Let's take a look:
     console.log(add.signature); // number, number => number
 ```
 
-Arguments can be verified against the function signature by calling verify inside your function:
+Arguments can be enforced directly with `enforceArguments` in places where enforce is inappropriate or not feasible for use:
 
 ```
-    function verifiedAdd (a, b) {
-        signet.verify(add, arguments);
+    const enforceAddArgs = signet.enforceArguments(['a: number', 'b: number']);
 
+    function verifiedAdd (a, b) {
+        enforceAddArgs(arguments);
         return a + b;
     }
     
@@ -502,15 +503,18 @@ You can declare the number of arguments a type constructor requires (the arity o
 - alias: `aliasName != typeString :: aliasName:string, typeString:string => undefined`
 - buildInputErrorMessage: `validationResult:array, args:array, signatureTree:array, functionName:string => string`
 - buildOutputErrorMessage: `validationResult:array, args:array, signatureTree:array, functionName:string => string`
-- duckTypeFactory: `duckTypeDef:object => function`
+- classTypeFactory: `class:function, otherProps:[composite<not<null>, object>] => function`
+- defineClassType: `class:function, otherProps:[composite<not<null>, object>] => function`
 - defineDuckType: `typeName:string, duckTypeDef:object => undefined`
 - defineExactDuckType: `typeName:string, duckTypeDef:object => undefined`
 - defineDependentOperatorOn: `typeName:string => operator:string, operatorCheck:function => undefined`
 - defineRecursiveType: `typeName:string, iteratorFactory:function, nodeType:type, typePreprocessor:[function] => undefined`
+- duckTypeFactory: `duckTypeDef:object => function`
 - enforce: `signature:string, functionToEnforce:function, options:[object] => function`
     - currently supported options:
         - inputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array], [functionName:string] => 'string'`
         - outputErrorBuilder: `[validationResult:array], [args:array], [signatureTree:array], [functionName:string] => 'string'`
+- enforceArguments: `array<string> => arguments => undefined`
 - extend: `typeName:string, typeCheck:function, preprocessor:[function] => undefined`
 - exactDuckTypeFactory: `duckTypeDef:object => function`
 - isRegisteredDuckType: `typeName:string => boolean`
@@ -533,6 +537,13 @@ You can declare the number of arguments a type constructor requires (the arity o
 - whichVariantType: `variantString:string => value:* => variant<string; null>`
 
 ## Change Log ##
+
+### 6.7.0 ###
+
+- Added class types for better TypeScript interop with the following methods:
+    - `defineClassType`
+    - `classTypeFactory`
+- Added `enforceArguments` method for situations where enforce and sign are either inappropriate or not feasible for use
 
 ### 6.6.0 ###
 

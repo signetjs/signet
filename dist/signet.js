@@ -1913,7 +1913,7 @@ function signetBuilder(
         }
     }
 
-    function enforceArgs(types) {
+    function enforceArguments(types) {
         return function (rawArgs) {
             var args = Array.prototype.slice.call(rawArgs, 0);
             var parsedTypes = types.map(parser.parseType);
@@ -2258,9 +2258,9 @@ function signetBuilder(
             'options:[object] ' +
             '=> function',
             enforce),
-        enforceArgs: enforce(
+        enforceArguments: enforce(
             'array<string> => arguments => undefined',
-            enforceArgs),
+            enforceArguments),
         exactDuckTypeFactory: enforce(
             'duckTypeDef:object => function',
             duckTypesModule.exactDuckTypeFactory),

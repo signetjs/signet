@@ -478,11 +478,11 @@ describe('Signet API', function () {
 
     });
 
-    describe('enforceArgs', function () {
+    describe('enforceArguments', function () {
 
         it('throws an error if arguments do not match requirement', function () {
             function test(a) {
-                signet.enforceArgs(['a:string'])(arguments);
+                signet.enforceArguments(['a:string'])(arguments);
             }
 
             assert.throws(test.bind(null, 5));
@@ -491,7 +491,7 @@ describe('Signet API', function () {
         it('verifies arguments and skips unfulfilled optional arguments', function () {
             
             function test(a, b, c) {
-                signet.enforceArgs(['a: string', 'b: [number]', 'c: string'])(arguments);
+                signet.enforceArguments(['a: string', 'b: [number]', 'c: string'])(arguments);
             }
 
             assert.doesNotThrow(test.bind(null, 'foo', 'bar'));
