@@ -119,10 +119,11 @@ List of primary types:
 
 - `*`
 - `array`
+- `bigint` - `* -> nativeNumber -> bigint`
 - `boolean`
 - `function`
 - `null`
-- `number`
+- `number` - `* -> nativeNumber -> bigint`
 - `object`
 - `string`
 - `symbol`
@@ -147,7 +148,7 @@ Extended types, and their inheritance chain, are as follows:
 - `decimalPrecision<precision:leftBoundedInt<0>>` - `number -> decimalPrecision`
 - `decreasing<typeString:type>`- `* -> array -> (sequence ->) decreasing`
 - `formattedString<regex>` - `* -> string -> formattedString`
-- `int` - `* -> number -> int`
+- `int` - `* -> nativeNumber -> int`
 - `increasing<typeString:type>`- `* -> array -> (sequence ->) increasing`
 - `leftBounded<typeString:type, min:number>` - `* -> leftBounded`
 - `leftBoundedFiniteInt<min:number>` - `* -> leftBoundedFiniteInt`
