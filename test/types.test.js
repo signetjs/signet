@@ -66,7 +66,7 @@ describe('Signet Types', function () {
         });
 
         it('should support an unordered product type', function () {
-            var isUnorderedProduct = signet.isTypeOf('unorderedProduct<number; int; object; array; string>');
+            var isUnorderedProduct = signet.isTypeOf('unorderedProduct<nativeNumber; int; object; array; string>');
 
             assert.equal(isUnorderedProduct([1, 2, 3, 4]), false); //too short
             assert.equal(isUnorderedProduct([1, 2, 3, 4, 5, 6]), false); //too long

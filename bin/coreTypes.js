@@ -142,10 +142,18 @@ function signetCoreTypes(
         return typeof value === 'number' && !isNaN(value);
     }
 
-    var checkNumberSubtype = isSignetSubtypeOf('number');
+    function isBigInt (value) {
+        return typeof value === 'bigint' && !isNaN(value); // eslint-disable-line valid-typeof
+    }
+
+    function isNativeNumber (value) {
+        return isNumber(value) || isBigInt(value);
+    }
+
+    var checkNumberSubtype = isSignetSubtypeOf('nativeNumber');
 
     function isNumberOrSubtype(typeName) {
-        return typeName === 'number' || checkNumberSubtype(typeName);
+        return checkNumberSubtype(typeName);
     }
 
     var checkStringSubtype = isSignetSubtypeOf('string');
@@ -230,6 +238,10 @@ function signetCoreTypes(
 
         return isArrayType(value)
             && (!checkValues || checkArrayValues(value, options));
+    }
+
+    function isInt(value) {
+        return isBigInt(value) || checkInt(value);
     }
 
     function checkInt(value) {
@@ -513,7 +525,7 @@ function signetCoreTypes(
     extend('boolean{0}', isType('boolean'));
     extend('function{0,1}', isType('function'), optionsToFunction);
     extend('enforcedFunction{0,1}', isEnforcedFunction);
-    extend('number{0}', isNumber);
+    extend('nativeNumber', isNativeNumber);
     extend('object{0}', isType('object'));
     extend('string{0}', isType('string'));
     extend('symbol{0}', isType('symbol'));
@@ -525,10 +537,13 @@ function signetCoreTypes(
     extend('composite{1,}', checkCompositeType, optionsToFunctions);
     extend('bounded{3}', isBounded);
 
+    subtype('nativeNumber')('number{0}', isNumber);
+    subtype('nativeNumber')('bigint{0}', isBigInt);
+    subtype('nativeNumber')('int{0}', isInt);
+
     subtype('object')('array{0,}', checkArray);
     subtype('object')('regexp{0}', isRegExp);
-    subtype('number')('finiteNumber', isFinite);
-    subtype('number')('int{0}', checkInt);
+    subtype('nativeNumber')('finiteNumber', isFinite);
     subtype('number')('decimalPrecision{1}', checkDecimalPrecision);
     subtype('finiteNumber')('finiteInt{0}', checkInt);
     subtype('string')('formattedString{1}', checkFormattedString, optionsToRegex);
@@ -570,12 +585,19 @@ function signetCoreTypes(
     alias('any{0}', '*');
     alias('void{0}', '*');
 
-    defineDependentOperatorOn('number')('>', greater);
-    defineDependentOperatorOn('number')('<', less);
-    defineDependentOperatorOn('number')('=', equal);
-    defineDependentOperatorOn('number')('>=', not(less));
-    defineDependentOperatorOn('number')('<=', not(greater));
-    defineDependentOperatorOn('number')('!=', not(equal));
+    defineDependentOperatorOn('nativeNumber')('>', greater);
+    defineDependentOperatorOn('nativeNumber')('<', less);
+    defineDependentOperatorOn('nativeNumber')('=', equal);
+    defineDependentOperatorOn('nativeNumber')('>=', not(less));
+    defineDependentOperatorOn('nativeNumber')('<=', not(greater));
+    defineDependentOperatorOn('nativeNumber')('!=', not(equal));
+
+    defineDependentOperatorOn('int')('>', greater);
+    defineDependentOperatorOn('int')('<', less);
+    defineDependentOperatorOn('int')('=', equal);
+    defineDependentOperatorOn('int')('>=', not(less));
+    defineDependentOperatorOn('int')('<=', not(greater));
+    defineDependentOperatorOn('int')('!=', not(equal));
 
     defineDependentOperatorOn('string')('=', equal);
     defineDependentOperatorOn('string')('!=', not(equal));

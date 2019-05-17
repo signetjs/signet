@@ -247,7 +247,7 @@ describe('Signet API', function () {
                 }
 
                 assert.throws(signet.enforce(
-                    'A <: B :: A:variant<string;number>, B:variant<string;int> => number',
+                    'A <: B :: A:variant<string;nativeNumber>, B:variant<string;int> => number',
                     testFnFactory()).bind(null, 2.2, 3),
                     'Anonymous expected a value of type A <: B but got A = 2.2 and B = 3 of type string');
                 assert.throws(signet.enforce(
@@ -256,7 +256,7 @@ describe('Signet API', function () {
                     'Anonymous expected a value of type B > C but got B = 6 and C = 7 of type string');
 
                 assert.doesNotThrow(signet.enforce(
-                    'A <: B :: A:variant<string;int>, B:variant<string;number> => number',
+                    'A <: B :: A:variant<string;int>, B:variant<string;nativeNumber> => number',
                     testFnFactory()).bind(null, 5, 6));
                 assert.doesNotThrow(signet.enforce(
                     'A < B, B < C :: A:int, B:int, C:int => number',
@@ -506,7 +506,7 @@ describe('Signet API', function () {
             const numberTypeChain = signet.typeChain('number');
 
             assert.equal(arrayTypeChain, '* -> object -> array');
-            assert.equal(numberTypeChain, '* -> number');
+            assert.equal(numberTypeChain, '* -> nativeNumber -> number');
         });
 
     });
