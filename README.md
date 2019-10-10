@@ -88,6 +88,73 @@ const range = signet.enforce(
 );
 ```
 
+## Namespacing Types ##
+
+It's a common need to namespace types in order to declare types for different contexts as you develop your application.  In statically typed languages like C# and Java, this concept is built into the language.
+
+Javascript doesn't have this concept, but Signet provides a means to work within a namespace in order to segregate type concepts without creating painful names.
+
+In node, Signet namespaces are simply separate instances of Signet.  This means you can do the following:
+
+```javascript
+const signetFactory = require('signet');
+
+const Permissions = signetFactory();
+const Signup = signetFactory();
+
+Permissions.defineDuckType('claim', {
+    id: 'int',
+    name: 'string'
+});
+
+Permissions.defineDuckType('user', {
+    userId: 'int',
+    claims: 'array<claims>'
+});
+
+// Don't use this crummy email validation,
+// it's for demonstration purposes only.
+Signup.defineDuckType('email', 'formattedString<[^@]+@.*\..*>');
+
+Signup.defineDuckType('user', {
+    name: 'string',
+    email: 'email',
+    username: 'string',
+    password: 'string'
+});
+
+```
+
+In the client, namspacing works a little differently:
+
+```javascript
+const Permissions = signet.new();
+const Signup = signet.new();
+
+Permissions.defineDuckType('claim', {
+    id: 'int',
+    name: 'string'
+});
+
+Permissions.defineDuckType('user', {
+    userId: 'int',
+    claims: 'array<claims>'
+});
+
+// Don't use this crummy email validation,
+// it's for demonstration purposes only.
+Signup.defineDuckType('email', 'formattedString<[^@]+@.*\..*>');
+
+Signup.defineDuckType('user', {
+    name: 'string',
+    email: 'email',
+    username: 'string',
+    password: 'string'
+});
+```
+
+This means you can work with a variety of types without type name collisions, keeping your contexts well bounded and easier to manage!
+
 ## Basic Operators and Syntactic Characters ##
 
 - Type names -- All primary type names should adhere to the list of supported types below

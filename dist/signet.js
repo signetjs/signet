@@ -2405,6 +2405,9 @@ var signet = (function () {
         module.exports = buildSignet;
     }
     
-    return buildSignet();
+    var signetInstance = buildSignet();
+    signetInstance.new = buildSignet;
+
+    return signetInstance;
 })();
 
