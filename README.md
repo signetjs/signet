@@ -114,7 +114,7 @@ Permissions.defineDuckType('user', {
 
 // Don't use this crummy email validation,
 // it's for demonstration purposes only.
-Signup.defineDuckType('email', 'formattedString<[^@]+@.*\..*>');
+Signup.alias('email', 'formattedString<[^@]+@.*\..*>');
 
 Signup.defineDuckType('user', {
     name: 'string',
