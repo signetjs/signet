@@ -536,6 +536,30 @@ describe('Signet API', function () {
             assert.equal(isMyObj(null), false);
         });
 
+        it('should produce a recursively defined type', function() {
+            var isMyObj = signet.duckTypeFactory({
+                _something: {
+                    anotherThing: 'string'
+                },
+                foo: 'string',
+                bar: 'int',
+                baz: 'array'
+            })
+
+            signet.subtype('object')('myObj', isMyObj)
+
+            var testObject = {
+                _something: {
+                    anotherThing: 'yay!'
+                },
+                foo: 'blah',
+                bar: 127,
+                baz: []
+            }
+
+            assert.equal(signet.isTypeOf('myObj')(testObject), true);
+        })
+
     });
 
     describe('exactDuckTypeFactory', function () {

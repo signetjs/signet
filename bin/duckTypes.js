@@ -173,6 +173,10 @@ function signetDuckTypes(typelog, isTypeOf, parseType, assembleType) {
     function buildPropCheck(propCheck, key, type) {
         var typeCheck = isTypeOf(type);
 
+        if(typeof typeCheck !== 'function') {
+            typeCheck = buildDuckType(type);
+        }
+
         return function (obj) {
             return typeCheck(obj[key]) && propCheck(obj);
         }
