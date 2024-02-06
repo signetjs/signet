@@ -522,6 +522,10 @@ function signetCoreTypes(
         return value === setDecimalPrecision(value, precision);
     }
 
+    function isPromise(value) {
+        return value instanceof Promise;
+    }
+
     extend('boolean{0}', isType('boolean'));
     extend('function{0,1}', isType('function'), optionsToFunction);
     extend('enforcedFunction{0,1}', isEnforcedFunction);
@@ -536,6 +540,7 @@ function signetCoreTypes(
     extend('taggedUnion{1,}', checkTaggedUnion, optionsToFunctions);
     extend('composite{1,}', checkCompositeType, optionsToFunctions);
     extend('bounded{3}', isBounded);
+    extend('promise', isPromise);
 
     subtype('nativeNumber')('number{0}', isNumber);
     subtype('nativeNumber')('bigint{0}', isBigInt);

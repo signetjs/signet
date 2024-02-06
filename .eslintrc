@@ -17,6 +17,7 @@
         "console": false,
         "global": false,
         "runQuokkaMochaBdd": false,
-        "Symbol": false
+        "Symbol": false,
+        "Promise": false
     }
 }

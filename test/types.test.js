@@ -65,6 +65,12 @@ describe('Signet Types', function () {
             assert.equal(signet.isTypeOf('taggedUnion<int; string>')(null), false);
         });
 
+        it('should support native promises', function () {
+            var isPromise = signet.isTypeOf('promise');
+
+            assert.equal(isPromise(new Promise(() => null, () => null)), true);
+        });
+
         it('should support an unordered product type', function () {
             var isUnorderedProduct = signet.isTypeOf('unorderedProduct<nativeNumber; int; object; array; string>');
 
